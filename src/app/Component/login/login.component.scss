@@ -1,0 +1,51 @@
+.login{
+    box-shadow: 10px 10px 15px rgba(0, 0, 0, 0.3);
+    width: 35%;
+    label{
+        font-size: 14px;
+        font-weight: 400;
+    }
+    button{
+        background-color: #115081;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+}
+.otp-input {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    text-align: center;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .otp-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .step2{
+    p{
+        color: #115081;
+        font-weight: 400;
+        font-size: 16;
+    }
+    span{
+        color: gray;
+    }
+  }
+
+@media (max-width: 768px) {
+    .login-space{
+        padding: 50px 10px !important;
+    }
+       .login{
+            width: 100%;
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);
+
+        } 
+}

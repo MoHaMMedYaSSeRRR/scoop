@@ -1,0 +1,29 @@
+:host{
+    margin-top: auto;
+}
+footer{
+    background-color: #191C1F;
+    h4{
+        font-size: 18px;
+        color: #fefefe;
+    }
+}
+@media (max-width: 768px) {
+    .content{
+        text-align: center;
+    }
+    .logo{
+        padding: 0;
+        text-align: center;
+        img{
+        padding-right: 20px;
+        }
+    }
+    h4{
+        text-align: center;
+        margin-left: 20px;
+    }
+    ul{
+        justify-content: center !important;
+    }
+}

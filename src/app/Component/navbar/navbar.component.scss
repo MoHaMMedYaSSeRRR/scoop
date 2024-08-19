@@ -1,0 +1,14 @@
+nav{
+    background-color: #115081;
+    h2{
+        font-size: 14px;
+        font-weight: 400;
+        color: #fff;
+    }
+
+}
+@media (max-width: 768px){
+    li a{
+        margin: 0px 5px;
+    }
+}
