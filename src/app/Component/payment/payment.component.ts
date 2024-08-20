@@ -6,5 +6,9 @@ import { Component } from '@angular/core';
   styleUrls: ['./payment.component.scss']
 })
 export class PaymentComponent {
+  isLayerHidden: boolean = false;
 
+  hideLayer(): void {
+    this.isLayerHidden = true;
+  }
 }

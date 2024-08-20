@@ -10,7 +10,6 @@ const routes: Routes = [
   {path:'login',component: LoginComponent},
   {path:'uploadpdf',component: UploadpdfComponent},
   {path:'review',component: ReviewComponent},
-  {path:'payment',component: PaymentComponent},
 
 
 ];

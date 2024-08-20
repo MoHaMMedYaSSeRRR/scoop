@@ -42,7 +42,7 @@
         </div>
         
         <button
-       
+        (click)="showpay()"
         type="button"
         class="sendBtn ms-1  p-2 border-0 text-white  d-block me-auto mt-3"
       >
@@ -52,6 +52,6 @@
     </div>
 </div>
 
-<section *ngIf="">
+<section *ngIf="ispay">
   <app-payment></app-payment>  
 </section>

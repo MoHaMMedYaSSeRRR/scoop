@@ -10,6 +10,11 @@ export class ReviewComponent {
   currentPage: number = 0;
   userPageCount!: number;
 
+  ispay:boolean=false;
+
+  showpay(){
+    this.ispay = true;
+  }
 
   goToPreviousPage(): void {
     if (this.currentPage > 0) {
