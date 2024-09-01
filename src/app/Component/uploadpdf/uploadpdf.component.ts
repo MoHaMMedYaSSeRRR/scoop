@@ -63,31 +63,34 @@ export class UploadpdfComponent {
     const images: string[] = [];
     const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
     const numPages = pdf.numPages;
-
+  
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const viewport = page.getViewport({ scale: 1.5 });
-
+  
+      // Create a new canvas and get the 2D context with willReadFrequently attribute set
       const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+  
       if (!context) {
         throw new Error('Failed to get canvas context');
       }
-
+  
       canvas.height = viewport.height;
       canvas.width = viewport.width;
-
+  
       const renderContext = {
         canvasContext: context,
         viewport: viewport,
       };
-
+  
       await page.render(renderContext).promise;
       images.push(canvas.toDataURL('image/png'));
     }
-
+  
     return images;
   }
+  
 
   async onSubmit(): Promise<void> {
     if (this.pdfForm.valid) {
