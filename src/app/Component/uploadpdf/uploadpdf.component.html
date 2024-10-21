@@ -21,7 +21,7 @@
           type="file"
           accept="application/pdf"
           #fileInput
-          (change)="onFileChange($event)"
+          (change)="onFileSelected($event)"
           hidden
         />
         <label for="pageCount">عدد صفحات الامتحان</label>
@@ -31,13 +31,13 @@
           class="form-control p-2 rounded-1 my-2"
           formControlName="pageCount"
         />
-        <label for="quesCount">عدد الأسئلة</label>
+        <!-- <label for="quesCount">عدد الأسئلة</label>
         <input
           id="quesCount"
           type="number"
           class="form-control p-2 rounded-1 my-2"
           formControlName="questionCount"
-        />
+        /> -->
         <button
           type="button"
           class="rounded-2 py-2 border-0 text-white px-5 d-block me-auto mt-3"
@@ -93,10 +93,11 @@
             >
               <i class="fa fa-arrow-right"></i>
             </span>
-          </div>
+          </div> 
         </div>
-
-        <div class="col-md-7">
+       
+        
+        <div  class="col-md-7">
           <div class="content text-end ps-md-3 p-1">
             <h3 class="mb-2">
               برجاء ادخال البيانات التالية لكل صفحة في الامتحان
@@ -126,14 +127,14 @@
               <input
                 type="number"
                 class="form-control p-2 rounded-1 my-2"
-                formControlName="score"
+              
                 required
               />
-
+              <!-- formControlName="fractioned_Grades" -->
               <label for="answer">اتجاه الاجابة</label>
               <div class="row justify-content-end align-items-center mt-2">
                 <div
-                  class="col-3 d-flex justify-content-center align-items-center"
+                  class="col-3 d-flex justify-content-end align-items-center"
                 >
                   <input
                     type="radio"
@@ -145,7 +146,7 @@
                   />
                   <label for="horizontal">افقي</label>
                 </div>
-                <div class="col-3">
+                <div class="col-3 ">
                   <input
                     type="radio"
                     id="vertical"
@@ -192,7 +193,7 @@
                     id="teacher-no"
                     name="gradedByTeacher"
                     formControlName="gradedByTeacher"
-                    value="no"
+                    [value]="false"
                     class="mx-2"
                   />
                   <label for="teacher-no">لا</label>
@@ -203,7 +204,7 @@
                     id="teacher-yes"
                     name="gradedByTeacher"
                     formControlName="gradedByTeacher"
-                    value="yes"
+                    [value]="true"
                     class="mx-2"
                   />
                   <label for="teacher-yes">نعم</label>
@@ -214,7 +215,17 @@
           </div>
         </div>
         <button
-        *ngIf="!isLastQuestion()"
+        
+        type="button"
+        class="sendBtn p-2 border-0 text-white  d-block me-auto mt-3"
+        (click)="onFinalSubmit()"
+       
+
+      >
+        ارسال
+      </button>
+        <button
+       
         type="button"
         class="sendBtn ms-1  p-2 border-0 text-white  d-block me-auto mt-3"
         (click)="onCurrentQuestionSubmit()"
@@ -222,16 +233,7 @@
         التالي
       </button>
 
-      <button
-        *ngIf="isLastQuestion()"
-        type="button"
-        class="sendBtn p-2 border-0 text-white  d-block me-auto mt-3"
-        (click)="onFinalSubmit()"
-        routerLink="/review"
-
-      >
-        ارسال
-      </button>
+     
       </div>
     </div>
   </div>

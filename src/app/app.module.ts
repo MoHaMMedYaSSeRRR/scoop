@@ -12,7 +12,7 @@ import { CarouselModule } from 'ngx-owl-carousel-o';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './Component/review/review.component';
 import { PaymentComponent } from './Component/payment/payment.component';
-
+import { HttpClientModule } from '@angular/common/http';
 @NgModule({
   declarations: [
     AppComponent,
@@ -29,7 +29,8 @@ import { PaymentComponent } from './Component/payment/payment.component';
     ReactiveFormsModule,
     BrowserAnimationsModule,
     CarouselModule ,
-    FormsModule
+    FormsModule , 
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]
