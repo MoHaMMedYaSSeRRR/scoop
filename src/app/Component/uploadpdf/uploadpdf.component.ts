@@ -11,12 +11,14 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
   styleUrls: ['./uploadpdf.component.scss'],
 })
 export class UploadpdfComponent {
+  private readonly ORIGINAL_IMAGE_WIDTH = 600; // Update this to the original width of your image
+private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original height of your image
   step1: boolean = true;
   step2: boolean = false;
   selectedFile: any;
   pdfForm: FormGroup;
   fileName: string | null = null;
-  pdfImages: string[] = [];
+  pdfImages: any[] = [];
   currentPage: number = 0;
   userPageCount: number = 0;
   selectedQuestions: Array<any> = []; 
@@ -107,7 +109,7 @@ export class UploadpdfComponent {
               this.formBuilder.group({
                 rowNumber: new FormControl('', Validators.required),
                 colNumber: new FormControl('', Validators.required),
-                fractioned_Grades: new FormControl('', ),
+                fractioned_Grades: [null, [this.fractionedGradesValidator]],
                 direction: new FormControl('', Validators.required),
                 marked: new FormControl(),
                 gradedByTeacher: new FormControl(),
@@ -125,7 +127,19 @@ export class UploadpdfComponent {
       fileReader.readAsArrayBuffer(pdfFile);
     }
   }
-
+   fractionedGradesValidator(control: FormControl): { [key: string]: boolean } | null {
+    const value = control.value;
+    // Allow empty input to be considered valid (return null if empty)
+    if (!value) {
+      return null;
+    }
+  
+    // Validate if non-empty
+    const values = value.split(',').map((val: string) => parseFloat(val));
+    const isValid = values.every((num:any) => !isNaN(num) && num >= 0);
+    return isValid ? null : { invalidFractionedGrade: true };
+  }
+  
   // Navigate to previous page
   goToPreviousPage(): void {
     if (this.currentPage > 0) {
@@ -134,6 +148,7 @@ export class UploadpdfComponent {
     }
   }
 
+  url:string='';
   // Navigate to next page
   goToNextPage(): void {
     if (this.currentPage < this.userPageCount - 1) {
@@ -157,9 +172,9 @@ export class UploadpdfComponent {
           rowNumber: '',
           colNumber: '',
           direction: '',
-          marked: false,
-          gradedByTeacher: false,
-          fractioned_Grades: ''
+          marked: '' ,
+          gradedByTeacher: '' ,
+          fractioned_Grades: null
         });
 
         this.resetSelectionBox(); // Reset selection box for the next question
@@ -178,86 +193,128 @@ export class UploadpdfComponent {
 
   // Final submission after all questions are done
   onFinalSubmit(): void {
-    if (this.getCurrentQuestionFormGroup().valid) {
-      this.addCurrentQuestionData();
-    }
-
-    console.log('Final data to send:', this.selectedQuestions ,this.selectedFile );
+    // Capture the last question's data before final submission
+    this.addCurrentQuestionData();
 
     const formData = new FormData();
     if (this.selectedFile) {
-      formData.append('pdf_file', this.selectedFile, this.selectedFile.name);
+        formData.append('pdf_file', this.selectedFile, this.selectedFile.name);
     }
 
-    // Send collected question data as JSON
     const pdfJson = JSON.stringify(this.selectedQuestions);
     formData.append('json_data', pdfJson);
 
-    // API call for final submission
-    // console.log(formData)
+    // Perform the upload
     this._UploadService.upload(formData).subscribe({
-      next: (res) => console.log(res),
-      error: (err) => console.log(err)
+        next: (res) => {
+            console.log(res);
+
+            // Set the URL and remove the first character if needed
+
+            if (res.result && res.result.output_path) {
+              this.url = res.result.output_path.slice(1);
+console.log(this.url)
+              // Trigger the click after a short delay to ensure the URL is set
+              setTimeout(() => {
+                  const anchor = document.createElement('a');
+                  anchor.href = 'http://157.173.124.62:5000' + this.url;
+                  anchor.target = '_blank';
+                  anchor.click();
+              }, 100); // 100ms delay
+          } else {
+              console.error('Output path is missing in the response:', res);
+          }
+        },
+        error: (err) => console.log(err)
     });
-  }
-
-  
-addCurrentQuestionData(): void {
-  const currentQuestion = this.getCurrentQuestionFormGroup().value;
-
-  // Calculate min and max points based on the selection box
-  const minX = Math.min(this.selectionBox.x, this.selectionBox.x + this.selectionBox.width);
-  const minY = Math.min(this.selectionBox.y, this.selectionBox.y + this.selectionBox.height);
-  const maxX = Math.max(this.selectionBox.x, this.selectionBox.x + this.selectionBox.width);
-  const maxY = Math.max(this.selectionBox.y, this.selectionBox.y + this.selectionBox.height);
-
-  const roiData = {
-    roi_coordinates: [minX, minY, maxX, maxY], // Store coordinates in an array: [minX, minY, maxX, maxY]
-    row_col_numbers: [currentQuestion.rowNumber, currentQuestion.colNumber],
-    marked: currentQuestion.marked,
-    graded_by_teacher: currentQuestion.gradedByTeacher,
-   fractioned_grades: currentQuestion.fractioned_Grades,
-    direction_of_question: currentQuestion.direction,
-  };
-
-  let pageData = this.selectedQuestions.find(
-    page => page.page_number === this.currentPage + 1
-  );
-
-  if (!pageData) {
-    pageData = { page_number: this.currentPage + 1, rois: [] };
-    this.selectedQuestions.push(pageData);
-  }
-
-  pageData.rois.push(roiData);
-
-  console.log('All ROIs for page:', pageData.page_number, pageData.rois);
 }
 
 
-  onMouseDown(event: MouseEvent): void {
-    this.isSelecting = true;
-    this.startX = event.offsetX;
-    this.startY = event.offsetY;
-  }
+  
+  addCurrentQuestionData(): void {
+    const currentQuestion = this.getCurrentQuestionFormGroup().value;
 
-  onMouseMove(event: MouseEvent): void {
-    if (this.isSelecting) {
-      const currentX = event.offsetX;
-      const currentY = event.offsetY;
+    let fractionedGradesArray: number[] | null = null;
 
-      this.selectionBox = {
-        x: Math.min(this.startX, currentX),
-        y: Math.min(this.startY, currentY),
-        width: Math.abs(currentX - this.startX),
-        height: Math.abs(currentY - this.startY),
-      };
+    if (currentQuestion.fractioned_Grades) {
+        const parsedGrades = currentQuestion.fractioned_Grades
+            .split(',')
+            .map((grade: string) => parseFloat(grade.trim()))
+            .filter((grade: number) => !isNaN(grade));
+
+        if (parsedGrades.length > 0) {
+            fractionedGradesArray = parsedGrades;
+        }
     }
-  }
+    if (this.pdfImages.length === 0) {
+        console.error('No PDF images loaded');
+        return;
+    }
+    const currentImage = this.pdfImages[this.currentPage];
+    const roiData = {
+        roi_coordinates: [
+            Math.floor(this.selectionBox.x) , // min x
+            Math.floor(this.selectionBox.y) , // min y
+           Math.floor( this.selectionBox.width), // max x
+            Math.floor(this.selectionBox.height)   // max y
+        ],
+        row_col_numbers: [currentQuestion.rowNumber, currentQuestion.colNumber],
+        marked: currentQuestion.marked,
+        graded_by_teacher: currentQuestion.gradedByTeacher,
+        fractioned_grades: fractionedGradesArray,
+        direction_of_question: currentQuestion.direction,
+    };
 
-  onMouseUp(): void {
-    this.isSelecting = false;
+    console.log('ROI Data:', roiData); 
+
+    let pageData = this.selectedQuestions.find(
+        page => page.page_number === this.currentPage + 1
+    );
+
+    if (!pageData) {
+        pageData = { page_number: this.currentPage + 1, rois: [] };
+        this.selectedQuestions.push(pageData);
+    }
+
+    pageData.rois.push(roiData);
+
+}
+
+
+onMouseDown(event: MouseEvent): void {
+  const imgElement = event.target as HTMLImageElement;
+  const rect = imgElement.getBoundingClientRect();
+
+  this.isSelecting = true;
+
+  // Get the start coordinates relative to the original image size
+  this.startX = (event.clientX - rect.left) * (this.ORIGINAL_IMAGE_WIDTH / rect.width);
+  this.startY = (event.clientY - rect.top) * (this.ORIGINAL_IMAGE_HEIGHT / rect.height);
+
+}
+onMouseMove(event: MouseEvent): void {
+  if (this.isSelecting) {
+    const imgElement = event.target as HTMLImageElement;
+    const rect = imgElement.getBoundingClientRect();
+
+    // Get the current coordinates relative to the original image size
+    const currentX = (event.clientX - rect.left) * (this.ORIGINAL_IMAGE_WIDTH / rect.width);
+    const currentY = (event.clientY - rect.top) * (this.ORIGINAL_IMAGE_HEIGHT / rect.height);
+
+    this.selectionBox = {
+      x: Math.min(this.startX, currentX), 
+      y: Math.min(this.startY, currentY),
+      width: Math.abs(currentX - this.startX),
+      height: Math.abs(currentY - this.startY)
+    };
+
   }
+}
+
+onMouseUp(): void {
+  this.isSelecting = false;
+}
+
 
   // Reset the selection box
   resetSelectionBox(): void {

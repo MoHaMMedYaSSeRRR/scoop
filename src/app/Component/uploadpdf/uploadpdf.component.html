@@ -55,12 +55,11 @@
       class="step2 justify-content-between overflow-hidden align-items-center"
     >
       <div class="row g-2">
-        <div class="col-md-5 text-end">
+        <div class="col-md-6 text-end">
           <div class="show p-0">
             <img
               *ngIf="pdfImages.length > 0"
               [src]="pdfImages[currentPage]"
-              class="w-100"
               (mousedown)="onMouseDown($event)"
               (mousemove)="onMouseMove($event)"
               (mouseup)="onMouseUp()"
@@ -97,7 +96,7 @@
         </div>
        
         
-        <div  class="col-md-7">
+        <div  class="col-md-5">
           <div class="content text-end ps-md-3 p-1">
             <h3 class="mb-2">
               برجاء ادخال البيانات التالية لكل صفحة في الامتحان
@@ -125,12 +124,12 @@
 
               <label for="score">الدرجة</label>
               <input
-                type="number"
+                type="text"
                 class="form-control p-2 rounded-1 my-2"
-              
+                formControlName="fractioned_Grades" 
                 required
               />
-              <!-- formControlName="fractioned_Grades" -->
+              <!-- -->
               <label for="answer">اتجاه الاجابة</label>
               <div class="row justify-content-end align-items-center mt-2">
                 <div
@@ -167,7 +166,7 @@
                     id="no"
                     name="marked"
                     formControlName="marked"
-                    value="no"
+                    [value]="false"
                     class="mx-2"
                   />
                   <label for="no">لا</label>
@@ -178,7 +177,7 @@
                     id="yes"
                     name="marked"
                     formControlName="marked"
-                    value="yes"
+                    [value]="true"
                     class="mx-2"
                   />
                   <label for="yes">نعم</label>
@@ -238,3 +237,4 @@
     </div>
   </div>
 </section>
+

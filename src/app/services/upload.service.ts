@@ -11,7 +11,7 @@ export class UploadService {
     private _HttpClient:HttpClient
   ) { }
   upload(data:any):Observable<any>{
-    return this._HttpClient.post('http://157.173.124.62:8080/upload' ,data);
+    return this._HttpClient.post('http://157.173.124.62:5000/upload' ,data);
 
   }
   gettest():Observable<any>{
