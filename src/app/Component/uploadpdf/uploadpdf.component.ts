@@ -191,16 +191,20 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
     return this.questions.at(this.currentPage) as FormGroup; // Adjusted to get current page's form
   }
 
-  // Final submission after all questions are done
   onFinalSubmit(): void {
-    // Capture the last question's data before final submission
+    // Get the current question form
+    const currentQuestionForm = this.getCurrentQuestionFormGroup();
+    
+    // Store the last question data, whether or not the form is valid
     this.addCurrentQuestionData();
 
+    // Prepare FormData for the final upload
     const formData = new FormData();
     if (this.selectedFile) {
         formData.append('pdf_file', this.selectedFile, this.selectedFile.name);
     }
 
+    // Prepare the JSON data for the final submission
     const pdfJson = JSON.stringify(this.selectedQuestions);
     formData.append('json_data', pdfJson);
 
@@ -208,22 +212,18 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
     this._UploadService.upload(formData).subscribe({
         next: (res) => {
             console.log(res);
-
-            // Set the URL and remove the first character if needed
-
             if (res.result && res.result.output_path) {
-              this.url = res.result.output_path.slice(1);
-console.log(this.url)
-              // Trigger the click after a short delay to ensure the URL is set
-              setTimeout(() => {
-                  const anchor = document.createElement('a');
-                  anchor.href = 'http://157.173.124.62:5000' + this.url;
-                  anchor.target = '_blank';
-                  anchor.click();
-              }, 100); // 100ms delay
-          } else {
-              console.error('Output path is missing in the response:', res);
-          }
+                const url = res.result.output_path.slice(1);
+                console.log(url);
+                setTimeout(() => {
+                    const anchor = document.createElement('a');
+                    anchor.href = 'http://157.173.124.62:5000' + url;
+                    anchor.target = '_blank';
+                    anchor.click();
+                }, 100); // 100ms delay
+            } else {
+                console.error('Output path is missing in the response:', res);
+            }
         },
         error: (err) => console.log(err)
     });
@@ -277,6 +277,7 @@ console.log(this.url)
     }
 
     pageData.rois.push(roiData);
+    console.log("hello")
 
 }
 
