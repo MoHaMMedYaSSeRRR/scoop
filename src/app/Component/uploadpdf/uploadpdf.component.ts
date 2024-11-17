@@ -49,7 +49,7 @@ export class UploadpdfComponent {
   userPageCount: number = 0;
   selectedQuestions: SelectedQuestions = {}; // Initialize as an object
 
-  id:any= {};
+  id: any = {};
   isSelecting: boolean = false;
   selectionBox = { x: 0, y: 0, width: 0, height: 0 };
   startX: number = 0;
@@ -60,7 +60,7 @@ export class UploadpdfComponent {
   constructor(
     private formBuilder: FormBuilder,
     private _UploadService: UploadService,
-    private router:Router
+    private router: Router
   ) {
     this.pdfForm = this.formBuilder.group({
       pdfFile: new FormControl(null, Validators.required),
@@ -225,13 +225,13 @@ export class UploadpdfComponent {
   }
   determineIdValue(currentQuestion: any): string {
     if (!currentQuestion.marked && !currentQuestion.gradedByTeacher) {
-      console.log( currentQuestion.marked , currentQuestion.gradedByTeacher)
-        return 'valid_id'; // Assign a valid ID when both are false
+      console.log(currentQuestion.marked, currentQuestion.gradedByTeacher);
+      return 'valid_id'; // Assign a valid ID when both are false
     } else {
-      console.log( currentQuestion.marked , currentQuestion.gradedByTeacher)
-        return 'not_an_id'; // Return a different value if either is true
+      console.log(currentQuestion.marked, currentQuestion.gradedByTeacher);
+      return 'not_an_id'; // Return a different value if either is true
     }
-}
+  }
   addCurrentQuestionData(): void {
     const currentQuestion = this.getCurrentQuestionFormGroup().value;
 
@@ -259,21 +259,23 @@ export class UploadpdfComponent {
     console.log('Question Data:', roiData); // Log for debugging
   }
 
-  fractionedGradesValidator(control: FormControl): { [key: string]: boolean } | null {
+  fractionedGradesValidator(
+    control: FormControl
+  ): { [key: string]: boolean } | null {
     const value = control.value;
     if (!value) {
       return null;
     }
-  
+
     // Validate if non-empty
     const values = value.split(',').map((val: string) => parseFloat(val));
-    const isValid = values.every((num:any) => !isNaN(num) && num >= 0);
+    const isValid = values.every((num: any) => !isNaN(num) && num >= 0);
     return isValid ? null : { invalidFractionedGrade: true };
   }
-  another:any=[]
+  another: any = [];
   onCurrentQuestionSubmit(): void {
     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-  
+
     // Validate if the selection box has been defined
     if (this.selectionBox.width > 0 && this.selectionBox.height > 0) {
       // Prepare ROI data based on the selection box and form values
@@ -281,7 +283,10 @@ export class UploadpdfComponent {
         position: [
           [
             [Math.floor(this.selectionBox.x), Math.floor(this.selectionBox.y)],
-            [Math.floor(this.selectionBox.x + this.selectionBox.width), Math.floor(this.selectionBox.y + this.selectionBox.height)],
+            [
+              Math.floor(this.selectionBox.x + this.selectionBox.width),
+              Math.floor(this.selectionBox.y + this.selectionBox.height),
+            ],
           ],
         ],
         bubbles: currentQuestionForm.value.colNumber,
@@ -289,18 +294,22 @@ export class UploadpdfComponent {
         method: currentQuestionForm.value.method || 'top-to-bottom',
         marked_by_teacher: currentQuestionForm.value.gradedByTeacher || false,
       };
-  
+
       // If the question is graded by a teacher, process the choices and add them to roiData
       if (roiData.marked_by_teacher) {
         const choicesValue = currentQuestionForm.value.choices;
         if (choicesValue) {
-          const choicesArray = choicesValue.split(',').map((val: string) => parseFloat(val.trim()));
-          roiData.choices = choicesArray.filter((choice: number) => !isNaN(choice));
+          const choicesArray = choicesValue
+            .split(',')
+            .map((val: string) => parseFloat(val.trim()));
+          roiData.choices = choicesArray.filter(
+            (choice: number) => !isNaN(choice)
+          );
         }
       }
-  
+
       const idValue = this.determineIdValue(currentQuestionForm.value);
-  
+
       if (idValue === 'valid_id') {
         // Handle ID data separately
         this.id = {
@@ -311,13 +320,15 @@ export class UploadpdfComponent {
         };
       } else {
         // Add the ROI data to selectedQuestions and another
-        const questionKey = `question_${Object.keys(this.selectedQuestions).length + 1}`;
+        const questionKey = `question_${
+          Object.keys(this.selectedQuestions).length + 1
+        }`;
         this.selectedQuestions[questionKey] = roiData;
         this.another.push({
           [questionKey]: roiData,
         });
       }
-  
+
       // Reset the form after submission
       currentQuestionForm.reset({
         roi_coordinates: [],
@@ -327,60 +338,76 @@ export class UploadpdfComponent {
         gradedByTeacher: '',
         choices: '', // Reset choices field as well
       });
-  
+
       this.resetSelectionBox(); // Reset selection box for the next question
     } else {
       console.error('Please select a region on the image.');
     }
-    this.direction=''
+    this.direction = '';
   }
-  
- pdfUrl:any;
 
-onFinalSubmit(): void {
+  pdfUrl: any;
+
+  onFinalSubmit(): void {
     this.onCurrentQuestionSubmit(); // Ensure current question data is stored before final submission
 
-    // Prepare the final JSON structure
-    const finalPayload = {
-        id: this.id,
-        ...this.selectedQuestions, // Spread all selected questions into the final payload
+    const selectedQuestionsArray = Array.isArray(this.selectedQuestions)
+    ? this.selectedQuestions
+    : Object.values(this.selectedQuestions);
+
+  // Initialize the questions object that will be populated dynamically
+  const questionsObject: Record<string, any> = {}; // Initialize an empty object for the questions
+
+  // Add the 'id' object to the questionsObject
+  questionsObject['id'] = this.id; // Add the static id object
+
+  // Add dynamically named questions (question_1, question_2, etc.)
+  selectedQuestionsArray.forEach((question: any, index: number) => {
+    const questionKey = `question_${index + 1}`; // Dynamically generate question names like 'question_1', 'question_2', etc.
+    questionsObject[questionKey] = {
+      ...question, // Spread the existing properties of the question
+      question_number: index + 1, // Add the dynamic `question_number` property
     };
+  });
 
-    console.log(finalPayload);
+  // Prepare the final payload, including dynamic question data
+  const finalPayload = {
+    answer_pages: 1, // or however many pages you have
+    questions: questionsObject, // Spread the questions object which includes id and dynamically named questions
+  };
 
-
+  console.log(finalPayload);
 
     const formData = new FormData();
     if (this.selectedFile) {
-        formData.append('file', this.selectedFile);
+      formData.append('file', this.selectedFile);
     }
     const pdfJson = JSON.stringify(finalPayload);
     formData.append('data', pdfJson);
     this._UploadService.upload(formData).subscribe({
-      next:(res)=>{
+      next: (res) => {
         console.log(res);
         this.pdfUrl = res.pdf_file_path;
         this._UploadService.setPdfUrl(this.pdfUrl);
-        this.router.navigate(['/review'])
+        this.router.navigate(['/review']);
         setTimeout(() => {
           const anchor = document.createElement('a');
           anchor.href = this.pdfUrl;
           anchor.target = '_blank';
           anchor.click();
-      }, 100);
+        }, 100);
       },
-      error:(err)=>{
+      error: (err) => {
         console.log(err);
-      }
-    })
-   
-}
-direction:any;
-checkdirection(direction:any){
-  if(direction === 'horizontal'){
-    this.direction = 'horizontal';
-  }else{
-    this.direction = 'vertical';
+      },
+    });
   }
-}
+  direction: any;
+  checkdirection(direction: any) {
+    if (direction === 'horizontal') {
+      this.direction = 'horizontal';
+    } else {
+      this.direction = 'vertical';
+    }
+  }
 }

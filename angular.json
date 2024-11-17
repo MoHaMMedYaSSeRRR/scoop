@@ -17,6 +17,9 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "allowedCommonJsDependencies": [
+              "pdfjs-dist/build/pdf"
+            ],
             "outputPath": "dist/scoop",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -78,6 +81,7 @@
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
             "browserTarget": "scoop:build"
+            
           }
         },
         "test": {
