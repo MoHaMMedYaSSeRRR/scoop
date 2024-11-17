@@ -9,7 +9,12 @@ label{
 button{
     background-color: #115081;
 }
-
+img {
+  user-select: none; /* Disable text selection */
+  -webkit-user-drag: none; /* Disable drag in Webkit browsers */
+  -moz-user-drag: none; /* Disable drag in Firefox */
+  -ms-user-drag: none; /* Disable drag in Internet Explorer */
+}
 
 
 .step2{
@@ -55,13 +60,10 @@ button{
 }
 .selection-box {
   position: absolute;
-  border: 2px dashed #00f;
-  background-color: rgba(0, 0, 255, 0.2);
-  pointer-events: none;
-}.selection-box {
-  position: absolute;
-  border: 2px solid rgba(0, 0, 255, 0.5);
-  background-color: rgba(0, 0, 255, 0.2);
+  border: 2px dashed rgba(0, 128, 255, 0.7);
+  background-color: rgba(0, 128, 255, 0.2);
+  pointer-events: none; /* Prevent interaction with the box */
+  z-index: 10; /* Make sure the box is on top of the image */
 }
 .row input{
   margin-top: 12px;

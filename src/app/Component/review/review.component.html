@@ -3,8 +3,13 @@
       class="step2 justify-content-between overflow-hidden align-items-center"
     >
       <div class="row g-2">
-        <div class="col-md-5 text-end px-3">
+        <div class="col-md-6 text-end px-3">
           <div class="show p-0">
+            <img
+            *ngIf="pdfImages.length > 0"
+            [src]="pdfImages[currentPage]"
+            class="w-100"
+          />
             
           </div>
           <div
@@ -17,7 +22,7 @@
             >
               <i class="fa fa-arrow-left"></i>
             </span>
-            <span>{{ currentPage + 1 }} / {{ userPageCount }} 100</span>
+            <span>{{ currentPage + 1 }} / {{ userPageCount }} </span>
             <span
               role="button"
               (click)="goToNextPage()"
@@ -28,7 +33,7 @@
           </div>
         </div>
 
-        <div class="col-md-7">
+        <div class="col-md-5">
           <div class="content text-end ps-md-3 p-1">
             <h3 class="mb-3">نتيجة التصحيح</h3>
 

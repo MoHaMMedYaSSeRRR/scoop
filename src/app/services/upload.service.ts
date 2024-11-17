@@ -6,15 +6,20 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class UploadService {
+  private pdfUrl: string = '';
 
   constructor(
     private _HttpClient:HttpClient
   ) { }
   upload(data:any):Observable<any>{
-    return this._HttpClient.post('http://157.173.124.62:5000/upload' ,data);
+    return this._HttpClient.post('https://scoob.cc/upload-file' ,data);
 
   }
-  gettest():Observable<any>{
-    return this._HttpClient.get('http://157.173.124.62:8080/test')
+  setPdfUrl(url: string): void {
+    this.pdfUrl = url;
+  }
+
+  getPdfUrl(): string {
+    return this.pdfUrl;
   }
 }

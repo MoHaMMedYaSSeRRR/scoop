@@ -63,6 +63,7 @@
               (mousedown)="onMouseDown($event)"
               (mousemove)="onMouseMove($event)"
               (mouseup)="onMouseUp()"
+              (mouseleave)="onMouseUp()"
             />
             <div
               class="selection-box"
@@ -92,11 +93,10 @@
             >
               <i class="fa fa-arrow-right"></i>
             </span>
-          </div> 
+          </div>
         </div>
-       
-        
-        <div  class="col-md-5">
+
+        <div class="col-md-5">
           <div class="content text-end ps-md-3 p-1">
             <h3 class="mb-2">
               برجاء ادخال البيانات التالية لكل صفحة في الامتحان
@@ -106,14 +106,7 @@
               [formGroup]="getCurrentQuestionFormGroup()"
               (ngSubmit)="onCurrentQuestionSubmit()"
             >
-              <label for="rownumber">عدد الصفوف</label>
-              <input
-                type="number"
-                class="form-control p-2 rounded-1 my-2"
-                formControlName="rowNumber"
-                required
-              />
-
+              <!-- Column Number -->
               <label for="colnumber">عدد الاعمدة</label>
               <input
                 type="number"
@@ -122,15 +115,17 @@
                 required
               />
 
+              <!-- Fractioned Grades -->
               <label for="score">الدرجة</label>
               <input
                 type="text"
                 class="form-control p-2 rounded-1 my-2"
-                formControlName="fractioned_Grades" 
+                formControlName="choices"
                 required
               />
-              <!-- -->
-              <label for="answer">اتجاه الاجابة</label>
+
+              <!-- Direction (افقي or راسي) -->
+              <label for="direction" class="mt-3">اتجاه</label>
               <div class="row justify-content-end align-items-center mt-2">
                 <div
                   class="col-3 d-flex justify-content-end align-items-center"
@@ -140,25 +135,31 @@
                     id="horizontal"
                     name="direction"
                     formControlName="direction"
-                    value="h"
+                    value="horizontal"
                     class="mx-2 mt-1"
+                    (click)="checkdirection('horizontal')"
+
                   />
-                  <label for="horizontal">افقي</label>
+                  <label  (click)="checkdirection('horizontal')" for="horizontal">افقي</label>
                 </div>
-                <div class="col-3 ">
+                <div class="col-3">
                   <input
                     type="radio"
                     id="vertical"
                     name="direction"
                     formControlName="direction"
-                    value="v"
+                    value="vertical"
                     class="mx-2 mt-1"
+                    (click)="checkdirection('vertical')"
                   />
-                  <label for="vertical">راسي</label>
+                  <label (click)="checkdirection('vertical')" for="vertical"
+                    >راسي</label
+                  >
                 </div>
               </div>
 
-              <label for="answer2" class="mt-3">يتم تصحيحه</label>
+              <!-- Marked by Teacher (Yes or No) -->
+              <label for="marked" class="mt-3">يتم تصحيحه</label>
               <div class="row justify-content-end align-items-center mt-2">
                 <div class="col-3">
                   <input
@@ -184,10 +185,13 @@
                 </div>
               </div>
 
-              <label for="answer3" class="mt-3">يصحح بواسطة المعلم</label>
+              <!-- Graded by Teacher (Yes or No) -->
+              <label for="gradedByTeacher" class="mt-3"
+                >يصحح بواسطة المعلم</label
+              >
               <div class="row justify-content-end align-items-center mt-2">
                 <div class="col-3">
-                  <input
+                  <!-- <input
                     type="radio"
                     id="teacher-no"
                     name="gradedByTeacher"
@@ -195,11 +199,11 @@
                     [value]="false"
                     class="mx-2"
                   />
-                  <label for="teacher-no">لا</label>
+                  <label for="teacher-no">لا</label> -->
                 </div>
                 <div class="col-3">
                   <input
-                    type="radio"
+                    type="checkbox"
                     id="teacher-yes"
                     name="gradedByTeacher"
                     formControlName="gradedByTeacher"
@@ -209,32 +213,81 @@
                   <label for="teacher-yes">نعم</label>
                 </div>
               </div>
-              
+
+              <!-- Method (Right to Left or Left to Right based on Language) -->
+              <label *ngIf="direction == 'horizontal' " for="method" class="mt-3">طريقة الكتابة</label>
+              <div *ngIf="direction == 'horizontal' " class="row justify-content-end align-items-center mt-2">
+                <div
+                  class="col-4 d-flex justify-content-end align-items-center"
+                >
+                  <input
+                    type="radio"
+                    id="rtl"
+                    name="method"
+                    formControlName="method"
+                    value="right-to-left"
+                    class="mx-2 mt-1"
+                  />
+                  <label for="rtl">من اليمين لليسار</label>
+                </div>
+                <div class="col-4">
+                  <input
+                    type="radio"
+                    id="ltr"
+                    name="method"
+                    formControlName="method"
+                    value="left-to-right"
+                    class="mx-2 mt-1"
+                  />
+                  <label for="ltr">من اليسار لليمين</label>
+                </div>
+              </div>
+              <label *ngIf="direction == 'vertical' " for="method" class="mt-3">طريقة الكتابة</label>
+              <div *ngIf="direction == 'vertical' "  class="row justify-content-end align-items-center mt-2">
+                <div
+                  class="col-4 d-flex justify-content-end align-items-center"
+                >
+                  <input
+                    type="radio"
+                    id="btt"
+                    name="method"
+                    formControlName="method"
+                    value="bottom-to-top"
+                    class="mx-2 mt-1"
+                  />
+                  <label for="btt">من الاسفل للاعلي</label>
+                </div>
+                <div class="col-4">
+                  <input
+                    type="radio"
+                    id="ttb"
+                    name="method"
+                    formControlName="method"
+                    value="top-to-bottom"
+                    class="mx-2 mt-1"
+                  />
+                  <label for="ttb">من الاعلي للاسفل</label>
+                </div>
+              </div>
             </form>
           </div>
         </div>
-        <button
-        
-        type="button"
-        class="sendBtn p-2 border-0 text-white  d-block me-auto mt-3"
-        (click)="onFinalSubmit()"
-       
 
-      >
-        ارسال
-      </button>
         <button
-       
-        type="button"
-        class="sendBtn ms-1  p-2 border-0 text-white  d-block me-auto mt-3"
-        (click)="onCurrentQuestionSubmit()"
-      >
-        التالي
-      </button>
-
-     
+          type="button"
+          class="sendBtn p-2 border-0 text-white d-block me-auto mt-3"
+          (click)="onFinalSubmit()"
+        >
+          ارسال
+        </button>
+        <button
+          type="button"
+          class="sendBtn ms-1 p-2 border-0 text-white d-block me-auto mt-3"
+          (click)="onCurrentQuestionSubmit()"
+        >
+          التالي
+        </button>
       </div>
     </div>
   </div>
 </section>
-

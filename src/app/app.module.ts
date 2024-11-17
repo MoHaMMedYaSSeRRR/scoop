@@ -12,7 +12,9 @@ import { CarouselModule } from 'ngx-owl-carousel-o';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './Component/review/review.component';
 import { PaymentComponent } from './Component/payment/payment.component';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { LoadingInterceptor } from './loading.interceptor';
+import { NgxSpinnerModule } from 'ngx-spinner';
 @NgModule({
   declarations: [
     AppComponent,
@@ -30,9 +32,13 @@ import { HttpClientModule } from '@angular/common/http';
     BrowserAnimationsModule,
     CarouselModule ,
     FormsModule , 
-    HttpClientModule
+    HttpClientModule,
+    NgxSpinnerModule
   ],
-  providers: [],
+  providers: [
+    {provide :HTTP_INTERCEPTORS ,useClass:LoadingInterceptor , multi:true}
+
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

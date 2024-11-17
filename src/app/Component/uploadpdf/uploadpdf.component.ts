@@ -1,9 +1,35 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
+import { Router } from '@angular/router';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import { UploadService } from 'src/app/services/upload.service';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
+
+interface ROI {
+  position: number[][][];
+  bubbles: number;
+  direction: string;
+  method: string;
+  marked_by_teacher: boolean;
+  choices?: number[]; // Optional
+}
+
+type SelectedQuestions = Record<string, ROI>; // Keep this as an object
+
+interface QuestionData {
+  position: number[][][];
+  bubbles: number;
+  direction: 'horizontal' | 'vertical'; // Explicit type matching ROI
+  method: 'top-to-bottom' | 'bottom-to-top' | 'right-to-left' | 'left-to-right';
+  marked_by_teacher: boolean;
+}
 
 @Component({
   selector: 'app-uploadpdf',
@@ -11,8 +37,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
   styleUrls: ['./uploadpdf.component.scss'],
 })
 export class UploadpdfComponent {
-  private readonly ORIGINAL_IMAGE_WIDTH = 600; // Update this to the original width of your image
-private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original height of your image
+  private readonly ORIGINAL_IMAGE_WIDTH = 600;
+  private readonly ORIGINAL_IMAGE_HEIGHT = 800;
   step1: boolean = true;
   step2: boolean = false;
   selectedFile: any;
@@ -21,8 +47,9 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
   pdfImages: any[] = [];
   currentPage: number = 0;
   userPageCount: number = 0;
-  selectedQuestions: Array<any> = []; 
+  selectedQuestions: SelectedQuestions = {}; // Initialize as an object
 
+  id:any= {};
   isSelecting: boolean = false;
   selectionBox = { x: 0, y: 0, width: 0, height: 0 };
   startX: number = 0;
@@ -30,11 +57,19 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
 
   @ViewChild('fileInput') fileInput!: ElementRef;
 
-  constructor(private formBuilder: FormBuilder, private _UploadService: UploadService) {
+  constructor(
+    private formBuilder: FormBuilder,
+    private _UploadService: UploadService,
+    private router:Router
+  ) {
     this.pdfForm = this.formBuilder.group({
       pdfFile: new FormControl(null, Validators.required),
-      pageCount: new FormControl(null, [Validators.required, Validators.min(1)]),
+      pageCount: new FormControl(null, [
+        Validators.required,
+        Validators.min(1),
+      ]),
       questions: this.formBuilder.array([]),
+      language: new FormControl('ar', Validators.required),
     });
   }
 
@@ -54,8 +89,14 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
       this.selectedFile = file;
       this.pdfForm.patchValue({ pdfFile: file });
     } else {
-      console.error("Please select a valid PDF file.");
+      console.error('Please select a valid PDF file.');
     }
+  }
+
+  get languageDirection(): string {
+    return this.pdfForm.get('language')?.value === 'ar'
+      ? 'right-to-left'
+      : 'left-to-right';
   }
 
   // Handle PDF to Image conversion
@@ -90,7 +131,6 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
     return images;
   }
 
-  // Step 1 to Step 2 transition after file selection and validation
   async onSubmit(): Promise<void> {
     if (this.pdfForm.valid) {
       const pdfFile = this.pdfForm.get('pdfFile')?.value;
@@ -101,7 +141,6 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
         this.pdfImages = await this.convertPdfToImages(pdfUrl);
         this.userPageCount = this.pdfForm.get('pageCount')?.value || 0;
 
-        // Create question forms based on page count
         if (this.questions.length === 0) {
           const pageCount = this.pdfForm.get('pageCount')?.value || 0;
           for (let i = 0; i < pageCount; i++) {
@@ -109,12 +148,13 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
               this.formBuilder.group({
                 rowNumber: new FormControl('', Validators.required),
                 colNumber: new FormControl('', Validators.required),
-                fractioned_Grades: [null, [this.fractionedGradesValidator]],
                 direction: new FormControl('', Validators.required),
                 marked: new FormControl(),
                 gradedByTeacher: new FormControl(),
-                roi_coordinates: new FormControl([]),
-                page_number: new FormControl(i + 1) // Track page number if needed
+                roi_coordinates: new FormControl([]), // ROI will be captured here
+                page_number: new FormControl(i + 1),
+                choices: new FormControl('', Validators.required), // Choices field
+                method: new FormControl('', Validators.required), // Default method
               })
             );
           }
@@ -127,9 +167,100 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
       fileReader.readAsArrayBuffer(pdfFile);
     }
   }
-   fractionedGradesValidator(control: FormControl): { [key: string]: boolean } | null {
+
+  // Navigate to previous page
+  goToPreviousPage(): void {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.resetSelectionBox(); // Reset selection on page change
+    }
+  }
+
+  // Navigate to next page
+  goToNextPage(): void {
+    if (this.currentPage < this.userPageCount - 1) {
+      this.currentPage++;
+      this.resetSelectionBox(); // Reset selection on page change
+    }
+  }
+
+  // Get the current question FormGroup
+  getCurrentQuestionFormGroup(): FormGroup {
+    return this.questions.at(this.currentPage) as FormGroup; // Adjusted to get current page's form
+  }
+
+  resetSelectionBox() {
+    this.selectionBox = { x: 0, y: 0, width: 0, height: 0 };
+  }
+
+  onMouseDown(event: MouseEvent): void {
+    const imgElement = event.target as HTMLImageElement;
+    const rect = imgElement.getBoundingClientRect();
+    this.isSelecting = true;
+    this.startX = event.clientX - rect.left;
+    this.startY = event.clientY - rect.top;
+    this.selectionBox = { x: this.startX, y: this.startY, width: 0, height: 0 };
+  }
+
+  onMouseMove(event: MouseEvent): void {
+    if (this.isSelecting) {
+      const imgElement = event.target as HTMLImageElement;
+      const rect = imgElement.getBoundingClientRect();
+      const currentX = event.clientX - rect.left;
+      const currentY = event.clientY - rect.top;
+
+      this.selectionBox.width = Math.abs(currentX - this.startX);
+      this.selectionBox.height = Math.abs(currentY - this.startY);
+      this.selectionBox.x = Math.min(this.startX, currentX);
+      this.selectionBox.y = Math.min(this.startY, currentY);
+    }
+  }
+  onMouseUp(): void {
+    if (this.isSelecting) {
+      // Stop selecting
+      this.isSelecting = false;
+
+      console.log('Final Selection Box:', this.selectionBox); // Log final selection box dimensions
+    }
+  }
+  determineIdValue(currentQuestion: any): string {
+    if (!currentQuestion.marked && !currentQuestion.gradedByTeacher) {
+      console.log( currentQuestion.marked , currentQuestion.gradedByTeacher)
+        return 'valid_id'; // Assign a valid ID when both are false
+    } else {
+      console.log( currentQuestion.marked , currentQuestion.gradedByTeacher)
+        return 'not_an_id'; // Return a different value if either is true
+    }
+}
+  addCurrentQuestionData(): void {
+    const currentQuestion = this.getCurrentQuestionFormGroup().value;
+
+    const roiData: ROI = {
+      position: [
+        [
+          [Math.floor(this.selectionBox.x), Math.floor(this.selectionBox.y)],
+          [
+            Math.floor(this.selectionBox.x + this.selectionBox.width),
+            Math.floor(this.selectionBox.y + this.selectionBox.height),
+          ],
+        ],
+      ],
+      bubbles: currentQuestion.colNumber,
+      direction: currentQuestion.direction || 'horizontal',
+      method: currentQuestion.method || 'top-to-bottom',
+      marked_by_teacher: currentQuestion.gradedByTeacher || false,
+    };
+
+    const questionKey = `question_${
+      Object.keys(this.selectedQuestions).length + 1
+    }`; // Use Object.keys to get count
+    this.selectedQuestions[questionKey] = roiData; // Store the ROI data for each question
+
+    console.log('Question Data:', roiData); // Log for debugging
+  }
+
+  fractionedGradesValidator(control: FormControl): { [key: string]: boolean } | null {
     const value = control.value;
-    // Allow empty input to be considered valid (return null if empty)
     if (!value) {
       return null;
     }
@@ -139,186 +270,117 @@ private readonly ORIGINAL_IMAGE_HEIGHT = 800; // Update this to the original hei
     const isValid = values.every((num:any) => !isNaN(num) && num >= 0);
     return isValid ? null : { invalidFractionedGrade: true };
   }
-  
-  // Navigate to previous page
-  goToPreviousPage(): void {
-    if (this.currentPage > 0) {
-      this.currentPage--;
-      this.resetSelectionBox(); // Reset selection on page change
-    }
-  }
-
-  url:string='';
-  // Navigate to next page
-  goToNextPage(): void {
-    if (this.currentPage < this.userPageCount - 1) {
-      this.currentPage++;
-      this.resetSelectionBox(); // Reset selection on page change
-    }
-  }
-
-  // Handle the 'التالي' button click event
+  another:any=[]
   onCurrentQuestionSubmit(): void {
     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-   
-      if (this.selectionBox.width > 0 && this.selectionBox.height > 0) {
-        this.addCurrentQuestionData();
-        console.log("Data stored for question:", currentQuestionForm.value);
-
-        // Reset fields for the next question while keeping the previous data intact
-        currentQuestionForm.reset({
-          roi_coordinates: [],
-          rowNumber: '',
-          colNumber: '',
-          direction: '',
-          marked: '' ,
-          gradedByTeacher: '' ,
-          fractioned_Grades: null
-        });
-
-        this.resetSelectionBox(); // Reset selection box for the next question
-      } else {
-        alert('Please select a region on the image.');
+  
+    // Validate if the selection box has been defined
+    if (this.selectionBox.width > 0 && this.selectionBox.height > 0) {
+      // Prepare ROI data based on the selection box and form values
+      const roiData: ROI = {
+        position: [
+          [
+            [Math.floor(this.selectionBox.x), Math.floor(this.selectionBox.y)],
+            [Math.floor(this.selectionBox.x + this.selectionBox.width), Math.floor(this.selectionBox.y + this.selectionBox.height)],
+          ],
+        ],
+        bubbles: currentQuestionForm.value.colNumber,
+        direction: currentQuestionForm.value.direction || 'horizontal',
+        method: currentQuestionForm.value.method || 'top-to-bottom',
+        marked_by_teacher: currentQuestionForm.value.gradedByTeacher || false,
+      };
+  
+      // If the question is graded by a teacher, process the choices and add them to roiData
+      if (roiData.marked_by_teacher) {
+        const choicesValue = currentQuestionForm.value.choices;
+        if (choicesValue) {
+          const choicesArray = choicesValue.split(',').map((val: string) => parseFloat(val.trim()));
+          roiData.choices = choicesArray.filter((choice: number) => !isNaN(choice));
+        }
       }
-    // } else {
-    //   alert('Please fill out the form for the current question before proceeding.');
-    // }
+  
+      const idValue = this.determineIdValue(currentQuestionForm.value);
+  
+      if (idValue === 'valid_id') {
+        // Handle ID data separately
+        this.id = {
+          position: roiData.position,
+          bubbles: roiData.bubbles,
+          direction: 'vertical',
+          method: 'top-to-bottom',
+        };
+      } else {
+        // Add the ROI data to selectedQuestions and another
+        const questionKey = `question_${Object.keys(this.selectedQuestions).length + 1}`;
+        this.selectedQuestions[questionKey] = roiData;
+        this.another.push({
+          [questionKey]: roiData,
+        });
+      }
+  
+      // Reset the form after submission
+      currentQuestionForm.reset({
+        roi_coordinates: [],
+        colNumber: '',
+        direction: '',
+        marked: '',
+        gradedByTeacher: '',
+        choices: '', // Reset choices field as well
+      });
+  
+      this.resetSelectionBox(); // Reset selection box for the next question
+    } else {
+      console.error('Please select a region on the image.');
+    }
+    this.direction=''
   }
+  
+ pdfUrl:any;
 
-  // Get the current question FormGroup
-  getCurrentQuestionFormGroup(): FormGroup {
-    return this.questions.at(this.currentPage) as FormGroup; // Adjusted to get current page's form
-  }
+onFinalSubmit(): void {
+    this.onCurrentQuestionSubmit(); // Ensure current question data is stored before final submission
 
-  onFinalSubmit(): void {
-    // Get the current question form
-    const currentQuestionForm = this.getCurrentQuestionFormGroup();
-    
-    // Store the last question data, whether or not the form is valid
-    this.addCurrentQuestionData();
+    // Prepare the final JSON structure
+    const finalPayload = {
+        id: this.id,
+        ...this.selectedQuestions, // Spread all selected questions into the final payload
+    };
 
-    // Prepare FormData for the final upload
+    console.log(finalPayload);
+
+
+
     const formData = new FormData();
     if (this.selectedFile) {
-        formData.append('pdf_file', this.selectedFile, this.selectedFile.name);
+        formData.append('file', this.selectedFile);
     }
-
-    // Prepare the JSON data for the final submission
-    const pdfJson = JSON.stringify(this.selectedQuestions);
-    formData.append('json_data', pdfJson);
-
-    // Perform the upload
+    const pdfJson = JSON.stringify(finalPayload);
+    formData.append('data', pdfJson);
     this._UploadService.upload(formData).subscribe({
-        next: (res) => {
-            console.log(res);
-            if (res.result && res.result.output_path) {
-                const url = res.result.output_path.slice(1);
-                console.log(url);
-                setTimeout(() => {
-                    const anchor = document.createElement('a');
-                    anchor.href = 'http://157.173.124.62:5000' + url;
-                    anchor.target = '_blank';
-                    anchor.click();
-                }, 100); // 100ms delay
-            } else {
-                console.error('Output path is missing in the response:', res);
-            }
-        },
-        error: (err) => console.log(err)
-    });
+      next:(res)=>{
+        console.log(res);
+        this.pdfUrl = res.pdf_file_path;
+        this._UploadService.setPdfUrl(this.pdfUrl);
+        this.router.navigate(['/review'])
+        setTimeout(() => {
+          const anchor = document.createElement('a');
+          anchor.href = this.pdfUrl;
+          anchor.target = '_blank';
+          anchor.click();
+      }, 100);
+      },
+      error:(err)=>{
+        console.log(err);
+      }
+    })
+   
 }
-
-
-  
-  addCurrentQuestionData(): void {
-    const currentQuestion = this.getCurrentQuestionFormGroup().value;
-
-    let fractionedGradesArray: number[] | null = null;
-
-    if (currentQuestion.fractioned_Grades) {
-        const parsedGrades = currentQuestion.fractioned_Grades
-            .split(',')
-            .map((grade: string) => parseFloat(grade.trim()))
-            .filter((grade: number) => !isNaN(grade));
-
-        if (parsedGrades.length > 0) {
-            fractionedGradesArray = parsedGrades;
-        }
-    }
-    if (this.pdfImages.length === 0) {
-        console.error('No PDF images loaded');
-        return;
-    }
-    const currentImage = this.pdfImages[this.currentPage];
-    const roiData = {
-        roi_coordinates: [
-            Math.floor(this.selectionBox.x) , // min x
-            Math.floor(this.selectionBox.y) , // min y
-           Math.floor( this.selectionBox.width), // max x
-            Math.floor(this.selectionBox.height)   // max y
-        ],
-        row_col_numbers: [currentQuestion.rowNumber, currentQuestion.colNumber],
-        marked: currentQuestion.marked,
-        graded_by_teacher: currentQuestion.gradedByTeacher,
-        fractioned_grades: fractionedGradesArray,
-        direction_of_question: currentQuestion.direction,
-    };
-
-    console.log('ROI Data:', roiData); 
-
-    let pageData = this.selectedQuestions.find(
-        page => page.page_number === this.currentPage + 1
-    );
-
-    if (!pageData) {
-        pageData = { page_number: this.currentPage + 1, rois: [] };
-        this.selectedQuestions.push(pageData);
-    }
-
-    pageData.rois.push(roiData);
-    console.log("hello")
-
-}
-
-
-onMouseDown(event: MouseEvent): void {
-  const imgElement = event.target as HTMLImageElement;
-  const rect = imgElement.getBoundingClientRect();
-
-  this.isSelecting = true;
-
-  // Get the start coordinates relative to the original image size
-  this.startX = (event.clientX - rect.left) * (this.ORIGINAL_IMAGE_WIDTH / rect.width);
-  this.startY = (event.clientY - rect.top) * (this.ORIGINAL_IMAGE_HEIGHT / rect.height);
-
-}
-onMouseMove(event: MouseEvent): void {
-  if (this.isSelecting) {
-    const imgElement = event.target as HTMLImageElement;
-    const rect = imgElement.getBoundingClientRect();
-
-    // Get the current coordinates relative to the original image size
-    const currentX = (event.clientX - rect.left) * (this.ORIGINAL_IMAGE_WIDTH / rect.width);
-    const currentY = (event.clientY - rect.top) * (this.ORIGINAL_IMAGE_HEIGHT / rect.height);
-
-    this.selectionBox = {
-      x: Math.min(this.startX, currentX), 
-      y: Math.min(this.startY, currentY),
-      width: Math.abs(currentX - this.startX),
-      height: Math.abs(currentY - this.startY)
-    };
-
+direction:any;
+checkdirection(direction:any){
+  if(direction === 'horizontal'){
+    this.direction = 'horizontal';
+  }else{
+    this.direction = 'vertical';
   }
 }
-
-onMouseUp(): void {
-  this.isSelecting = false;
-}
-
-
-  // Reset the selection box
-  resetSelectionBox(): void {
-    this.selectionBox = { x: 0, y: 0, width: 0, height: 0 };
-  }
 }
