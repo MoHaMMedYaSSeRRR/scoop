@@ -19,6 +19,8 @@ interface ROI {
   method: string;
   marked_by_teacher: boolean;
   choices?: number[]; // Optional
+  page?: number; // Add this line to include page tracking
+
 }
 
 type SelectedQuestions = Record<string, ROI>; // Keep this as an object
@@ -192,37 +194,15 @@ export class UploadpdfComponent {
   resetSelectionBox() {
     this.selectionBox = { x: 0, y: 0, width: 0, height: 0 };
   }
+  resetboxes() {
+    this.selectionBoxes = [];
 
-  onMouseDown(event: MouseEvent): void {
-    const imgElement = event.target as HTMLImageElement;
-    const rect = imgElement.getBoundingClientRect();
-    this.isSelecting = true;
-    this.startX = event.clientX - rect.left;
-    this.startY = event.clientY - rect.top;
-    this.selectionBox = { x: this.startX, y: this.startY, width: 0, height: 0 };
   }
 
-  onMouseMove(event: MouseEvent): void {
-    if (this.isSelecting) {
-      const imgElement = event.target as HTMLImageElement;
-      const rect = imgElement.getBoundingClientRect();
-      const currentX = event.clientX - rect.left;
-      const currentY = event.clientY - rect.top;
+ 
 
-      this.selectionBox.width = Math.abs(currentX - this.startX);
-      this.selectionBox.height = Math.abs(currentY - this.startY);
-      this.selectionBox.x = Math.min(this.startX, currentX);
-      this.selectionBox.y = Math.min(this.startY, currentY);
-    }
-  }
-  onMouseUp(): void {
-    if (this.isSelecting) {
-      // Stop selecting
-      this.isSelecting = false;
-
-      console.log('Final Selection Box:', this.selectionBox); // Log final selection box dimensions
-    }
-  }
+ 
+ 
   determineIdValue(currentQuestion: any): string {
     if (!currentQuestion.marked && !currentQuestion.gradedByTeacher) {
       console.log(currentQuestion.marked, currentQuestion.gradedByTeacher);
@@ -275,60 +255,41 @@ export class UploadpdfComponent {
   another: any = [];
   onCurrentQuestionSubmit(): void {
     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
+   
     // Validate if the selection box has been defined
-    if (this.selectionBox.width > 0 && this.selectionBox.height > 0) {
+    if (this.selectionBoxes.length > 0) {
       // Prepare ROI data based on the selection box and form values
       const roiData: ROI = {
-        position: [
+        position: this.selectionBoxes.map(box => [
+          [Math.floor(box.x), Math.floor(box.y)],
           [
-            [Math.floor(this.selectionBox.x), Math.floor(this.selectionBox.y)],
-            [
-              Math.floor(this.selectionBox.x + this.selectionBox.width),
-              Math.floor(this.selectionBox.y + this.selectionBox.height),
-            ],
+              Math.floor(box.x + box.width),
+              Math.floor(box.y + box.height),
           ],
-        ],
+      ]),
         bubbles: currentQuestionForm.value.colNumber,
         direction: currentQuestionForm.value.direction || 'horizontal',
         method: currentQuestionForm.value.method || 'top-to-bottom',
         marked_by_teacher: currentQuestionForm.value.gradedByTeacher || false,
+        page: this.currentPage + 1, // Add current page number
       };
-
-      // If the question is graded by a teacher, process the choices and add them to roiData
-      if (roiData.marked_by_teacher) {
-        const choicesValue = currentQuestionForm.value.choices;
-        if (choicesValue) {
-          const choicesArray = choicesValue
-            .split(',')
-            .map((val: string) => parseFloat(val.trim()));
-          roiData.choices = choicesArray.filter(
-            (choice: number) => !isNaN(choice)
-          );
-        }
-      }
-
+  
       const idValue = this.determineIdValue(currentQuestionForm.value);
-
+  
       if (idValue === 'valid_id') {
-        // Handle ID data separately
+        // Handle ID data for the first question
         this.id = {
-          position: roiData.position,
-          bubbles: roiData.bubbles,
-          direction: 'vertical',
-          method: 'top-to-bottom',
+          ...roiData,
         };
       } else {
-        // Add the ROI data to selectedQuestions and another
+        // Add ROI data to the selected questions object
         const questionKey = `question_${
           Object.keys(this.selectedQuestions).length + 1
         }`;
+  
         this.selectedQuestions[questionKey] = roiData;
-        this.another.push({
-          [questionKey]: roiData,
-        });
       }
-
+  
       // Reset the form after submission
       currentQuestionForm.reset({
         roi_coordinates: [],
@@ -338,70 +299,65 @@ export class UploadpdfComponent {
         gradedByTeacher: '',
         choices: '', // Reset choices field as well
       });
-
-      this.resetSelectionBox(); // Reset selection box for the next question
+  
+      this.resetboxes(); // Reset selection box for the next question
     } else {
-      console.error('Please select a region on the image.');
+      console.error('Please define a selection area before submitting.');
     }
-    this.direction = '';
+    this.direction='';
   }
-
+  
   pdfUrl: any;
 
   onFinalSubmit(): void {
     this.onCurrentQuestionSubmit(); // Ensure current question data is stored before final submission
 
-    const selectedQuestionsArray = Array.isArray(this.selectedQuestions)
-    ? this.selectedQuestions
-    : Object.values(this.selectedQuestions);
+    const questionsObject: Record<string, any> = {};
+    questionsObject['id'] = this.id; // Add the static id object
 
-  // Initialize the questions object that will be populated dynamically
-  const questionsObject: Record<string, any> = {}; // Initialize an empty object for the questions
+    // Loop through selected questions and add them to the questionsObject
+    Object.keys(this.selectedQuestions).forEach((key, index) => {
+        const questionData = this.selectedQuestions[key];
+        questionsObject[key] = {
+            ...questionData, // Spread existing properties of the question
+            question_number: index + 1 // Add the dynamic `question_number` property
+        };
+    });
 
-  // Add the 'id' object to the questionsObject
-  questionsObject['id'] = this.id; // Add the static id object
-
-  // Add dynamically named questions (question_1, question_2, etc.)
-  selectedQuestionsArray.forEach((question: any, index: number) => {
-    const questionKey = `question_${index + 1}`; // Dynamically generate question names like 'question_1', 'question_2', etc.
-    questionsObject[questionKey] = {
-      ...question, // Spread the existing properties of the question
-      question_number: index + 1, // Add the dynamic `question_number` property
+    // Prepare the final payload, including dynamic question data
+    const finalPayload = {
+        answer_pages: this.userPageCount, // Use userPageCount for dynamic page count
+        questions: questionsObject // Include questions object
     };
-  });
 
-  // Prepare the final payload, including dynamic question data
-  const finalPayload = {
-    answer_pages: 1, // or however many pages you have
-    questions: questionsObject, // Spread the questions object which includes id and dynamically named questions
-  };
-
-  console.log(finalPayload);
+    console.log(finalPayload); // Check the structure of your final payload
 
     const formData = new FormData();
     if (this.selectedFile) {
-      formData.append('file', this.selectedFile);
+        formData.append('file', this.selectedFile);
     }
+    
     const pdfJson = JSON.stringify(finalPayload);
     formData.append('data', pdfJson);
+
     this._UploadService.upload(formData).subscribe({
-      next: (res) => {
-        console.log(res);
-        this.pdfUrl = res.pdf_file_path;
-        this._UploadService.setPdfUrl(this.pdfUrl);
-        this.router.navigate(['/review']);
-        setTimeout(() => {
-          const anchor = document.createElement('a');
-          anchor.href = this.pdfUrl;
-          anchor.target = '_blank';
-          anchor.click();
-        }, 100);
-      },
-      error: (err) => {
-        console.log(err);
-      },
+        next: (res) => {
+            console.log(res);
+            this.pdfUrl = res.pdf_file_path;
+            this._UploadService.setPdfUrl(this.pdfUrl);
+            this.router.navigate(['/review']);
+            setTimeout(() => {
+                const anchor = document.createElement('a');
+                anchor.href = this.pdfUrl;
+                anchor.target = '_blank';
+                anchor.click();
+            }, 100);
+        },
+        error: (err) => {
+            console.log(err);
+        },
     });
-  }
+}
   direction: any;
   checkdirection(direction: any) {
     if (direction === 'horizontal') {
@@ -409,5 +365,45 @@ export class UploadpdfComponent {
     } else {
       this.direction = 'vertical';
     }
+  }
+  selectionBoxes: { x: number; y: number; width: number; height: number }[] = [];
+
+    // Other existing methods...
+
+    onMouseDown(event: MouseEvent): void {
+      const imgElement = event.target as HTMLImageElement;
+      const rect = imgElement.getBoundingClientRect();
+      this.isSelecting = true;
+      this.startX = event.clientX - rect.left;
+      this.startY = event.clientY - rect.top;
+
+      // Start a new selection box
+      this.selectionBox = { x: this.startX, y: this.startY, width: 0, height: 0 };
+  }
+
+  onMouseMove(event: MouseEvent): void {
+      if (this.isSelecting) {
+          const imgElement = event.target as HTMLImageElement;
+          const rect = imgElement.getBoundingClientRect();
+          const currentX = event.clientX - rect.left;
+          const currentY = event.clientY - rect.top;
+
+          // Update selection box dimensions
+          this.selectionBox.width = Math.abs(currentX - this.startX);
+          this.selectionBox.height = Math.abs(currentY - this.startY);
+          this.selectionBox.x = Math.min(this.startX, currentX);
+          this.selectionBox.y = Math.min(this.startY, currentY);
+      }
+  }
+
+  onMouseUp(): void {
+      if (this.isSelecting) {
+          // Stop selecting and save the box
+          this.isSelecting = false;
+          // Add finalized selection box to array
+          this.selectionBoxes.push({ ...this.selectionBox });
+          console.log('Final Selection Box:', this.selectionBox);
+          this.resetSelectionBox(); // Reset for next selection
+      }
   }
 }

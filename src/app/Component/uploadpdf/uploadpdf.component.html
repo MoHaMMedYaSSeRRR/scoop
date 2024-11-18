@@ -65,8 +65,23 @@
               (mouseup)="onMouseUp()"
               (mouseleave)="onMouseUp()"
             />
+
+            <!-- Render all finalized selection boxes -->
+            <div
+              *ngFor="let box of selectionBoxes"
+              class="selection-box"
+              [ngStyle]="{
+                left: box.x + 'px',
+                top: box.y + 'px',
+                width: box.width + 'px',
+                height: box.height + 'px'
+              }"
+            ></div>
+
+            <!-- Render current selection box while dragging -->
             <div
               class="selection-box"
+              *ngIf="isSelecting"
               [ngStyle]="{
                 left: selectionBox.x + 'px',
                 top: selectionBox.y + 'px',
@@ -138,9 +153,10 @@
                     value="horizontal"
                     class="mx-2 mt-1"
                     (click)="checkdirection('horizontal')"
-
                   />
-                  <label  (click)="checkdirection('horizontal')" for="horizontal">افقي</label>
+                  <label (click)="checkdirection('horizontal')" for="horizontal"
+                    >افقي</label
+                  >
                 </div>
                 <div class="col-3">
                   <input
@@ -215,8 +231,13 @@
               </div>
 
               <!-- Method (Right to Left or Left to Right based on Language) -->
-              <label *ngIf="direction == 'horizontal' " for="method" class="mt-3">طريقة الكتابة</label>
-              <div *ngIf="direction == 'horizontal' " class="row justify-content-end align-items-center mt-2">
+              <label *ngIf="direction == 'horizontal'" for="method" class="mt-3"
+                >طريقة الكتابة</label
+              >
+              <div
+                *ngIf="direction == 'horizontal'"
+                class="row justify-content-end align-items-center mt-2"
+              >
                 <div
                   class="col-4 d-flex justify-content-end align-items-center"
                 >
@@ -242,8 +263,13 @@
                   <label for="ltr">من اليسار لليمين</label>
                 </div>
               </div>
-              <label *ngIf="direction == 'vertical' " for="method" class="mt-3">طريقة الكتابة</label>
-              <div *ngIf="direction == 'vertical' "  class="row justify-content-end align-items-center mt-2">
+              <label *ngIf="direction == 'vertical'" for="method" class="mt-3"
+                >طريقة الكتابة</label
+              >
+              <div
+                *ngIf="direction == 'vertical'"
+                class="row justify-content-end align-items-center mt-2"
+              >
                 <div
                   class="col-4 d-flex justify-content-end align-items-center"
                 >
