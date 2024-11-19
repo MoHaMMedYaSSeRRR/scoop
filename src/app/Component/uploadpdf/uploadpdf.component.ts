@@ -280,8 +280,8 @@ export class UploadpdfComponent {
       } else if (idValue === 'teacher_id') {
         // Add choices to ROI for teacher ID
         roiData.choices = currentQuestionForm.value.choices
-          .split(',')
-          .map((choice: string) => parseInt(choice.trim(), 10));
+          .split('-')
+          .map((choice: string) => parseFloat(choice.trim()));
           const questionKey = `question_${
             Object.keys(this.selectedQuestions).length + 1
           }`;
@@ -289,7 +289,7 @@ export class UploadpdfComponent {
           this.selectedQuestions[questionKey] = roiData;
       } else {
         // Add points to ROI for non-teacher ID
-        roiData.points = currentQuestionForm.value.choices;
+        roiData.points = Number(currentQuestionForm.value.choices);
         const questionKey = `question_${
           Object.keys(this.selectedQuestions).length + 1
         }`;

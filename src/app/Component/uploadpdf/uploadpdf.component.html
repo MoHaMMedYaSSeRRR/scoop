@@ -38,15 +38,20 @@
           class="form-control p-2 rounded-1 my-2"
           formControlName="questionCount"
         /> -->
-        <button
-        type="button"
-        class="rounded-2 py-2 border-0 text-white px-5 d-block me-auto mt-3"
-        (click)="onSubmit()"
-        [disabled]="pdfForm.invalid || isLoading"
-      >
-        <span *ngIf="isLoading" class="fa fa-spinner fa-spin me-2"></span>
-        <span *ngIf="!isLoading">التالي</span>
-      </button>
+        <div class="d-flex align-items-center mt-3">
+          <button
+            type="button"
+            class="rounded-2 py-2 border-0 text-white px-5 me-auto"
+            (click)="onSubmit()"
+            [disabled]="pdfForm.invalid || isLoading"
+          >
+            <span *ngIf="isLoading" class="fa fa-spinner fa-spin me-2"></span>
+            <span *ngIf="!isLoading">التالي</span>
+          </button>
+          <span *ngIf="isLoading" class="w-75 text-start me-5 load" style="margin-left: 10px;"> ...... جاري تحميل الملف</span>
+        </div>
+        
+        
       
       </form>
     </div>
