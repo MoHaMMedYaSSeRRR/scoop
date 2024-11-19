@@ -14,6 +14,7 @@ export class ReviewComponent implements OnInit {
   userPageCount: number = 0;
   ispay: boolean = false;
   pdfUrl: string = '';
+  isLoading: boolean = true; // Add this flag
 
   constructor(private _UploadService: UploadService) {}
 
@@ -23,9 +24,6 @@ export class ReviewComponent implements OnInit {
     this.loadPdfImages(this.pdfUrl);
   }
 
-  /**
-   * Converts a PDF into an array of image URLs (Base64).
-   */
   async convertPdfToImages(pdfUrl: string): Promise<string[]> {
     const images: string[] = [];
     const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
@@ -57,16 +55,16 @@ export class ReviewComponent implements OnInit {
     return images;
   }
 
-  /**
-   * Loads PDF images and sets them to `pdfImages`.
-   */
   async loadPdfImages(pdfUrl: string) {
+    this.isLoading = true; // Set loading to true
     try {
       this.pdfImages = await this.convertPdfToImages(pdfUrl);
       this.userPageCount = this.pdfImages.length;
       console.log('PDF converted to images:', this.pdfImages);
     } catch (error) {
       console.error('Error converting PDF to images:', error);
+    } finally {
+      this.isLoading = false; // Set loading to false after images are loaded
     }
   }
 

@@ -5,11 +5,16 @@
       <div class="row g-2">
         <div class="col-md-6 text-end px-3">
           <div class="show p-0">
+            <div *ngIf="isLoading" class="d-flex justify-content-center align-items-center" style="height: 200px;">
+              <span class="fa fa-spinner fa-spin text-primary fs-3"></span>
+            </div>
+          
+            <!-- PDF Image -->
             <img
-            *ngIf="pdfImages.length > 0"
-            [src]="pdfImages[currentPage]"
-            class="w-100"
-          />
+              *ngIf="!isLoading && pdfImages.length > 0"
+              [src]="pdfImages[currentPage]"
+              class="w-100"
+            />
             
           </div>
           <div
