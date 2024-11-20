@@ -289,7 +289,7 @@ export class UploadpdfComponent {
           this.selectedQuestions[questionKey] = roiData;
       } else {
         // Add points to ROI for non-teacher ID
-        roiData.points = Number(currentQuestionForm.value.choices);
+        roiData.points = Number(currentQuestionForm.value.choices) | 1;
         const questionKey = `question_${
           Object.keys(this.selectedQuestions).length + 1
         }`;
