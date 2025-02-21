@@ -25,14 +25,6 @@ interface ROI {
 
 type SelectedQuestions = Record<string, ROI>; // Keep this as an object
 
-interface QuestionData {
-  position: number[][][];
-  bubbles: number;
-  direction: 'horizontal' | 'vertical'; // Explicit type matching ROI
-  method: 'top-to-bottom' | 'bottom-to-top' | 'right-to-left' | 'left-to-right';
-  marked_by_teacher: boolean;
-}
-
 @Component({
   selector: 'app-uploadpdf',
   templateUrl: './uploadpdf.component.html',
@@ -50,7 +42,12 @@ export class UploadpdfComponent {
   currentPage: number = 0;
   userPageCount: number = 0;
   selectedQuestions: SelectedQuestions = {}; // Initialize as an object
-
+  pdfUrl: any;
+  isGlobal = true;
+  isshow = false;
+  formData = new FormData();
+  isID: boolean = false;
+  questionType = '';
   id: any = {};
   isSelecting: boolean = false;
   selectionBox = { x: 0, y: 0, width: 0, height: 0 };
@@ -58,6 +55,8 @@ export class UploadpdfComponent {
   startY: number = 0;
   isLoading: boolean = false;
   @ViewChild('fileInput') fileInput!: ElementRef;
+  currentScore: any = 0;
+  finalScore: any = 0;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -163,6 +162,7 @@ export class UploadpdfComponent {
           }
         }
 
+        // Transition to step two
         this.step1 = false;
         this.step2 = true;
       };
@@ -189,7 +189,7 @@ export class UploadpdfComponent {
 
   // Get the current question FormGroup
   getCurrentQuestionFormGroup(): FormGroup {
-    return this.questions.at(this.currentPage) as FormGroup; // Adjusted to get current page's form
+    return this.questions.at(this.currentPage) as FormGroup;
   }
 
   resetSelectionBox() {
@@ -209,30 +209,38 @@ export class UploadpdfComponent {
     }
   }
   addCurrentQuestionData(): void {
-    const currentQuestion = this.getCurrentQuestionFormGroup().value;
+    if (this.isGlobal == true) {
+      this.globalSelectionBox = this.selectionBox;
+      console.log(this.globalSelectionBox);
+      this.isGlobal = false;
+      this.isshow = true;
+    }
+    if (this.isshow == true) {
+      const currentQuestion = this.getCurrentQuestionFormGroup().value;
 
-    const roiData: ROI = {
-      position: [
-        [
-          [Math.floor(this.selectionBox.x), Math.floor(this.selectionBox.y)],
+      const roiData: ROI = {
+        position: [
           [
-            Math.floor(this.selectionBox.x + this.selectionBox.width),
-            Math.floor(this.selectionBox.y + this.selectionBox.height),
+            [Math.floor(this.selectionBox.x), Math.floor(this.selectionBox.y)],
+            [
+              Math.floor(this.selectionBox.x + this.selectionBox.width),
+              Math.floor(this.selectionBox.y + this.selectionBox.height),
+            ],
           ],
         ],
-      ],
-      bubbles: currentQuestion.colNumber,
-      direction: currentQuestion.direction || 'horizontal',
-      method: currentQuestion.method || 'top-to-bottom',
-      marked_by_teacher: currentQuestion.gradedByTeacher || false,
-    };
+        bubbles: currentQuestion.colNumber,
+        direction: currentQuestion.direction || 'horizontal',
+        method: currentQuestion.method || 'top-to-bottom',
+        marked_by_teacher: currentQuestion.gradedByTeacher || false,
+      };
 
-    const questionKey = `question_${
-      Object.keys(this.selectedQuestions).length + 1
-    }`; // Use Object.keys to get count
-    this.selectedQuestions[questionKey] = roiData; // Store the ROI data for each question
+      const questionKey = `question_${
+        Object.keys(this.selectedQuestions).length + 1
+      }`; // Use Object.keys to get count
+      this.selectedQuestions[questionKey] = roiData; // Store the ROI data for each question
 
-    console.log('Question Data:', roiData); // Log for debugging
+      console.log('Question Data:', roiData); // Log for debugging
+    }
   }
 
   fractionedGradesValidator(
@@ -250,74 +258,96 @@ export class UploadpdfComponent {
   }
   another: any = [];
   onCurrentQuestionSubmit(): void {
-    const currentQuestionForm = this.getCurrentQuestionFormGroup();
+    if (this.isGlobal == true) {
+      this.isGlobal = false;
+      this.isshow = true;
+    }
+    if (this.isshow == true) {
+      const currentQuestionForm = this.getCurrentQuestionFormGroup();
 
-    // Validate if the selection box has been defined
-    if (this.selectionBoxes.length > 0) {
-      // Prepare ROI data based on the selection box and form values
-      const roiData: ROI = {
-        position: this.selectionBoxes.map((box) => [
-          [Math.floor(box.x), Math.floor(box.y)],
-          [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-        ]),
-        bubbles: currentQuestionForm.value.colNumber,
-        direction: currentQuestionForm.value.direction || 'horizontal',
-        method: currentQuestionForm.value.method || 'top-to-bottom',
-        marked_by_teacher: currentQuestionForm.value.gradedByTeacher || false,
-        // choices: currentQuestionForm.value.choices
-        //   .split(',')
-        //   .map((choice: string) => parseInt(choice.trim(), 10)),
-        page: this.currentPage + 1, // Add current page number
-      };
-
-      const idValue = this.determineIdValue(currentQuestionForm.value);
-
-      if (idValue === 'valid_id') {
-        // Handle ID data for the first question
-        this.id = {
-          ...roiData,
+      // Validate if the selection box has been defined
+      if (this.selectionBoxes.length > 0) {
+        // Prepare ROI data based on the selection box and form values
+        const roiData: ROI = {
+          position: this.selectionBoxes.map((box) => [
+            [Math.floor(box.x), Math.floor(box.y)],
+            [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
+          ]),
+          bubbles: currentQuestionForm.value.colNumber,
+          direction: currentQuestionForm.value.direction || 'horizontal',
+          method: currentQuestionForm.value.method || 'top-to-bottom',
+          marked_by_teacher: currentQuestionForm.value.gradedByTeacher || false,
+          // choices: currentQuestionForm.value.choices
+          //   .split(',')
+          //   .map((choice: string) => parseInt(choice.trim(), 10)),
+          page: this.currentPage + 1, // Add current page number
         };
-      } else if (idValue === 'teacher_id') {
-        // Add choices to ROI for teacher ID
-        roiData.choices = currentQuestionForm.value.choices
-          .split('-')
-          .map((choice: string) => parseFloat(choice.trim()));
+
+        const idValue = this.determineIdValue(currentQuestionForm.value);
+
+        if (idValue === 'valid_id') {
+          // Handle ID data for the first question
+          this.id = {
+            ...roiData,
+          };
+        } else if (idValue === 'teacher_id') {
+          // Add choices to ROI for teacher ID
+          roiData.choices = currentQuestionForm.value.choices
+            .split('-')
+            .map((choice: string) => parseFloat(choice.trim()));
+
+          // Safely calculate the max value
+          roiData.points =
+            Array.isArray(roiData.choices) && roiData.choices.length > 0
+              ? Math.max(...roiData.choices)
+              : 0; // Default to 0 if choices is undefined or empty
+
           const questionKey = `question_${
             Object.keys(this.selectedQuestions).length + 1
           }`;
-  
+
           this.selectedQuestions[questionKey] = roiData;
+        } else {
+          // Add points to ROI for non-teacher ID
+          roiData.points = Number(currentQuestionForm.value.choices) || 1;
+          const questionKey = `question_${
+            Object.keys(this.selectedQuestions).length + 1
+          }`;
+
+          this.selectedQuestions[questionKey] = roiData;
+        }
+
+        // Reset the form after submission
+        currentQuestionForm.reset({
+          roi_coordinates: [],
+          colNumber: '',
+          direction: '',
+          marked: '',
+          gradedByTeacher: '',
+          choices: '', // Reset choices field as well
+        });
+
+        this.resetboxes(); // Reset selection box for the next question
       } else {
-        // Add points to ROI for non-teacher ID
-        roiData.points = Number(currentQuestionForm.value.choices) | 1;
-        const questionKey = `question_${
-          Object.keys(this.selectedQuestions).length + 1
-        }`;
-
-        this.selectedQuestions[questionKey] = roiData;
+        console.error('Please define a selection area before submitting.');
       }
-
-      // Reset the form after submission
-      currentQuestionForm.reset({
-        roi_coordinates: [],
-        colNumber: '',
-        direction: '',
-        marked: '',
-        gradedByTeacher: '',
-        choices: '', // Reset choices field as well
-      });
-
-      this.resetboxes(); // Reset selection box for the next question
-    } else {
-      console.error('Please define a selection area before submitting.');
+      this.direction = '';
+      this.isID = false;
     }
-    this.direction = '';
   }
 
-  pdfUrl: any;
-
+  checkifid(x: any) {
+    if (x == true) {
+      this.isID = true;
+    } else {
+      this.isID = false;
+    }
+  }
+  checkQuestionType(x: any) {
+    this.questionType = x;
+  }
   onFinalSubmit(): void {
-    this.onCurrentQuestionSubmit(); // Ensure current question data is stored before final submission
+    this.onCurrentQuestionSubmit();
 
     const questionsObject: Record<string, any> = {};
     questionsObject['id'] = this.id; // Add the static id object
@@ -331,27 +361,37 @@ export class UploadpdfComponent {
       };
     });
 
-    // Prepare the final payload, including dynamic question data
     const finalPayload = {
       answer_pages: this.userPageCount, // Use userPageCount for dynamic page count
       questions: questionsObject, // Include questions object
     };
-
+    this._UploadService.setdata(finalPayload);
     console.log(finalPayload); // Check the structure of your final payload
 
-    const formData = new FormData();
     if (this.selectedFile) {
-      formData.append('file', this.selectedFile);
+      this.formData.append('file', this.selectedFile);
     }
 
     const pdfJson = JSON.stringify(finalPayload);
-    formData.append('data', pdfJson);
+    this.formData.append('data', pdfJson);
 
-    this._UploadService.upload(formData).subscribe({
+    this.isshow = false;
+  }
+  onCallApi() {
+    this._UploadService.setSelectedBox(this.globalSelectionBox);
+    console.log(this.globalSelectionBox);
+    this._UploadService.upload(this.formData).subscribe({
       next: (res) => {
         console.log(res);
         this.pdfUrl = res.pdf_file_path;
         this._UploadService.setPdfUrl(this.pdfUrl);
+
+        // Process the response to calculate grades and errors
+        this.processApiResponse(
+          res.response.answers,
+          res.response.model_answer
+        );
+
         this.router.navigate(['/review']);
         setTimeout(() => {
           const anchor = document.createElement('a');
@@ -367,14 +407,11 @@ export class UploadpdfComponent {
   }
   direction: any;
   checkdirection(direction: any) {
-    if (direction === 'horizontal') {
-      this.direction = 'horizontal';
-    } else {
-      this.direction = 'vertical';
-    }
+    this.direction = direction;
   }
   selectionBoxes: { x: number; y: number; width: number; height: number }[] =
     [];
+  globalSelectionBox = { x: 0, y: 0, width: 0, height: 0 };
 
   // Other existing methods...
 
@@ -408,10 +445,125 @@ export class UploadpdfComponent {
     if (this.isSelecting) {
       // Stop selecting and save the box
       this.isSelecting = false;
+      if (this.isGlobal == true) {
+        this.globalSelectionBox = this.selectionBox;
+        console.log(this.globalSelectionBox)
+      }
       // Add finalized selection box to array
       this.selectionBoxes.push({ ...this.selectionBox });
       console.log('Final Selection Box:', this.selectionBox);
+
       this.resetSelectionBox(); // Reset for next selection
     }
+  }
+
+  // Function to process the response
+  processApiResponse(response: any, model: any): void {
+    const results: any[] = []; // Array to store final results
+
+    for (const studentId in response) {
+      const studentData = response[studentId];
+      let totalGrades = 0;
+      let maxGrades = 0;
+      const errorPages = new Set<number>(); // Use a Set to avoid duplicate pages
+      let page: any = 0;
+
+      for (const questionKey in studentData) {
+        const question = studentData[questionKey];
+        // Validate grades and calculate total and max grades
+        page = question.page;
+        if (Array.isArray(question.grades)) {
+          totalGrades += question.grades.reduce(
+            (sum: number, grade: number) => sum + grade,
+            0
+          );
+        }
+
+        // Check for errors and collect pages
+        if (Array.isArray(question.errors)) {
+          question.errors.forEach((error: string | null) => {
+            if (error === "There's more than one answer") {
+              errorPages.add(question.page);
+            }
+          });
+        }
+      }
+
+      if (model) {
+        for (const questionKey in model) {
+          const question = model[questionKey];
+          console.log(question);
+          if (question.grades) {
+            maxGrades += question.grades;
+          }
+        }
+      }
+
+      console.log('Model Answer Max Grade:', maxGrades);
+
+      // Add result for the current student
+      results.push({
+        studentId: parseInt(studentId, 10),
+        totalGrades,
+        maxGrades,
+        page: page,
+        score: `${totalGrades} out of ${maxGrades}`,
+        errorPages: Array.from(errorPages), // Convert Set to Array
+      });
+    }
+    this._UploadService.setScores(results);
+    console.log(results); // Output the final result
+  }
+  removeBox(index: number, event: any): void {
+    event.stopPropagation();
+    this.selectionBoxes.splice(index, 1);
+  }
+
+  setOpacityForSameName(name: string, value: any): void {
+    const radios = document.querySelectorAll(
+      `input[name="${name}"]`
+    ) as NodeListOf<HTMLInputElement>;
+
+    radios.forEach((radio) => {
+      const label = radio.nextElementSibling as HTMLElement;
+
+      // Normalize both `radio.value` and `value` to strings for comparison
+      if (radio.value === String(value)) {
+        // Full opacity for the selected radio button and its label
+        radio.style.opacity = '1';
+        if (label) {
+          label.style.opacity = '1';
+        }
+      } else {
+        // Reduced opacity for unselected radio buttons and their labels
+        radio.style.opacity = '0.5';
+        if (label) {
+          label.style.opacity = '0.5';
+        }
+      }
+    });
+  }
+  setOpacityForBoolean(name: string, selectedValue: boolean): void {
+    const radios = document.querySelectorAll(
+      `input[name="${name}"]`
+    ) as NodeListOf<HTMLInputElement>;
+    console.log(radios);
+    radios.forEach((radio) => {
+      const label = radio.nextElementSibling as HTMLElement;
+
+      // Determine if the current radio is selected
+      const isSelected =
+        (radio.value === 'true' && selectedValue) ||
+        (radio.value === 'false' && !selectedValue);
+
+      // Apply opacity based on selection
+      if (isSelected) {
+        radio.style.opacity = '1'; // Fully opaque for selected
+        if (label) label.style.opacity = '1'; // Fully opaque for label
+      } else {
+        radio.style.opacity = '0.5'; // Semi-transparent for unselected
+        if (label) label.style.opacity = '0.5'; // Semi-transparent for label
+      }
+    });
   }
 }

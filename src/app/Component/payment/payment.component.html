@@ -3,9 +3,9 @@
     <h2>هل تريد المزيد؟</h2>
     <p class="mt-3">سكوب يتيح لك تصحيح 10 صفحات مجاني اشترك بسهولة</p>
 
-    <span  (click)="hideLayer()" role="button" class=" circle position-absolute d-flex justify-content-center align-items-center  shadow-sm"><i class="fa fa-close"></i></span>
-    <div class="row px-3 my-3 justify-content-end g-2 align-items-center flex-row-reverse">
-      <div class="col-md-4">
+    <!-- <span  (click)="hideLayer()" role="button" class=" circle position-absolute d-flex justify-content-center align-items-center  shadow-sm"><i class="fa fa-close"></i></span> -->
+    <div class="row px-3 my-3 justify-content-center g-2 align-items-center flex-row-reverse">
+      <!-- <div class="col-md-4">
         <div
           class="p-4  py-5  content d-flex justify-content-center align-items-center flex-column"
         >
@@ -15,22 +15,28 @@
             وصف الباقة : تتيح لك الباقة الاساسية تصحيح 10 صفحات مجانية
           </p>
         </div>
-      </div>
-      <div class="col-md-4">
-        <div
-          class="p-4  py-5  content d-flex justify-content-center align-items-center flex-column">
-          <h5 class="d-flex justify-content-center align-items-center"> شهرية <span class="mx-2">شائعة</span> </h5>
-          <h4 class="d-flex justify-content-center align-items-center flex-row-reverse">
-            <h2 class="mt-3 mx-2">50</h2>
-              ريال 
-
-          </h4>
-          <p class="text-center my-3">
-            وصف الباقة : تتيح لك الباقة الاساسية تصحيح 1000 صفحات مجانية
-          </p>
-        </div>
-      </div>
-      <div class="col-md-4">
+      </div> -->
+      <div *ngFor="let item of packages" 
+      class="col-md-4" 
+      >
+   
+   <div [class.active]="selectedPackageId === item.id"
+   (click)="selectPackage(item)" class="p-4 py-5 content d-flex justify-content-center align-items-center flex-column">
+     <h5 class="d-flex justify-content-center align-items-center">
+       {{ item.name }} <span class="mx-2">شائعة</span>
+     </h5>
+     <h4 class="d-flex justify-content-center align-items-center flex-row-reverse">
+       <h2 class="mt-3 mx-2">{{ item.final_price }}</h2>
+       ريال
+     </h4>
+     <p class="text-center my-3">
+       {{ item.description }}
+       وتتيح لك عدد صفحات {{item.pages_limit}}صفحة
+     </p>
+   </div>
+ </div>
+ 
+      <!-- <div class="col-md-4">
         <div
           class="p-4 py-5  content d-flex  justify-content-center align-items-center flex-column"
         >
@@ -43,12 +49,14 @@
             وصف الباقة : تتيح لك الباقة الاساسية تصحيح 100,000 صفحات مجانية
           </p>
         </div>
-      </div>
+      </div> -->
 
-      <div class="col-md-4 p-2 px-3">
-        <button class="w-100 py-2">
+      <div class="col-md-12 text-end  ">
+        <div class="col-md-4 p-2 px-3">
+          <button (click)="subscribePackage();testMyFatoorah()" class="w-100 py-2">
             اشتراك
         </button>
+        </div>
       </div>
 
     </div>

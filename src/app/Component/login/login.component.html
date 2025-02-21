@@ -60,7 +60,11 @@
     </h5>
     <form [formGroup]="loginForm" (submit)="login(loginForm)">
       <label for="email" class="mt-3">البريد الالكتروني</label>
-      <input type="email" class="form-control rounded-1 my-3 p-3" formControlName="email" />
+      <input
+        type="email"
+        class="form-control rounded-1 my-3 p-3"
+        formControlName="email"
+      />
 
       <button
         class="mt-3 btn w-100 d-flex justify-content-center align-items-center p-3"
@@ -125,11 +129,11 @@
       </div>
       <p>
         <span>لم تستلم الرمز؟</span>
-        اعادة ارسال
+        <span role="button" (click)="resendOtp()"> اعادة ارسال </span>
       </p>
 
       <button
-      routerLink="/uploadpdf"
+        
         class="mt-3 btn w-100 d-flex justify-content-center align-items-center p-3"
       >
         تسجيل الدخول

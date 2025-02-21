@@ -15,6 +15,8 @@ import { PaymentComponent } from './Component/payment/payment.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { LoadingInterceptor } from './loading.interceptor';
 import { NgxSpinnerModule } from 'ngx-spinner';
+import { ToastrModule } from 'ngx-toastr';
+import { MyhttpInterceptor } from './interceptors/myhttp.interceptor';
 @NgModule({
   declarations: [
     AppComponent,
@@ -23,22 +25,23 @@ import { NgxSpinnerModule } from 'ngx-spinner';
     LoginComponent,
     UploadpdfComponent,
     ReviewComponent,
-    PaymentComponent
+    PaymentComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     ReactiveFormsModule,
     BrowserAnimationsModule,
-    CarouselModule ,
-    FormsModule , 
+    ToastrModule.forRoot(),
+    CarouselModule,
+    FormsModule,
     HttpClientModule,
-    NgxSpinnerModule
+    NgxSpinnerModule,
   ],
   providers: [
-    {provide :HTTP_INTERCEPTORS ,useClass:LoadingInterceptor , multi:true}
-
+    { provide: HTTP_INTERCEPTORS, useClass: MyhttpInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true },
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

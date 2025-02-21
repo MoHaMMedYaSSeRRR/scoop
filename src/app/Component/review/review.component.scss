@@ -66,3 +66,147 @@
       width: 40%;
     }
   }
+  .color-toolbar {
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .color-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  
+  .color-btn:hover {
+    transform: scale(1.1);
+    border-color: #000;
+  }
+  
+  canvas {
+    border: 1px solid transparent;
+    cursor: crosshair;
+  }
+ 
+  
+  .color-btn.selected {
+    border-color: #000; /* Highlight selected color */
+    transform: scale(1.2); /* Slightly larger */
+  }  
+  .color-circles {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .color-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .color-circle:hover {
+    opacity: 0.8;
+  }
+  
+  .color-circle:focus {
+    outline: none;
+  }
+  
+  .color-circle[style*="background"] {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  canvas {
+    border: 1px solid #ccc;
+    position: relative;
+  }
+  img{
+    user-select: none; /* Disable text selection */
+    -webkit-user-drag: none; /* Disable drag in Webkit browsers */
+    -moz-user-drag: none; /* Disable drag in Firefox */
+    -ms-user-drag: none; /* Disable drag in Internet Explorer */
+  }
+  .color-toolbar {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .color-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;  /* Make the button circular */
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  
+  .color-circle:hover {
+    transform: scale(1.2);  /* Slightly increase size on hover */
+  }
+  
+  /* Canvas styling */
+  canvas {
+    width: 100%;
+    height: auto;
+    border: 2px solid #ccc;
+  }
+  
+  /* Optional: Add a green background to selection */
+  .selection {
+    background-color: #4caf50;  /* Green color */
+  }
+  .selection-box {
+    position: absolute;
+    border: 3.5px solid #01ff0a;; /* Orange dashed border for visibility */
+    background-color: transparent; /* Semi-transparent green background */
+    z-index: 9999; /* Ensure it's on top of the PDF image */
+    pointer-events: none; /* Prevent interaction with the selection box itself */
+    border-radius: 50%;
+  }
+  .score-line {
+    position: absolute;
+    top: 50%; /* Center the line vertically in the parent container */
+    left: 50%; /* Center the line horizontally */
+    transform: translate(-50%, -50%); /* Correct positioning to ensure it’s centered both vertically and horizontally */
+    border-top: 2px solid #01ff0a; /* Line color */
+    width: 100%; /* Ensure the line spans the full width of its parent container */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .score-label {
+    position: absolute;
+    top: -30px; /* Position the score label above the line */
+    left: 50%; /* Center the label horizontally */
+    transform: translateX(-50%); /* Ensure it's centered horizontally */
+    font-weight: bold;
+    color: #01ff0a;
+  }
+  
+  .final-score {
+    position: absolute;
+    bottom: -30px; /* Position the final score below the line */
+    left: 50%; /* Center the final score horizontally */
+    transform: translateX(-50%); /* Ensure it's centered horizontally */
+    font-weight: bold;
+    color: #01ff0a;
+  }
+  .global{
+    width: 100px;
+    height: 100px;
+    border-radius:50%;
+  }
+  
+  

@@ -1,0 +1,12 @@
+{
+    "/myfatoorah-api": {
+      "target": "https://apitest.myfatoorah.com",
+      "secure": false,
+      "changeOrigin": true,
+      "logLevel": "debug",
+      "pathRewrite": {
+        "^/myfatoorah-api": ""
+      }
+    }
+  }
+  
