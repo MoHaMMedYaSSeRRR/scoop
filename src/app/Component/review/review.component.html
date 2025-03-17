@@ -3,109 +3,73 @@
     <div class="row g-2">
       <div class="col-md-6 text-end px-3">
         <div class="show p-0 position-relative">
-          <div
-            *ngIf="isLoading"
-            class="d-flex justify-content-center align-items-center"
-            style="height: 200px"
-          >
-            <span class="fa fa-spinner fa-spin text-primary fs-3"></span>
-          </div>
-          <img
-            *ngIf="!isLoading && pdfImages.length > 0"
-            [src]="pdfImages[currentPage]"
-            (mousedown)="onMouseDown($event)"
-            (mousemove)="onMouseMove($event)"
-            (mouseup)="onMouseUp()"
-            (mouseleave)="onMouseUp()"
-          />
-
-          <!-- Render all finalized selection boxes -->
-          <div
-            *ngFor="let box of selectionBoxes"
-            class="selection-box"
-            [ngStyle]="{
-              left: box.x + 'px',
-              top: box.y + 'px',
-              width: box.width + 'px',
-              height: box.height + 'px'
-            }"
-          ></div>
-
-          <!-- Render current selection box while dragging -->
-          <div
-            class="selection-box"
-            *ngIf="isSelecting"
-            [ngStyle]="{
-              left: selectionBox.x + 'px',
-              top: selectionBox.y + 'px',
-              width: selectionBox.width + 'px',
-              height: selectionBox.height + 'px'
-            }"
-          ></div>
-
-          <!-- Render the global selection box if global is true -->
-          <div
-            class="selection-box global"
-            *ngIf="!isLoading && globalSelectionBox.width > 0"
-            [ngStyle]="{
-              left: globalSelectionBox.x + 'px',
-              top: globalSelectionBox.y + 'px',
-              width: globalSelectionBox.width + 'px',
-              height: globalSelectionBox.height + 'px'
-            }"
-          >
-            <div class="score-line">
-              <div class="score-label">
-                {{ currentScore }}
-              </div>
-              <div class="final-score">
-                {{ finalScore }}
-                <!-- Final score below the line -->
-              </div>
+            <div *ngIf="isLoading" class="d-flex justify-content-center align-items-center" style="height: 200px">
+                <span class="fa fa-spinner fa-spin text-primary fs-3"></span>
             </div>
-          </div>
-
-          <!-- Render the line and scores -->
+    
+            <img *ngIf="!isLoading && pdfImages.length > 0"
+                 [src]="pdfImages[currentPage]"
+                 (mousedown)="onMouseDown($event)"
+                 class="selectable-image" />
+    
+            <div *ngFor="let circle of selectionCircles[currentPage] || []"
+                 class="selection-circle"
+                 [ngStyle]="{
+                    left: circle.x + 'px',
+                    top: circle.y + 'px',
+                    width: circle.radius * 2 + 'px',
+                    height: circle.radius * 2 + 'px',
+                    backgroundColor: circle.isCorrect ? 'green' : 'red'
+                }">
+            </div>
         </div>
-
-        <!-- Navigation Arrows -->
-        <div
-          class="arrows d-flex justify-content-between align-items-center w-50 m-auto mt-3 text-center"
-        >
-          <span
-            role="button"
-            (click)="goToPreviousPage()"
-            [class.disabled]="currentPage === 0"
-          >
-            <i class="fa fa-arrow-left"></i>
-          </span>
-          <span>{{ currentPage + 1 }} / {{ userPageCount }}</span>
-          <span
-            role="button"
-            (click)="goToNextPage()"
-            [class.disabled]="currentPage === userPageCount - 1"
-          >
-            <i class="fa fa-arrow-right"></i>
-          </span>
+    
+        <!-- Navigation -->
+        <div class="arrows d-flex justify-content-between align-items-center w-50 m-auto mt-3 text-center">
+            <span role="button" (click)="goToPreviousPage()" [class.disabled]="currentPage === 0">
+                <i class="fa fa-arrow-left"></i>
+            </span>
+            <span>{{ currentPage + 1 }} / {{ userPageCount }}</span>
+            <span role="button" (click)="goToNextPage()" [class.disabled]="currentPage === userPageCount - 1">
+                <i class="fa fa-arrow-right"></i>
+            </span>
         </div>
-      </div>
-
-      <div class="col-md-5">
+    </div>
+    
+     
+      <div class="col-md-5 d-none">
         <div class="content text-end ps-md-3 p-1">
           <h3 class="mb-3">نتيجة التصحيح</h3>
 
           <div class="hint p-2 w-100 ms-auto text-center">
-            <h5>
-              عدد الاسئلة التي تحتاج الي مراجعة : 10 اسئلة
-            </h5>
+            <h5>عدد الاسئلة التي تحتاج الي مراجعة : 10 اسئلة</h5>
           </div>
-          <button class="btn px-5 py-2 d-block text-start mt-3">مراجعة </button>
+          <button (click)="reviewOMR()" class="btn px-5 py-2 d-block text-start mt-3">مراجعة</button>
         </div>
       </div>
-      
+      <div class="col-md-5">
+        <div class="content text-end ps-md-3 p-1">
+            <h3 class="mb-3">نتيجة التصحيح</h3>
+    
+            <div class="hint p-2 w-100 ms-auto text-center">
+                <h5>عدد الاسئلة التي تحتاج الي مراجعة : {{ errorQuestions.length }} أسئلة</h5>
+            </div>
+    
+            <div *ngIf="errorQuestions.length > 0" class="error-list text-end mt-3">
+                <h5>الأسئلة التي تحتوي على أخطاء:</h5>
+                <ul>
+                    <li *ngFor="let error of errorQuestions">
+                        ❌ الصفحة {{ getArabicNumber(error.page) }}, السؤال {{ getArabicNumber(error.questionNumber) }}, الفرعي {{ getArabicNumber(error.subQuestion) }}
+                    </li>
+                </ul>
+            </div>
+    
+            <button (click)="reviewOMR()" class="btn px-5 py-2 d-block text-start mt-3">مراجعة</button>
+        </div>
+    </div>
     
 
-      <!-- <button
+      <!-- <bu tton
         (click)="showpay()"
         type="button"
         class="sendBtn ms-1 p-2 border-0 text-white d-block me-auto mt-3"
@@ -117,10 +81,9 @@
         (click)="downloadMarkedPdf()"
         type="button"
         class="sendBtn ms-1 p-2 border-0 text-white d-block me-auto mt-3"
-        >
+      >
         تحميل
       </button>
-     
     </div>
   </div>
 </div>

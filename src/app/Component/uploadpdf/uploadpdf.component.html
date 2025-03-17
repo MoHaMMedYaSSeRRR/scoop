@@ -156,295 +156,272 @@
               برجاء ادخال البيانات التالية لكل صفحة في الامتحان
             </h3>
             <form
-              class="my-2"
-              [formGroup]="getCurrentQuestionFormGroup()"
-              (ngSubmit)="onCurrentQuestionSubmit()"
-            >
-              <!-- Column Number -->
-              <!-- <label for="colnumber">عدد الاجابات</label> -->
-              <!-- <input
-                type="number"
-                class="form-control p-2 rounded-1 my-2 text-end"
-                formControlName="colNumber"
-                placeholder="عدد الاجابات"
-                required
-              /> -->
-
-              <!-- Fractioned Grades -->
-              <!-- <label for="score">الدرجة</label> -->
-
-              <div class="row justify-content-end align-items-center mt-4">
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="no"
-                    name="marked"
-                    formControlName="marked"
-                    value="false"
-                    class="mx-2"
-                    (click)="
-                      checkifid(false); setOpacityForBoolean('marked', false)
-                    "
-                  />
-                  <label
-                    (click)="
-                      checkifid(false); setOpacityForBoolean('marked', false)
-                    "
-                    for="no"
-                  >
-                    رقم جلوس
-                  </label>
-                </div>
-
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="yes"
-                    name="marked"
-                    formControlName="marked"
-                    value="true"
-                    class="mx-2"
-                    (click)="
-                      checkifid(true); setOpacityForBoolean('marked', true)
-                    "
-                  />
-                  <label
-                    (click)="
-                      checkifid(true); setOpacityForBoolean('marked', true)
-                    "
-                    for="yes"
-                  >
-                    الاسئلة
-                  </label>
-                </div>
+            class="my-2"
+            [formGroup]="getCurrentQuestionFormGroup()"
+            (ngSubmit)="onCurrentQuestionSubmit()"
+          >
+            <!-- Marked Field -->
+            <div class="row justify-content-end align-items-center mt-4">
+              <div class="col-3">
+                <input
+                  type="radio"
+                  id="no"
+                  name="marked"
+                  formControlName="marked"
+                  value="false"
+                  class="mx-2"
+                  (click)="checkifid(false); setOpacityForBoolean('marked', false)"
+                />
+                <label
+                  (click)="checkifid(false); setOpacityForBoolean('marked', false)"
+                  for="no"
+                >
+                  رقم جلوس
+                </label>
               </div>
-
-              <div
-                *ngIf="isID"
-                class="row justify-content-end align-items-center mt-4"
-              >
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="teacher-no"
-                    name="gradedByTeacher"
-                    formControlName="gradedByTeacher"
-                    value="false"
-                    class="mx-2"
-                    (click)="
-                      setOpacityForBoolean('gradedByTeacher', false);
-                      checkQuestionType('choicis')
-                    "
-                  />
-                  <label
-                    (click)="
-                      setOpacityForBoolean('gradedByTeacher', false);
-                      checkQuestionType('choicis')
-                    "
-                    for="teacher-no"
-                  >
-                    خيارات
-                  </label>
-                </div>
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="teacher-yes"
-                    name="gradedByTeacher"
-                    formControlName="gradedByTeacher"
-                    value="true"
-                    class="mx-2"
-                    (click)="
-                      setOpacityForBoolean('gradedByTeacher', true);
-                      checkQuestionType('nochoicis')
-                    "
-                  />
-                  <label
-                    (click)="
-                      setOpacityForBoolean('gradedByTeacher', true);
-                      checkQuestionType('nochoicis')
-                    "
-                    for="teacher-yes"
-                  >
-                    مقالي
-                  </label>
-                </div>
+              <div class="col-3">
+                <input
+                  type="radio"
+                  id="yes"
+                  name="marked"
+                  formControlName="marked"
+                  value="true"
+                  class="mx-2"
+                  (click)="checkifid(true); setOpacityForBoolean('marked', true)"
+                />
+                <label
+                  (click)="checkifid(true); setOpacityForBoolean('marked', true)"
+                  for="yes"
+                >
+                  الاسئلة
+                </label>
               </div>
-              <input
-                *ngIf="questionType == 'nochoicis'"
-                type="text"
-                class="form-control p-2 rounded-1 my-2 text-end"
-                formControlName="choices"
-                placeholder=" ex: 1-2-3-4-5 الدرجة"
-                required
-              />
-              <input
-                *ngIf="questionType == 'choicis'"
-                type="number"
-                class="form-control p-2 rounded-1 my-2 text-end"
-                formControlName="colNumber"
-                placeholder="عدد الاجابات"
-                required
-              />
-              <input
+            </div>
+          
+            <!-- Graded By Teacher Field -->
+            <div *ngIf="isID" class="row justify-content-end align-items-center mt-4">
+              <div class="col-3">
+                <input
+                  type="radio"
+                  id="teacher-no"
+                  name="gradedByTeacher"
+                  formControlName="gradedByTeacher"
+                  value="false"
+                  class="mx-2"
+                  (click)="
+                    setOpacityForBoolean('gradedByTeacher', false);
+                    checkQuestionType('choicis')
+                  "
+                />
+                <label
+                  (click)="
+                    setOpacityForBoolean('gradedByTeacher', false);
+                    checkQuestionType('choicis')
+                  "
+                  for="teacher-no"
+                >
+                  خيارات
+                </label>
+              </div>
+              <div class="col-3">
+                <input
+                  type="radio"
+                  id="teacher-yes"
+                  name="gradedByTeacher"
+                  formControlName="gradedByTeacher"
+                  value="true"
+                  class="mx-2"
+                  (click)="
+                    setOpacityForBoolean('gradedByTeacher', true);
+                    checkQuestionType('nochoicis')
+                  "
+                />
+                <label
+                  (click)="
+                    setOpacityForBoolean('gradedByTeacher', true);
+                    checkQuestionType('nochoicis')
+                  "
+                  for="teacher-yes"
+                >
+                  مقالي
+                </label>
+              </div>
+            </div>
+          
+            <!-- Choices Field -->
+            <input
+              *ngIf="questionType == 'nochoicis'"
+              type="text"
+              class="form-control p-2 rounded-1 my-2 text-end"
+              formControlName="choices"
+              placeholder="ex: 1-2-3-4-5 الدرجة"
+              required
+            />
+            <input
+              *ngIf="questionType == 'choicis'"
+              type="text"
+              class="form-control p-2 rounded-1 my-2 text-end"
+              formControlName="choices"
+              placeholder=" أ-ب-ج-د :الاجابات"
+              required
+            />
+            <input
               *ngIf="questionType == 'choicis'"
               type="number"
               class="form-control p-2 rounded-1 my-2 text-end"
-              formControlName="ََquestionNumber"
-              placeholder=" كم اجابة لكل فقرة"
+              formControlName="entities_count"
+              placeholder="كم اجابة لكل فقرة"
               required
             />
-              <input
-                *ngIf="questionType == 'choicis'"
-                type="text"
-                class="form-control p-2 rounded-1 my-2 text-end"
-                formControlName="choices"
-                placeholder=" ex:1 الدرجة"
-                required
-              />
-              <div class="row justify-content-end align-items-center mt-4">
-                <div
-                  (click)="checkdirection('horizontal')"
-                  class="col-3 d-flex justify-content-start align-items-end"
+            <input
+              *ngIf="questionType == 'choicis'"
+              type="number"
+              class="form-control p-2 rounded-1 my-2 text-end"
+              formControlName="worth"
+              placeholder="ex:1 الدرجة"
+              required
+            />
+          
+            <!-- Direction Field -->
+            <div class="row justify-content-end align-items-center mt-4">
+              <div
+                (click)="checkdirection('horizontal')"
+                class="col-3 d-flex justify-content-start align-items-end"
+              >
+                <input
+                  type="radio"
+                  id="horizontal"
+                  name="orientation"
+                  formControlName="orientation"
+                  value="horizontal"
+                  class="mx-2 mt-1"
+                  (click)="
+                    checkdirection('horizontal');
+                    setOpacityForSameName('orientation', 'horizontal')
+                  "
+                />
+                <label
+                  (click)="
+                    checkdirection('horizontal');
+                    setOpacityForSameName('orientation', 'horizontal')
+                  "
+                  for="horizontal"
                 >
-                  <input
-                    type="radio"
-                    id="horizontal"
-                    name="direction"
-                    formControlName="direction"
-                    value="horizontal"
-                    class="mx-2 mt-1"
-                    (click)="
-                      checkdirection('horizontal');
-                      setOpacityForSameName('direction', 'horizontal')
-                    "
-                  />
-                  <label
-                    (click)="
-                      checkdirection('horizontal');
-                      setOpacityForSameName('direction', 'horizontal')
-                    "
-                    for="horizontal"
-                    >افقي</label
-                  >
-                </div>
-                <div (click)="checkdirection('vertical')" class="col-3">
-                  <input
-                    type="radio"
-                    id="vertical"
-                    name="direction"
-                    formControlName="direction"
-                    value="vertical"
-                    class="mx-2 mt-1"
-                    (click)="
-                      checkdirection('vertical');
-                      setOpacityForSameName('direction', 'vertical')
-                    "
-                  />
-                  <label
-                    (click)="
-                      checkdirection('vertical');
-                      setOpacityForSameName('direction', 'vertical')
-                    "
-                    for="vertical"
-                    >عمودي</label
-                  >
-                </div>
+                  افقي
+                </label>
               </div>
-
-              <div
-                *ngIf="direction == 'horizontal'"
-                class="row justify-content-end align-items-center mt-4"
-              >
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="rtl"
-                    name="method"
-                    formControlName="method"
-                    value="right-to-left"
-                    class="mx-2 mt-1"
-                    (click)="setOpacityForSameName('method', 'right-to-left')"
-                  />
-                  <label
-                    (click)="setOpacityForSameName('method', 'right-to-left')"
-                    for="rtl"
-                  >
-                    من اليمين لليسار
-                  </label>
-                </div>
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="ltr"
-                    name="method"
-                    formControlName="method"
-                    value="left-to-right"
-                    class="mx-2 mt-1"
-                    (click)="setOpacityForSameName('method', 'left-to-right')"
-                  />
-                  <label
-                    (click)="setOpacityForSameName('method', 'left-to-right')"
-                    for="ltr"
-                  >
-                    من اليسار لليمين
-                  </label>
-                </div>
+              <div (click)="checkdirection('vertical')" class="col-3">
+                <input
+                  type="radio"
+                  id="vertical"
+                  name="orientation"
+                  formControlName="orientation"
+                  value="vertical"
+                  class="mx-2 mt-1"
+                  (click)="
+                    checkdirection('vertical');
+                    setOpacityForSameName('orientation', 'vertical')
+                  "
+                />
+                <label
+                  (click)="
+                    checkdirection('vertical');
+                    setOpacityForSameName('orientation', 'vertical')
+                  "
+                  for="vertical"
+                >
+                  عمودي
+                </label>
               </div>
-
-              <div
-                *ngIf="direction == 'vertical'"
-                class="row justify-content-end align-items-center mt-4"
-              >
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="btt"
-                    name="method"
-                    formControlName="method"
-                    value="bottom-to-top"
-                    class="mx-2 mt-1"
-                    (click)="setOpacityForSameName('method', 'bottom-to-top')"
-                  />
-                  <label
-                    (click)="setOpacityForSameName('method', 'bottom-to-top')"
-                    for="btt"
-                  >
-                    من الاسفل للاعلي
-                  </label>
-                </div>
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="ttb"
-                    name="method"
-                    formControlName="method"
-                    value="top-to-bottom"
-                    class="mx-2 mt-1"
-                    (click)="setOpacityForSameName('method', 'top-to-bottom')"
-                  />
-                  <label
-                    (click)="setOpacityForSameName('method', 'top-to-bottom')"
-                    for="ttb"
-                  >
-                    من الاعلي للاسفل
-                  </label>
-                </div>
+            </div>
+          
+            <!-- Method Field -->
+            <div *ngIf="direction == 'horizontal'" class="row justify-content-end align-items-center mt-4">
+              <div class="col-3">
+                <input
+                  type="radio"
+                  id="rtl"
+                  name="direction"
+                  formControlName="direction"
+                  value="right-to-left"
+                  class="mx-2 mt-1"
+                  (click)="setOpacityForSameName('direction', 'right-to-left')"
+                />
+                <label
+                  (click)="setOpacityForSameName('direction', 'right-to-left')"
+                  for="rtl"
+                >
+                  من اليمين لليسار
+                </label>
               </div>
-            </form>
+              <div class="col-3">
+                <input
+                  type="radio"
+                  id="ltr"
+                  name="direction"
+                  formControlName="direction"
+                  value="left-to-right"
+                  class="mx-2 mt-1"
+                  (click)="setOpacityForSameName('direction', 'left-to-right')"
+                />
+                <label
+                  (click)="setOpacityForSameName('direction', 'left-to-right')"
+                  for="ltr"
+                >
+                  من اليسار لليمين
+                </label>
+              </div>
+            </div>
+          
+            <div *ngIf="direction == 'vertical'" class="row justify-content-end align-items-center mt-4">
+              <div class="col-3">
+                <input
+                  type="radio"
+                  id="btt"
+                  name="direction"
+                  formControlName="direction"
+                  value="bottom-to-top"
+                  class="mx-2 mt-1"
+                  (click)="setOpacityForSameName('direction', 'bottom-to-top')"
+                />
+                <label
+                  (click)="setOpacityForSameName('direction', 'bottom-to-top')"
+                  for="btt"
+                >
+                  من الاسفل للاعلي
+                </label>
+              </div>
+              <div class="col-3">
+                <input
+                  type="radio"
+                  id="ttb"
+                  name="direction"
+                  formControlName="direction"
+                  value="top-to-bottom"
+                  class="mx-2 mt-1"
+                  (click)="setOpacityForSameName('direction', 'top-to-bottom')"
+                />
+                <label
+                  (click)="setOpacityForSameName('direction', 'top-to-bottom')"
+                  for="ttb"
+                >
+                  من الاعلي للاسفل
+                </label>
+              </div>
+            </div>
+          </form>
           </div>
         </div>
 
-        <button
+        <!-- <button
           *ngIf="!isshow"
           type="button"
           class="sendBtn p-2 border-0 text-white d-block me-auto mt-3"
           (click)="onCallApi()"
         >
           ارسال
-        </button>
+        </button> -->
         <button
-          *ngIf="isshow"
           type="button"
           class="sendBtn p-2 border-0 text-white d-block me-auto mt-3"
           (click)="onFinalSubmit()"

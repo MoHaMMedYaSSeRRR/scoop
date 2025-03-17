@@ -1,0 +1,54 @@
+<div class="col-md-6 text-end px-3">
+    <div class="show p-0 position-relative">
+      <div
+        *ngIf="isLoading"
+        class="d-flex justify-content-center align-items-center"
+        style="height: 200px"
+      >
+        <span class="fa fa-spinner fa-spin text-primary fs-3"></span>
+      </div>
+  
+      <!-- ✅ Show only images from filteredPages -->
+      <img
+        *ngIf="!isLoading && pdfImages.length > 0"
+        [src]="getCurrentPageImage()"
+        (mousedown)="onMouseDown($event)"
+        class="selectable-image"
+      />
+  
+      <!-- ✅ Show selection circles only for the filtered pages -->
+      <div
+        *ngFor="let circle of detectedCircles[currentPageIndex] || []"
+        class="selection-circle"
+        [ngStyle]="{
+          left: circle.x + 'px',
+          top: circle.y-7+ 'px',
+          width: circle.radius * 2.5 + 'px',
+          height: circle.radius * 2.5 + 'px',
+          backgroundColor: circle.isCorrect ? 'green' : 'red'
+        }"
+      ></div> 
+    </div>
+  
+    <!-- ✅ Navigation: Now loops only through filteredPages -->
+    <div class="arrows d-flex justify-content-between align-items-center w-50 m-auto mt-3 text-center">
+      <span
+        role="button"
+        (click)="goToPreviousPage()"
+        [class.disabled]="currentPageIndex === 0"
+      >
+        <i class="fa fa-arrow-left"></i>
+      </span>
+  
+      <!-- ✅ Show actual filtered page number -->
+      <span>{{ getFilteredPageIndex() }} / {{ filteredPages.length }}</span>
+  
+      <span
+        role="button"
+        (click)="goToNextPage()"
+        [class.disabled]="currentPageIndex === filteredPages.length - 1"
+      >
+        <i class="fa fa-arrow-right"></i>
+      </span>
+    </div>
+  </div>

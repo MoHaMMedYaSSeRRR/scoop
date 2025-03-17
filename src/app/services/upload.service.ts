@@ -7,19 +7,32 @@ import { BehaviorSubject, Observable } from 'rxjs';
 })
 export class UploadService {
   private pdfUrl: string = '';
-  data:any;
+  private dataSubject = new BehaviorSubject<any>(null);
+  data$ = this.dataSubject.asObservable();
+
+  private fileSubject = new BehaviorSubject<File | null>(null);
+  file$ = this.fileSubject.asObservable();
+
   constructor(
     private _HttpClient:HttpClient
   ) { }
   upload(data:any):Observable<any>{
-    return this._HttpClient.post('https://scoob.cc/upload-file' ,data);
+    return this._HttpClient.post('/scoob-api/step-1' ,data);
 
   }
-  setdata(data:any){
-    this.data=data;
+  pdfFile:any;
+  setdata(data: any, file: File) {
+    this.dataSubject.next(data);
+    this.fileSubject.next(file);
   }
-  getdata():any{
-    return this.data;
+
+  // ✅ Retrieve Stored Data
+  getdata(): any {
+    return this.dataSubject.getValue();
+  }
+
+  getFile(): File | null {
+    return this.fileSubject.getValue();
   }
   setPdfUrl(url: string): void {
     this.pdfUrl = url;
@@ -37,14 +50,18 @@ export class UploadService {
   getScores() {
     return this.scores;
   }
-  private selectedBoxSubject = new BehaviorSubject<any>(null); // Initialize as null
+  private selectedBoxSubject = new BehaviorSubject<any>(null); 
   selectedBox$ = this.selectedBoxSubject.asObservable();
 
   setSelectedBox(box: any) {
-    this.selectedBoxSubject.next(box); // Update the selected box
+    this.selectedBoxSubject.next(box); 
   }
 
   getSelectedBox() {
-    return this.selectedBoxSubject.value; // Get the latest selected box
+    return this.selectedBoxSubject.value; 
+  }
+  reviewOmr(data:any):Observable<any>{
+    return this._HttpClient.post('/scoob-api/final' ,data);
+
   }
 }

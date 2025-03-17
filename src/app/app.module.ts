@@ -17,6 +17,7 @@ import { LoadingInterceptor } from './loading.interceptor';
 import { NgxSpinnerModule } from 'ngx-spinner';
 import { ToastrModule } from 'ngx-toastr';
 import { MyhttpInterceptor } from './interceptors/myhttp.interceptor';
+import { ReviewTestComponent } from './Component/review-test/review-test.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -26,6 +27,7 @@ import { MyhttpInterceptor } from './interceptors/myhttp.interceptor';
     UploadpdfComponent,
     ReviewComponent,
     PaymentComponent,
+    ReviewTestComponent,
   ],
   imports: [
     BrowserModule,

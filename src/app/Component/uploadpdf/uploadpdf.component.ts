@@ -13,14 +13,16 @@ import { UploadService } from 'src/app/services/upload.service';
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
 
 interface ROI {
-  position: number[][][];
-  bubbles: number;
-  direction: string;
-  method: string;
-  marked_by_teacher: boolean;
-  choices?: number[]; // Optional
-  page?: number; // Add this line to include page tracking
-  points?: number;
+  points: number[][][]; 
+  roi_type: string; 
+  entities_count: number;
+  choices?: string[];
+  orientation: string; // Add this field
+  direction: string; // Add this field
+  worth: number; // Add this field
+  corrected_by_teacher: boolean; // Add this field
+  id: boolean; // Add this field
+  page_number?:number;
 }
 
 type SelectedQuestions = Record<string, ROI>; // Keep this as an object
@@ -57,6 +59,7 @@ export class UploadpdfComponent {
   @ViewChild('fileInput') fileInput!: ElementRef;
   currentScore: any = 0;
   finalScore: any = 0;
+  selectedIdType!: string;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -151,12 +154,15 @@ export class UploadpdfComponent {
                 rowNumber: new FormControl('', Validators.required),
                 colNumber: new FormControl('', Validators.required),
                 direction: new FormControl('', Validators.required),
+                orientation: new FormControl('', Validators.required),
                 marked: new FormControl(),
                 gradedByTeacher: new FormControl(),
-                roi_coordinates: new FormControl([]), // ROI will be captured here
+                entities_count: new FormControl(),
+                roi_coordinates: new FormControl([]), 
                 page_number: new FormControl(i + 1),
-                choices: new FormControl('', Validators.required), // Choices field
-                method: new FormControl('', Validators.required), // Default method
+                choices: new FormControl('', Validators.required), 
+                worth: new FormControl(1, Validators.required), 
+                id: new FormControl(false),
               })
             );
           }
@@ -208,40 +214,6 @@ export class UploadpdfComponent {
       return 'not_Teacher';
     }
   }
-  addCurrentQuestionData(): void {
-    if (this.isGlobal == true) {
-      this.globalSelectionBox = this.selectionBox;
-      console.log(this.globalSelectionBox);
-      this.isGlobal = false;
-      this.isshow = true;
-    }
-    if (this.isshow == true) {
-      const currentQuestion = this.getCurrentQuestionFormGroup().value;
-
-      const roiData: ROI = {
-        position: [
-          [
-            [Math.floor(this.selectionBox.x), Math.floor(this.selectionBox.y)],
-            [
-              Math.floor(this.selectionBox.x + this.selectionBox.width),
-              Math.floor(this.selectionBox.y + this.selectionBox.height),
-            ],
-          ],
-        ],
-        bubbles: currentQuestion.colNumber,
-        direction: currentQuestion.direction || 'horizontal',
-        method: currentQuestion.method || 'top-to-bottom',
-        marked_by_teacher: currentQuestion.gradedByTeacher || false,
-      };
-
-      const questionKey = `question_${
-        Object.keys(this.selectedQuestions).length + 1
-      }`; // Use Object.keys to get count
-      this.selectedQuestions[questionKey] = roiData; // Store the ROI data for each question
-
-      console.log('Question Data:', roiData); // Log for debugging
-    }
-  }
 
   fractionedGradesValidator(
     control: FormControl
@@ -258,88 +230,64 @@ export class UploadpdfComponent {
   }
   another: any = [];
   onCurrentQuestionSubmit(): void {
-    if (this.isGlobal == true) {
+    if (this.isGlobal) {
       this.isGlobal = false;
       this.isshow = true;
     }
-    if (this.isshow == true) {
+  
+    if (this.isshow) {
       const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-      // Validate if the selection box has been defined
+  
       if (this.selectionBoxes.length > 0) {
-        // Prepare ROI data based on the selection box and form values
         const roiData: ROI = {
-          position: this.selectionBoxes.map((box) => [
+          points: this.selectionBoxes.map((box) => [
             [Math.floor(box.x), Math.floor(box.y)],
             [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
           ]),
-          bubbles: currentQuestionForm.value.colNumber,
-          direction: currentQuestionForm.value.direction || 'horizontal',
-          method: currentQuestionForm.value.method || 'top-to-bottom',
-          marked_by_teacher: currentQuestionForm.value.gradedByTeacher || false,
-          // choices: currentQuestionForm.value.choices
-          //   .split(',')
-          //   .map((choice: string) => parseInt(choice.trim(), 10)),
-          page: this.currentPage + 1, // Add current page number
+          roi_type: 'question',
+          entities_count: currentQuestionForm.value.entities_count || 10,
+          choices: currentQuestionForm.value.choices && currentQuestionForm.value.choices.trim()
+            ? currentQuestionForm.value.choices.split(/[-,]/).map((choice: string) => choice.trim()) // Fix splitting choices
+            : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],        
+          orientation: currentQuestionForm.value.orientation || 'horizontal', // Ensure default value
+          direction: currentQuestionForm.value.direction || "right-to-left",
+          worth: currentQuestionForm.value.worth || 1,
+          corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === true, // Ensure boolean value
+          id: this.selectedIdType === 'student_id' ? false : true, // Assign ID correctly
         };
-
-        const idValue = this.determineIdValue(currentQuestionForm.value);
-
-        if (idValue === 'valid_id') {
-          // Handle ID data for the first question
-          this.id = {
-            ...roiData,
-          };
-        } else if (idValue === 'teacher_id') {
-          // Add choices to ROI for teacher ID
-          roiData.choices = currentQuestionForm.value.choices
-            .split('-')
-            .map((choice: string) => parseFloat(choice.trim()));
-
-          // Safely calculate the max value
-          roiData.points =
-            Array.isArray(roiData.choices) && roiData.choices.length > 0
-              ? Math.max(...roiData.choices)
-              : 0; // Default to 0 if choices is undefined or empty
-
-          const questionKey = `question_${
-            Object.keys(this.selectedQuestions).length + 1
-          }`;
-
-          this.selectedQuestions[questionKey] = roiData;
-        } else {
-          // Add points to ROI for non-teacher ID
-          roiData.points = Number(currentQuestionForm.value.choices) || 1;
-          const questionKey = `question_${
-            Object.keys(this.selectedQuestions).length + 1
-          }`;
-
-          this.selectedQuestions[questionKey] = roiData;
-        }
-
-        // Reset the form after submission
+  
+        const questionKey = `question_${Object.keys(this.selectedQuestions).length + 1}`;
+        this.selectedQuestions[questionKey] = roiData;
+  
         currentQuestionForm.reset({
           roi_coordinates: [],
           colNumber: '',
           direction: '',
           marked: '',
-          gradedByTeacher: '',
-          choices: '', // Reset choices field as well
+          gradedByTeacher: false, // Ensure reset as boolean
+          choices: '',
+          worth: 1,
+          id: false,
         });
-
-        this.resetboxes(); // Reset selection box for the next question
+  
+        this.resetboxes();
       } else {
         console.error('Please define a selection area before submitting.');
       }
+  
       this.direction = '';
       this.isID = false;
     }
   }
-
+  
+ 
   checkifid(x: any) {
     if (x == true) {
+      this.selectedIdType ='student_id';
       this.isID = true;
     } else {
+      this.selectedIdType ='question_id';
+
       this.isID = false;
     }
   }
@@ -348,38 +296,62 @@ export class UploadpdfComponent {
   }
   onFinalSubmit(): void {
     this.onCurrentQuestionSubmit();
-
-    const questionsObject: Record<string, any> = {};
-    questionsObject['id'] = this.id; // Add the static id object
-
-    // Loop through selected questions and add them to the questionsObject
-    Object.keys(this.selectedQuestions).forEach((key, index) => {
+  
+    const pagesObject: Record<string, any> = {};
+  
+    Object.keys(this.selectedQuestions).forEach((key) => {
       const questionData = this.selectedQuestions[key];
-      questionsObject[key] = {
-        ...questionData, // Spread existing properties of the question
-        question_number: index + 1, // Add the dynamic `question_number` property
+      const pageKey = `page-${questionData.page_number || 1}`;
+      const questionKey = `question-${Object.keys(pagesObject[pageKey] || {}).length + 1}`;
+  
+      if (!pagesObject[pageKey]) {
+        pagesObject[pageKey] = {};
+      }
+  
+      pagesObject[pageKey][questionKey] = {
+        points: questionData.points,
+        roi_type: questionData.roi_type || 'question',
+        entities_count: questionData.entities_count || 10,
+        choices: questionData.choices || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        orientation: questionData.orientation || 'horizontal',
+        direction: questionData.direction || 'right-to-left',
+        worth: questionData.worth || 1,
+        corrected_by_teacher: questionData.corrected_by_teacher || false,
+        id: questionData.id, // Now correctly stored based on the selected radio button
       };
     });
-
-    const finalPayload = {
-      answer_pages: this.userPageCount, // Use userPageCount for dynamic page count
-      questions: questionsObject, // Include questions object
-    };
-    this._UploadService.setdata(finalPayload);
-    console.log(finalPayload); // Check the structure of your final payload
-
+  
+    const finalPayload = { ...pagesObject };
+    this._UploadService.setdata(finalPayload , this.selectedFile);
+  
     if (this.selectedFile) {
       this.formData.append('file', this.selectedFile);
     }
-
+  
     const pdfJson = JSON.stringify(finalPayload);
     this.formData.append('data', pdfJson);
+      // this._UploadService.setdata('res.response', this.selectedFile); 
+      // this.router.navigate(['/review'])
 
     this.isshow = false;
-  }
+    this._UploadService.upload(this.formData).subscribe({
+      next: (res) => {
+        console.log(res)
+        this._UploadService.setdata(res.response, this.selectedFile); 
+        this.router.navigate(['/review'])
+      },
+      error: (err) => {
+        console.log(err);
+      },
+    });
+  } 
+  
+ 
+
   onCallApi() {
-    this._UploadService.setSelectedBox(this.globalSelectionBox);
-    console.log(this.globalSelectionBox);
+    // this._UploadService.setSelectedBox(this.globalSelectionBox);
+    // console.log(this.globalSelectionBox);
+  // console.log(this.formData)
     this._UploadService.upload(this.formData).subscribe({
       next: (res) => {
         console.log(res);
@@ -446,12 +418,28 @@ export class UploadpdfComponent {
       // Stop selecting and save the box
       this.isSelecting = false;
       if (this.isGlobal == true) {
+        this.globalSelectionBox = { 
+          x: this.selectionBox.x, 
+          y: this.selectionBox.y, 
+          width: this.selectionBox.width, 
+          height: this.selectionBox.height 
+        };
+    
+        const selectionPoints: [[number, number], [number, number]] = [
+          [this.selectionBox.x, this.selectionBox.y],  // Top-left corner
+          [this.selectionBox.x + this.selectionBox.width, this.selectionBox.y + this.selectionBox.height] // Bottom-right corner
+        ];
+        this._UploadService.setSelectedBox(selectionPoints); 
+    
         this.globalSelectionBox = this.selectionBox;
+        this._UploadService.setSelectedBox(this.globalSelectionBox)
         console.log(this.globalSelectionBox)
+      } else{
+        this.selectionBoxes.push({ ...this.selectionBox });
+        console.log('Final Selection Box:', this.selectionBox);
       }
       // Add finalized selection box to array
-      this.selectionBoxes.push({ ...this.selectionBox });
-      console.log('Final Selection Box:', this.selectionBox);
+      
 
       this.resetSelectionBox(); // Reset for next selection
     }
@@ -547,23 +535,33 @@ export class UploadpdfComponent {
     const radios = document.querySelectorAll(
       `input[name="${name}"]`
     ) as NodeListOf<HTMLInputElement>;
-    console.log(radios);
     radios.forEach((radio) => {
       const label = radio.nextElementSibling as HTMLElement;
 
-      // Determine if the current radio is selected
       const isSelected =
         (radio.value === 'true' && selectedValue) ||
         (radio.value === 'false' && !selectedValue);
 
-      // Apply opacity based on selection
       if (isSelected) {
-        radio.style.opacity = '1'; // Fully opaque for selected
-        if (label) label.style.opacity = '1'; // Fully opaque for label
+        radio.style.opacity = '1'; 
+        if (label) label.style.opacity = '1'; 
       } else {
-        radio.style.opacity = '0.5'; // Semi-transparent for unselected
-        if (label) label.style.opacity = '0.5'; // Semi-transparent for label
+        radio.style.opacity = '0.5'; 
+        if (label) label.style.opacity = '0.5';
       }
     });
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
