@@ -1,8 +1,8 @@
 <div class="container m-auto m-3 p-5">
   <div class="step2 justify-content-between overflow-hidden align-items-center">
     <div class="row g-2">
-      <div class="col-md-6 text-end px-3">
-        <div class="show p-0 position-relative">
+      <div class="col-md-6 text-end p-0 m-0 ">
+        <div class="show p-0 m-0 position-relative">
             <div *ngIf="isLoading" class="d-flex justify-content-center align-items-center" style="height: 200px">
                 <span class="fa fa-spinner fa-spin text-primary fs-3"></span>
             </div>
@@ -35,9 +35,9 @@
             </span>
         </div>
     </div>
-    
      
-      <div class="col-md-5 d-none">
+     
+      <div class="col-md-5 ">
         <div class="content text-end ps-md-3 p-1">
           <h3 class="mb-3">نتيجة التصحيح</h3>
 
@@ -47,7 +47,7 @@
           <button (click)="reviewOMR()" class="btn px-5 py-2 d-block text-start mt-3">مراجعة</button>
         </div>
       </div>
-      <div class="col-md-5">
+      <div class="col-md-5 d-none" >
         <div class="content text-end ps-md-3 p-1">
             <h3 class="mb-3">نتيجة التصحيح</h3>
     

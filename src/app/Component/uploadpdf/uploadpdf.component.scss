@@ -31,16 +31,17 @@ img {
 
 .step2{
     .show{
-        width: 600px;
-        height: 800px;
+        width: 600px !important;
+        // height: 800px !important;
         // border: 1px solid #DADADA;
         position: relative;
         overflow: hidden;
+        // background-color: red;
 
         img{
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
+          width:600px !important;
+          // height:800px !important;
+          background-color: #007bff;
           cursor: crosshair;
           z-index: 120 !important;
         }

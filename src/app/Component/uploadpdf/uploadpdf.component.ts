@@ -255,7 +255,7 @@ export class UploadpdfComponent {
           corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === true, // Ensure boolean value
           id: this.selectedIdType === 'student_id' ? false : true, // Assign ID correctly
         };
-  
+        console.log(roiData)
         const questionKey = `question_${Object.keys(this.selectedQuestions).length + 1}`;
         this.selectedQuestions[questionKey] = roiData;
   
@@ -330,20 +330,20 @@ export class UploadpdfComponent {
   
     const pdfJson = JSON.stringify(finalPayload);
     this.formData.append('data', pdfJson);
-      // this._UploadService.setdata('res.response', this.selectedFile); 
-      // this.router.navigate(['/review'])
+      this._UploadService.setdata('res.response', this.selectedFile); 
+      this.router.navigate(['/review'])
 
     this.isshow = false;
-    this._UploadService.upload(this.formData).subscribe({
-      next: (res) => {
-        console.log(res)
-        this._UploadService.setdata(res.response, this.selectedFile); 
-        this.router.navigate(['/review'])
-      },
-      error: (err) => {
-        console.log(err);
-      },
-    });
+    // this._UploadService.upload(this.formData).subscribe({
+    //   next: (res) => {
+    //     console.log(res)
+    //     this._UploadService.setdata(res.response, this.selectedFile); 
+    //     this.router.navigate(['/review'])
+    //   },
+    //   error: (err) => {
+    //     console.log(err);
+    //   },
+    // });
   } 
   
  
@@ -390,60 +390,72 @@ export class UploadpdfComponent {
   onMouseDown(event: MouseEvent): void {
     const imgElement = event.target as HTMLImageElement;
     const rect = imgElement.getBoundingClientRect();
+    
+    const imgWidth = 600; // الصورة بعرض ثابت 600px
+    const aspectRatio = imgElement.naturalHeight / imgElement.naturalWidth; // نسبة الأبعاد الحقيقية
+
+    const imgHeight = imgWidth * aspectRatio; // حساب الارتفاع بناءً على العرض
+
+    // ضبط الإحداثيات بحيث يكون (x=0) عند حافة اليسار و(y=0) عند الحافة العلوية
+    this.startX = ((event.clientX - rect.left) / rect.width) * imgWidth;
+    this.startY = ((event.clientY - rect.top) / rect.height) * imgHeight;
+
     this.isSelecting = true;
-    this.startX = event.clientX - rect.left;
-    this.startY = event.clientY - rect.top;
-
-    // Start a new selection box
     this.selectionBox = { x: this.startX, y: this.startY, width: 0, height: 0 };
-  }
+}
 
-  onMouseMove(event: MouseEvent): void {
-    if (this.isSelecting) {
-      const imgElement = event.target as HTMLImageElement;
-      const rect = imgElement.getBoundingClientRect();
-      const currentX = event.clientX - rect.left;
-      const currentY = event.clientY - rect.top;
+  
 
-      // Update selection box dimensions
-      this.selectionBox.width = Math.abs(currentX - this.startX);
-      this.selectionBox.height = Math.abs(currentY - this.startY);
-      this.selectionBox.x = Math.min(this.startX, currentX);
-      this.selectionBox.y = Math.min(this.startY, currentY);
-    }
+onMouseMove(event: MouseEvent): void {
+  if (this.isSelecting) {
+    const imgElement = event.target as HTMLImageElement;
+    const rect = imgElement.getBoundingClientRect();
+
+    const imgWidth = 600; // عرض الصورة القياسي
+    const aspectRatio = imgElement.naturalHeight / imgElement.naturalWidth; // نسبة أبعاد الصورة
+    const imgHeight = imgWidth * aspectRatio; // حساب الارتفاع بناءً على العرض
+
+    // تحويل إحداثيات الماوس إلى نظام الصورة (600x auto height)
+    const currentX = ((event.clientX - rect.left) / rect.width) * imgWidth;
+    const currentY = ((event.clientY - rect.top) / rect.height) * imgHeight;
+
+    this.selectionBox.width = Math.abs(currentX - this.startX);
+    this.selectionBox.height = Math.abs(currentY - this.startY);
+    this.selectionBox.x = Math.min(this.startX, currentX);
+    this.selectionBox.y = Math.min(this.startY, currentY);
   }
+}
+
+  
 
   onMouseUp(): void {
     if (this.isSelecting) {
-      // Stop selecting and save the box
       this.isSelecting = false;
-      if (this.isGlobal == true) {
+  
+      if (this.isGlobal) {
         this.globalSelectionBox = { 
           x: this.selectionBox.x, 
           y: this.selectionBox.y, 
           width: this.selectionBox.width, 
           height: this.selectionBox.height 
         };
-    
+  
         const selectionPoints: [[number, number], [number, number]] = [
-          [this.selectionBox.x, this.selectionBox.y],  // Top-left corner
-          [this.selectionBox.x + this.selectionBox.width, this.selectionBox.y + this.selectionBox.height] // Bottom-right corner
+          [this.globalSelectionBox.x, this.globalSelectionBox.y],  
+          [this.globalSelectionBox.x + this.globalSelectionBox.width, this.globalSelectionBox.y + this.globalSelectionBox.height]
         ];
-        this._UploadService.setSelectedBox(selectionPoints); 
-    
-        this.globalSelectionBox = this.selectionBox;
-        this._UploadService.setSelectedBox(this.globalSelectionBox)
-        console.log(this.globalSelectionBox)
-      } else{
+  
+        this._UploadService.setSelectedBox(selectionPoints);
+        console.log('Corrected Global Selection:', this.globalSelectionBox);
+      } else {
         this.selectionBoxes.push({ ...this.selectionBox });
         console.log('Final Selection Box:', this.selectionBox);
       }
-      // Add finalized selection box to array
-      
-
-      this.resetSelectionBox(); // Reset for next selection
+  
+      this.resetSelectionBox();
     }
   }
+  
 
   // Function to process the response
   processApiResponse(response: any, model: any): void {

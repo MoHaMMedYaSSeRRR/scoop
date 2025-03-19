@@ -951,3 +951,20 @@ interface Page {
   page_number: number;
   questions: { [key: string]: Question };
 }
+interface Bubble {
+  circle: [number, number, number];
+  selected: boolean;
+  correct: boolean;
+}
+
+interface Group {
+  bubbles: Bubble[];
+  errors: string | null;
+}
+
+
+
+interface Page {
+  page_number: number;
+  questions: { [key: string]: Question };
+}
