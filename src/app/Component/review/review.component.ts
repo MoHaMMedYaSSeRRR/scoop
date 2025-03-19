@@ -42,7 +42,7 @@ interface StudentMarks {
 })
 export class ReviewComponent implements OnInit {
   question_data: any[] = [];
-  studentsScores: StudentScores[] = [];
+
 
   pdfImages: any[] = [];
   currentPage: number = 0;
@@ -85,6 +85,11 @@ data:any;
   showScore=false;
   omrResponse: any;
   pdfFile!:File;
+
+  studentsScores: StudentScores[] = [];
+  currentErrorIndex: number = 0;errorPages: number[] = []; // Stores only pages with errors
+  errorBorders: { [key: number]: { x: number; y: number; width: number; height: number; color: string }[] } = {};
+
   constructor(private _UploadService: UploadService) {}
 
   ngOnInit(): void {
@@ -101,36 +106,42 @@ data:any;
     });
     
         // this.omrResponse =examData;
-        this.loadPdfImages(this.pdfFile);
-        this.getPagesWithErrors();
         this.getAllPagesWithErrors();
+        // this.getPagesWithErrors();
+      console.log(this.currentPage)
+        // this.processOmrResponse();
+      console.log(this.currentPage)
+        this.loadPdfImages(this.pdfFile);
+      console.log(this.currentPage)
+      console.log(this.currentPage)
+      console.log(this.currentPage)
+
 
         // this.filterErrorPages();
-        // this.extractValidSelections();
         // this.loadFilteredPdfImages();
         // this.pdfUrl = this._UploadService.getPdfUrl();
     // console.log('Retrieved PDF URL:', this.pdfUrl);
     // this.loadPdfImages(this.pdfUrl);
     // this.studentsScores = this._UploadService.getScores(); // Load student scores from the service
     // console.log(this.studentsScores);
-    const rawData = this._UploadService.getdata();
-    this.updateScores();
-    if(this.currentPage==0){
-      this.currentScore = this.finalScore = this.studentsScores[2].maxGrades;
-    }
-    if (rawData && rawData.questions) {
-      this.question_data = this.convertQuestionsToArray(rawData.questions);
-      console.log('Question Data:', this.question_data);
-    } else {
-      console.error('Failed to load question data:', rawData);
-      this.question_data = []; // Initialize with an empty array
-      alert('Error loading question data. Please try again later.');
-    }
-    this._UploadService.selectedBox$.subscribe({
-      next:(res)=>{
-        this.globalSelectionBox=res;
-      }
-    })
+    // const rawData = this._UploadService.getdata();
+    // this.updateScores();
+    // if(this.currentPage==0){
+    //   this.currentScore = this.finalScore = this.studentsScores[2].maxGrades;
+    // }
+    // if (rawData && rawData.questions) {
+    //   this.question_data = this.convertQuestionsToArray(rawData.questions);
+    //   console.log('Question Data:', this.question_data);
+    // } else {
+    //   console.error('Failed to load question data:', rawData);
+    //   this.question_data = []; // Initialize with an empty array
+    //   alert('Error loading question data. Please try again later.');
+    // }
+    // this._UploadService.selectedBox$.subscribe({
+    //   next:(res)=>{
+    //     this.globalSelectionBox=res;
+    //   }
+    // })
   }
 
   async convertPdfToImages(file: File): Promise<string[]> {
@@ -366,24 +377,24 @@ data:any;
     this.selectionBoxes = this.pageSelections[page] || []; // Load saved selections if available
   }
 
-  goToPreviousPage() {
-    if (this.currentPage > 0) {
-      this.saveCurrentPageSelections(); // Save current page's selections
-      this.currentPage--; // Go back to the previous page
-      this.loadPageSelections(this.currentPage); // Load selections for the previous page
-      this.updateScores();
-    }
+  // goToPreviousPage() {
+  //   if (this.currentPage > 0) {
+  //     this.saveCurrentPageSelections(); // Save current page's selections
+  //     this.currentPage--; // Go back to the previous page
+  //     this.loadPageSelections(this.currentPage); // Load selections for the previous page
+  //     this.updateScores();
+  //   }
 
-  }
+  // }
 
-  goToNextPage() {
-    if (this.currentPage < this.userPageCount - 1) {
-      this.saveCurrentPageSelections(); // Save current page's selections
-      this.currentPage++; // Move to the next page
-      this.loadPageSelections(this.currentPage); // Load selections for the next page
-      this.updateScores();
-    }
-  }
+  // goToNextPage() {
+  //   if (this.currentPage < this.userPageCount - 1) {
+  //     this.saveCurrentPageSelections(); // Save current page's selections
+  //     this.currentPage++; // Move to the next page
+  //     this.loadPageSelections(this.currentPage); // Load selections for the next page
+  //     this.updateScores();
+  //   }
+  // }
 
   remarkQuestion(questionNumber: number, updatedScore: number) {
     const student = this.studentsScores.find(
@@ -648,7 +659,7 @@ getNormalizedClick(event: MouseEvent, imgElement: HTMLImageElement) {
 
 /** ✅ Get the current page data */
 getPageData() {
-  const pageData = this.omrResponse.find((p: any) => p.page_number === this.currentPage + 1);
+  const pageData = this.omrResponse.find((p: any) => p.page_number === this.currentPage);
   if (!pageData) {
       console.error(`⚠️ No data found for page ${this.currentPage + 1}`);
       return null;
@@ -711,59 +722,102 @@ reviewOMR() {
 }
 
 getAllPagesWithErrors() {
-  this.errorQuestions = []; // Clear previous errors
+  this.errorQuestions = [];
+  this.errorBorders = {}; // Ensure it's an object, not an array
+  const errorPagesSet = new Set<number>();
 
   this.omrResponse.forEach((pageData: any) => {
+      const pageErrors: { x: number; y: number; width: number; height: number; color: string }[] = []; // Explicit type
+
       Object.entries(pageData.questions).forEach(([questionNumber, questionData]: [string, any]) => {
           questionData.groups.forEach((group: any, groupIndex: number) => {
               if (group.errors) {
                   this.errorQuestions.push({
                       page: pageData.page_number,
                       questionNumber,
-                      subQuestion: groupIndex + 1, // ✅ Fix: Add +1 to group index
+                      subQuestion: groupIndex + 1,
                       errors: group.errors
+                  });
+
+                  errorPagesSet.add(pageData.page_number);
+
+                  // Ensure we have valid bubbles
+                  if (!group.bubbles || group.bubbles.length === 0) return;
+
+                  const bubbles = group.bubbles.map((b: any) => b.circle);
+                  const minX = Math.min(...bubbles.map((b: any) => b[0]));
+                  const minY = Math.min(...bubbles.map((b: any) => b[1]));
+                  const maxX = Math.max(...bubbles.map((b: any) => b[0]));
+                  const maxY = Math.max(...bubbles.map((b: any) => b[1]));
+
+                  // Add dynamic padding for small areas
+                  const padding = 10;
+                  const width = maxX - minX + padding;
+                  const height = maxY - minY + padding;
+
+                  // Determine border color
+                  let borderColor = "#ff0000"; // Default: No answer
+                  if (group.errors === "There's more than one answer") {
+                      borderColor = "#0000ff"; // Multiple answers
+                  }
+
+                  // Store errors per page
+                  pageErrors.push({
+                      x: minX - padding / 2,
+                      y: minY - padding / 2,
+                      width: width,
+                      height: height,
+                      color: borderColor
                   });
               }
           });
       });
+
+      // Assign page-specific errors
+      if (pageErrors.length > 0) {
+          this.errorBorders[pageData.page_number] = pageErrors;
+      }
   });
 
-  console.log("🚨 جميع الأسئلة التي تحتوي على أخطاء:", this.errorQuestions);
+  this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
+  
+  if (this.errorPages.length > 0) {
+      this.currentErrorIndex = 0;
+      this.currentPage = this.errorPages[this.currentErrorIndex];
+  }
+
+  console.log("🚨 Pages with errors:", this.errorPages);
+  console.log("🖼️ Error Borders:", this.errorBorders);
 }
 
 
-getPagesWithErrors() {
-  const pagesWithErrors = this.omrResponse
-      .filter((page: any) => page.page_number !== 1) // Exclude Page 1 (Model Answer)
-      .filter((page: any) => Object.values(page.questions).some((q: any) => q.errors))
-      .map((page: any) => page.page_number);
-
-  console.log(`🚨 Pages with errors (excluding Page 1): ${pagesWithErrors.join(', ')}`);
-  return pagesWithErrors;
-}
 
 onMouseDown(event: MouseEvent) {
   const imgElement = event.target as HTMLImageElement;
-  if (!imgElement) {
-      console.error("❌ Image element not found!");
+  if (!imgElement) return;
+
+  const { offsetX, offsetY } = this.getNormalizedClick(event, imgElement);
+
+  const insideErrorArea = (this.errorBorders[this.currentPage] || []).some((border) => {
+    return offsetX >= border.x && offsetX <= border.x + border.width &&
+           offsetY >= border.y && offsetY <= border.y + border.height;
+  });
+
+  if (!insideErrorArea) {
+      console.warn("❌ Click ignored! Not inside an error-marked area.");
       return;
   }
 
-  // Normalize click coordinates
-  const { offsetX, offsetY } = this.getNormalizedClick(event, imgElement);
-  console.log(`📍 Clicked at (${offsetX}, ${offsetY}) - Circle Center`);
-
-  // Find the current page data
+  // Proceed with question selection logic
   const pageData = this.getPageData();
   if (!pageData) return;
 
-  // Find the clicked question
   const foundQuestionKey = this.getClickedQuestion(offsetX, offsetY, pageData);
   if (!foundQuestionKey) return;
 
-  // Find the closest bubble and mark selection
   this.updateBubbleSelection(offsetX, offsetY, pageData.questions[foundQuestionKey], foundQuestionKey);
 }
+
 
 getClickedQuestion(offsetX: number, offsetY: number, pageData: any) {
   const tolerance = 12;
@@ -864,9 +918,10 @@ updateBubbleSelection(offsetX: number, offsetY: number, foundQuestionData: any, 
           this.selectionCircles[this.currentPage] = [];
       }
 
+      // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
       this.selectionCircles[this.currentPage].push({
-          x: offsetX,
-          y: offsetY,
+          x: bestMatch.circle[0],  // Use found bubble X
+          y: bestMatch.circle[1],  // Use found bubble Y
           radius: circleRadius,
           isCorrect,
       });
@@ -877,6 +932,77 @@ updateBubbleSelection(offsetX: number, offsetY: number, foundQuestionData: any, 
   }
 }
 
+getPagesWithErrors() {
+  if (!Array.isArray(this.omrResponse)) {
+    console.error("❌ Error: this.omrResponse is not an array", this.omrResponse);
+    return;
+  }
+
+  this.errorPages = this.omrResponse
+    .filter((page: any) => page.page_number !== 1) // Exclude Model Answer Page 1
+    .filter((page: any) => page.questions && Object.values(page.questions).some((q: any) => q.errors))
+    .map((page: any) => page.page_number);
+
+  if (this.errorPages.length > 0) {
+    this.currentErrorIndex = 0; // Start from the first error page
+  }
+
+  console.log(`🚨 Pages with errors: ${this.errorPages.join(', ')}`);
+}
 
 
+goToPreviousPage() {
+  if (this.currentErrorIndex > 0) {
+    this.currentErrorIndex--;
+    this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to previous error page
+  }
+}
+
+goToNextPage() {
+  if (this.currentErrorIndex < this.errorPages.length - 1) {
+    this.currentErrorIndex++;
+    this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to next error page
+  }
+}
+
+filteredPages: any[] = [];
+detectedCircles: { [key: number]: { x: number; y: number; radius: number; isCorrect: boolean }[] } = {};
+
+processOmrResponse(): void {
+  if (!this.omrResponse) return;
+
+  this.detectedCircles = {}; // Reset detected circles for each page
+
+  this.omrResponse.forEach((page: { page_number: number; questions: any }) => {
+    let pageCircles: { x: number; y: number; radius: number; isCorrect: boolean }[] = [];
+
+    Object.keys(page.questions).forEach((questionKey: string) => {
+      let question = page.questions[questionKey];
+
+      if (question.groups && Array.isArray(question.groups)) {
+        question.groups.forEach((group: { bubbles: any[]; errors?: string }) => {
+          if (!group.errors) { // Only process groups without errors
+            group.bubbles.forEach((bubble: { circle: number[]; selected: boolean; correct: boolean }) => {
+              if (bubble.selected) {
+                pageCircles.push({
+                  x: bubble.circle[0],
+                  y: bubble.circle[1],
+                  radius: bubble.circle[2],
+                  isCorrect: bubble.correct
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+
+    this.detectedCircles[page.page_number] = pageCircles;
+  });
+}
+
+}
+interface Page {
+  page_number: number;
+  questions: { [key: string]: Question };
 }

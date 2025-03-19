@@ -228,4 +228,8 @@
     border-radius: 50%;    
     transform: translate(-50%, -50%);
   }
-  
+  .error-box {
+    position: absolute;
+    border: 3px solid;
+    pointer-events: none;
+}

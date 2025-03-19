@@ -344,9 +344,9 @@ export class UploadpdfComponent {
         console.log(err);
       },
     });
-  } 
+   } 
   
- 
+  
 
   onCallApi() {
     // this._UploadService.setSelectedBox(this.globalSelectionBox);
