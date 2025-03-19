@@ -17,13 +17,7 @@ export class UploadService {
     private _HttpClient:HttpClient
   ) { }
   upload(data: any): Observable<any> {
-    return this._HttpClient.post('/scoob-api/step-1', data).pipe(
-      timeout(30000), // 30 seconds
-      catchError(error => {
-        console.error('Request timed out:', error);
-        return throwError(() => error);
-      })
-    );
+    return this._HttpClient.post('/scoob-api/step-1', data);
   }
   pdfFile:any;
   setdata(data: any, file: File) {
