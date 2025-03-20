@@ -17,8 +17,10 @@ export class UploadService {
     private _HttpClient:HttpClient
   ) { }
   upload(data: any): Observable<any> {
-    return this._HttpClient.post('/scoob-api/step-1', data);
+    const apiUrl = 'https://scoob.cc/step-1'; // Use full URL
+    return this._HttpClient.post(apiUrl, data);
   }
+  
   pdfFile:any;
   setdata(data: any, file: File) {
     this.dataSubject.next(data);
