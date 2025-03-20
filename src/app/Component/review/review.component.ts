@@ -701,25 +701,40 @@ getArabicNumber(num: any) {
 }
 
 reviewOMR() {
-  const dragValue = this._UploadService.getSelectedBox(); 
-  console.log("📦 Drag Value:", dragValue);
+  const box = this._UploadService.getSelectedBox(); 
 
+  if (!box || !box.x_min || !box.y_min || !box.x_max || !box.y_max) {
+    console.error("❌ Invalid box data:", box);
+    return;
+  }
+
+  // Calculate the center and radius of the circle
+  const x_center = Math.round((box.x_min + box.x_max) / 2);
+  const y_center = Math.round((box.y_min + box.y_max) / 2);
+  const radius = Math.round(Math.max(box.x_max - box.x_min, box.y_max - box.y_min) / 2);
+
+  const circleData = {x: x_center,y_center,radius };
+  console.log("⭕ Circle Data:", circleData);
+
+  // Update OMR data with circular selection
   const updatedOMR = {
-      ...this.omrResponse, // ✅ Keep existing OMR data
-      drag: dragValue // ✅ Add `drag` after all pages
+    ...this.omrResponse, // ✅ Keep existing OMR data
+    drag: circleData // ✅ Store circle instead of box
   };
-  this._UploadService.reviewOmr(updatedOMR).subscribe({
-    next:(res)=>{
-      console.log(res);
-    }, 
-    error:(err)=>{
-      console.log(err);
-    }
-  })
 
-  console.log("📄 Updated OMR JSON with Drag:", updatedOMR);
+  this._UploadService.reviewOmr(updatedOMR).subscribe({
+    next: (res) => {
+      console.log("✅ API Response:", res);
+    },
+    error: (err) => {
+      console.error("❌ API Error:", err);
+    }
+  });
+
+  console.log("📄 Updated OMR JSON with Circle:", updatedOMR);
   return updatedOMR;
 }
+
 
 getAllPagesWithErrors() {
   this.errorQuestions = [];

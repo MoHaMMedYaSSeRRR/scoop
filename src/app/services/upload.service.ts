@@ -61,8 +61,8 @@ export class UploadService {
   getSelectedBox() {
     return this.selectedBoxSubject.value; 
   }
-  reviewOmr(data:any):Observable<any>{
-    return this._HttpClient.post('/scoob-api/final' ,data);
-
+   reviewOmr(data:any): Observable<any> {
+    const apiUrl = 'https://scoob.cc/final'; // Use full URL
+    return this._HttpClient.post(apiUrl, data);
   }
 }
