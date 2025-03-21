@@ -96,11 +96,11 @@ export class ReviewComponent implements OnInit {
   constructor(private _UploadService: UploadService) {}
 
   ngOnInit(): void {
-    this._UploadService.data$.subscribe((response) => {
-      if (response) {
-        this.omrResponse = response;
-      }
-    });
+    // this._UploadService.data$.subscribe((response) => {
+    //   if (response) {
+    //     this.omrResponse = response;
+    //   }
+    // });
     this._UploadService.file$.subscribe((file) => {
       if (file) {
         this.pdfFile = file;
@@ -108,13 +108,13 @@ export class ReviewComponent implements OnInit {
       }
     });
 
-    // this.omrResponse =examData;
-    this.getAllPagesWithErrors();
+    this.omrResponse =examData;
     // this.getPagesWithErrors();
     console.log(this.currentPage);
     // this.processOmrResponse();
     console.log(this.currentPage);
     this.loadPdfImages(this.pdfFile);
+    this.getAllPagesWithErrors();
     console.log(this.currentPage);
     console.log(this.currentPage);
     console.log(this.currentPage);
