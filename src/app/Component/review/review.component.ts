@@ -772,9 +772,10 @@ export class ReviewComponent implements OnInit {
     console.log("⭕ Circle Data:", circleData);
   
     // Update OMR data with circular selection
-  const updatedOMR = {
-  pages: { ...this.omrResponse }, // Wrap everything inside 'pages'
-  drag: circleData // Add 'drag' separately
+const updatedOMR = {
+  pages: { ...this.omrResponse }, // Wrap existing data inside 'pages'
+  number_of_pages: this.omrResponse.length, // Count total pages
+  drag: circleData // Store circle data
 };
 
   
