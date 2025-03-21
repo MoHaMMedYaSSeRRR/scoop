@@ -23,7 +23,7 @@ export class UploadService {
   // }
   
   upload(data: any): Observable<any> {
-    return this._HttpClient.post(`http://127.0.0.1:8000/step-1`, data);
+    return this._HttpClient.post(`${this.baseUrl}/step-1`, data);
   }
   pdfFile:any;
   setdata(data: any, file: File) {
@@ -70,6 +70,6 @@ export class UploadService {
   //   return this._HttpClient.post(apiUrl, data);
   // }
   reviewOmr(data: any): Observable<any> {
-    return this._HttpClient.post(`http://127.0.0.1:8000/final`, data);
+    return this._HttpClient.post(`${this.baseUrl}/final`, data);
   }
 }

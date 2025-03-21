@@ -330,20 +330,20 @@ export class UploadpdfComponent {
   
     const pdfJson = JSON.stringify(finalPayload);
     this.formData.append('data', pdfJson);
-      this._UploadService.setdata('res.response', this.selectedFile); 
-      this.router.navigate(['/review'])
+      // this._UploadService.setdata('res.response', this.selectedFile); 
+      // this.router.navigate(['/review'])
 
     this.isshow = false;
-    // this._UploadService.upload(this.formData).subscribe({
-    //   next: (res) => {
-    //     console.log(res)
-    //     this._UploadService.setdata(res.response, this.selectedFile); 
-    //     this.router.navigate(['/review'])
-    //   },
-    //   error: (err) => {
-    //     console.log(err);
-    //   },
-    // });
+    this._UploadService.upload(this.formData).subscribe({
+      next: (res) => {
+        console.log(res)
+        this._UploadService.setdata(res.response, this.selectedFile); 
+        this.router.navigate(['/review'])
+      },
+      error: (err) => {
+        console.log(err);
+      },
+    });
    } 
   
   
