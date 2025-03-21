@@ -1,15 +1,9 @@
-import {
-  Component,
-  ElementRef,
-  OnInit,
-  ViewChild,
-} from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { UploadService } from 'src/app/services/upload.service';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import { jsPDF } from 'jspdf';
-import examData from '../../../assets/EXAM-12-response.json'
+import examData from '../../../assets/EXAM-12-response.json';
 
-  
 interface Question {
   position: number[][][];
   bubbles: number;
@@ -43,7 +37,6 @@ interface StudentMarks {
 export class ReviewComponent implements OnInit {
   question_data: any[] = [];
 
-
   pdfImages: any[] = [];
   currentPage: number = 0;
   userPageCount: number = 0;
@@ -65,7 +58,8 @@ export class ReviewComponent implements OnInit {
   isSelectionBox: boolean = true;
 
   // The global selection box
-  globalSelectionBox = { x: 0, y: 0, width: 0, height: 0 };  selectionBoxes: { x: number; y: number; width: number; height: number }[] =
+  globalSelectionBox = { x: 0, y: 0, width: 0, height: 0 };
+  selectionBoxes: { x: number; y: number; width: number; height: number }[] =
     [];
   selectionStartX: number = 0;
   selectionStartY: number = 0;
@@ -79,16 +73,25 @@ export class ReviewComponent implements OnInit {
   } = {};
   currentStudentId!: number;
   newmarks!: StudentMarks[];
-data:any;
-  showfinalize=false;
-  showDownload=false;
-  showScore=false;
+  data: any;
+  showfinalize = false;
+  showDownload = false;
+  showScore = false;
   omrResponse: any;
-  pdfFile!:File;
+  pdfFile!: File;
 
   studentsScores: StudentScores[] = [];
-  currentErrorIndex: number = 0;errorPages: number[] = []; // Stores only pages with errors
-  errorBorders: { [key: number]: { x: number; y: number; width: number; height: number; color: string }[] } = {};
+  currentErrorIndex: number = 0;
+  errorPages: number[] = []; // Stores only pages with errors
+  errorBorders: {
+    [key: number]: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      color: string;
+    }[];
+  } = {};
 
   constructor(private _UploadService: UploadService) {}
 
@@ -96,30 +99,29 @@ data:any;
     this._UploadService.data$.subscribe((response) => {
       if (response) {
         this.omrResponse = response;
-            }
+      }
     });
     this._UploadService.file$.subscribe((file) => {
       if (file) {
         this.pdfFile = file;
-        console.log(this.pdfFile)
+        console.log(this.pdfFile);
       }
     });
-    
-        // this.omrResponse =examData;
-        this.getAllPagesWithErrors();
-        // this.getPagesWithErrors();
-      console.log(this.currentPage)
-        // this.processOmrResponse();
-      console.log(this.currentPage)
-        this.loadPdfImages(this.pdfFile);
-      console.log(this.currentPage)
-      console.log(this.currentPage)
-      console.log(this.currentPage)
 
+    // this.omrResponse =examData;
+    this.getAllPagesWithErrors();
+    // this.getPagesWithErrors();
+    console.log(this.currentPage);
+    // this.processOmrResponse();
+    console.log(this.currentPage);
+    this.loadPdfImages(this.pdfFile);
+    console.log(this.currentPage);
+    console.log(this.currentPage);
+    console.log(this.currentPage);
 
-        // this.filterErrorPages();
-        // this.loadFilteredPdfImages();
-        // this.pdfUrl = this._UploadService.getPdfUrl();
+    // this.filterErrorPages();
+    // this.loadFilteredPdfImages();
+    // this.pdfUrl = this._UploadService.getPdfUrl();
     // console.log('Retrieved PDF URL:', this.pdfUrl);
     // this.loadPdfImages(this.pdfUrl);
     // this.studentsScores = this._UploadService.getScores(); // Load student scores from the service
@@ -146,7 +148,7 @@ data:any;
 
   async convertPdfToImages(file: File): Promise<string[]> {
     const images: string[] = [];
-  
+
     // Read file as ArrayBuffer
     const fileReader = new FileReader();
     const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
@@ -154,37 +156,35 @@ data:any;
       fileReader.onerror = (error) => reject(error);
       fileReader.readAsArrayBuffer(file);
     });
-  
+
     // Convert ArrayBuffer to Uint8Array
     const uint8Array = new Uint8Array(arrayBuffer);
-  
+
     // Load PDF from Uint8Array
     const pdf = await pdfjsLib.getDocument(uint8Array).promise;
     const numPages = pdf.numPages;
-  
+
     const imagePromises = Array.from({ length: numPages }, async (_, index) => {
       const page = await pdf.getPage(index + 1);
       const viewport = page.getViewport({ scale: 1.5 });
-  
+
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d', { willReadFrequently: true });
-  
+
       if (!context) {
         throw new Error('Failed to get canvas context');
       }
-  
+
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-  
+
       await page.render({ canvasContext: context, viewport }).promise;
       return canvas.toDataURL('image/png');
     });
-  
+
     return Promise.all(imagePromises);
   }
-  
-  
-  
+
   async loadPdfImages(file: File) {
     this.isLoading = true;
     try {
@@ -197,124 +197,134 @@ data:any;
       this.isLoading = false;
     }
   }
-  
 
   downloadMarkedPdf() {
     if (!this.pdfImages || this.pdfImages.length === 0) {
-        console.error('No images available to convert to PDF');
-        return;
+      console.error('No images available to convert to PDF');
+      return;
     }
 
     const pdf = new jsPDF();
     const promises: Promise<void>[] = [];
 
     this.pdfImages.forEach((image, pageIndex) => {
-        promises.push(
-            new Promise<void>((resolve) => {
-                const img = new Image();
-                img.src = image;
+      promises.push(
+        new Promise<void>((resolve) => {
+          const img = new Image();
+          img.src = image;
 
-                img.onload = () => {
-                    // Set canvas size to match the image size (600x800)
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    if (!context) return;
+          img.onload = () => {
+            // Set canvas size to match the image size (600x800)
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            if (!context) return;
 
-                    canvas.width = 600;  // Image width
-                    canvas.height = 800; // Image height
+            canvas.width = 600; // Image width
+            canvas.height = 800; // Image height
 
-                    // Draw the image without margins (exact position)
-                    context.drawImage(img, 0, 0, 600, 800);
+            // Draw the image without margins (exact position)
+            context.drawImage(img, 0, 0, 600, 800);
 
-                    // Draw selection boxes (ensure they are after the image)
-                    const selections = this.pageSelections[pageIndex] || [];
-                    selections.forEach(({ x, y, width, height }) => {
-                        // Make sure selection boxes have no margin and are drawn in the correct position
-                        context.strokeStyle = '#01ff0a'; // Green for selection boxes
-                        context.lineWidth = 2;
-                        context.strokeRect(x, y, width, height);
-                    });
+            // Draw selection boxes (ensure they are after the image)
+            const selections = this.pageSelections[pageIndex] || [];
+            selections.forEach(({ x, y, width, height }) => {
+              // Make sure selection boxes have no margin and are drawn in the correct position
+              context.strokeStyle = '#01ff0a'; // Green for selection boxes
+              context.lineWidth = 2;
+              context.strokeRect(x, y, width, height);
+            });
 
-                    // For the first page, use the max grade of page 2
-                    let currentScore = 0;
-                    let finalScore = 0;
+            // For the first page, use the max grade of page 2
+            let currentScore = 0;
+            let finalScore = 0;
 
-                    // Display max grade at top and bottom of page 1
-                    if (pageIndex === 0) {
-                        const studentPage2 = this.studentsScores.find(s => s.page === 2);
-                        if (studentPage2) {
-                            currentScore = studentPage2.maxGrades || 0;
-                            finalScore = studentPage2.maxGrades || 0;
-                        }
-                    } else {
-                        // For other pages, use the regular logic
-                        const student = this.studentsScores.find(s => s.page === pageIndex + 1);
-                        if (student) {
-                            currentScore = student.totalGrades || 0;
-                            finalScore = student.maxGrades || 0;
-                        }
-                    }
+            // Display max grade at top and bottom of page 1
+            if (pageIndex === 0) {
+              const studentPage2 = this.studentsScores.find(
+                (s) => s.page === 2
+              );
+              if (studentPage2) {
+                currentScore = studentPage2.maxGrades || 0;
+                finalScore = studentPage2.maxGrades || 0;
+              }
+            } else {
+              // For other pages, use the regular logic
+              const student = this.studentsScores.find(
+                (s) => s.page === pageIndex + 1
+              );
+              if (student) {
+                currentScore = student.totalGrades || 0;
+                finalScore = student.maxGrades || 0;
+              }
+            }
 
-                    // Draw global circle and scores
-                    if (this.isGlobal && this.globalSelectionBox.width > 0) {
-                        const { x, y, width, height } = this.globalSelectionBox;
+            // Draw global circle and scores
+            if (this.isGlobal && this.globalSelectionBox.width > 0) {
+              const { x, y, width, height } = this.globalSelectionBox;
 
-                        // Draw the circle
-                        context.beginPath();
-                        context.arc(
-                            x + width / 2,
-                            y + height / 2,
-                            width / 2,
-                            0,
-                            2 * Math.PI
-                        );
-                        context.strokeStyle = '#01ff0a'; // Green for the circle
-                        context.lineWidth = 2;
-                        context.stroke();
+              // Draw the circle
+              context.beginPath();
+              context.arc(
+                x + width / 2,
+                y + height / 2,
+                width / 2,
+                0,
+                2 * Math.PI
+              );
+              context.strokeStyle = '#01ff0a'; // Green for the circle
+              context.lineWidth = 2;
+              context.stroke();
 
-                        // Draw horizontal line inside the circle
-                        context.beginPath();
-                        context.moveTo(x, y + height / 2); // Start at the left
-                        context.lineTo(x + width, y + height / 2); // End at the right
-                        context.stroke();
+              // Draw horizontal line inside the circle
+              context.beginPath();
+              context.moveTo(x, y + height / 2); // Start at the left
+              context.lineTo(x + width, y + height / 2); // End at the right
+              context.stroke();
 
-                        // Draw scores at the top and bottom of the circle
-                        context.font = 'bold 14px Arial';
-                        context.fillStyle = '#01ff0a';
-                        context.textAlign = 'center';
-                        // Draw top score
-                        context.fillText(
-                            `${currentScore}`,
-                            x + width / 2,
-                            y + height / 2 - 10 // Slightly above the center line
-                        );
-                        // Draw bottom score
-                        context.fillText(
-                            `${finalScore}`,
-                            x + width / 2,
-                            y + height / 2 + 20 // Slightly below the center line
-                        );
-                    }
+              // Draw scores at the top and bottom of the circle
+              context.font = 'bold 14px Arial';
+              context.fillStyle = '#01ff0a';
+              context.textAlign = 'center';
+              // Draw top score
+              context.fillText(
+                `${currentScore}`,
+                x + width / 2,
+                y + height / 2 - 10 // Slightly above the center line
+              );
+              // Draw bottom score
+              context.fillText(
+                `${finalScore}`,
+                x + width / 2,
+                y + height / 2 + 20 // Slightly below the center line
+              );
+            }
 
-                    // Convert canvas to image
-                    const imgData = canvas.toDataURL('image/png');
+            // Convert canvas to image
+            const imgData = canvas.toDataURL('image/png');
 
-                    // Add the image to the PDF
-                    if (pageIndex > 0) {
-                        pdf.addPage();
-                    }
-                    pdf.addImage(imgData, 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
-                    resolve();
-                };
-            })
-        );
+            // Add the image to the PDF
+            if (pageIndex > 0) {
+              pdf.addPage();
+            }
+            pdf.addImage(
+              imgData,
+              'PNG',
+              0,
+              0,
+              pdf.internal.pageSize.getWidth(),
+              pdf.internal.pageSize.getHeight()
+            );
+            resolve();
+          };
+        })
+      );
     });
 
     // Save the PDF after processing all images
     Promise.all(promises).then(() => {
-        pdf.save('marked_pdf_with_positions.pdf');
+      pdf.save('marked_pdf_with_positions.pdf');
     });
-}
+  }
   clearCanvas(): void {
     if (this.canvasContext) {
       const canvas = this.canvasRef.nativeElement;
@@ -350,7 +360,6 @@ data:any;
     this.canvasContext.strokeStyle = this.selectedColor;
   }
 
- 
   // Calculate total score dynamically based on all questions
   calculateTotalScore(student: StudentScores) {
     let total = 0;
@@ -360,7 +369,6 @@ data:any;
     student.total = total; // Update total score
     console.log(`Student ${student.studentId} total updated: ${student.total}`);
   }
-
 
   clearSelection(): void {
     this.selectionBoxes = [];
@@ -446,33 +454,33 @@ data:any;
     });
   }
 
+  markedSelectionArray: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }[] = [];
 
-  
-  markedSelectionArray: { x: number; y: number; width: number; height: number }[] = [];
-
-  
-
-  
   updateScoreForSelectedQuestions() {
     const currentPagePlusOne = this.currentPage + 1; // Adjust for 1-based page index
     console.log(`Updating scores for current page: ${currentPagePlusOne}`);
-  
+
     this.studentsScores.forEach((student) => {
       if (student.page === currentPagePlusOne) {
         console.log(`Processing scores for Student ID: ${student.studentId}`);
-  
+
         let totalMarks = student.totalGrades || 0;
-  
+
         if (typeof student.score === 'string') {
           student.score = {};
         }
-  
+
         this.question_data.forEach((question) => {
           if (Array.isArray(question.position)) {
-            question.position.forEach((posSet:any) => {
+            question.position.forEach((posSet: any) => {
               if (Array.isArray(posSet) && posSet.length === 2) {
                 const [point1, point2] = posSet;
-  
+
                 // Process each selection box (no need to remove, just check for marking)
                 this.selectionBoxes.forEach((selection) => {
                   // Skip if the point has already been marked
@@ -483,26 +491,38 @@ data:any;
                       marked.width === selection.width &&
                       marked.height === selection.height
                   );
-                  
+
                   if (!isAlreadyMarked) {
                     // Mark the selection
                     const isOverlapping = this.isOverlap(
-                      { x: selection.x, y: selection.y, width: selection.width, height: selection.height },
+                      {
+                        x: selection.x,
+                        y: selection.y,
+                        width: selection.width,
+                        height: selection.height,
+                      },
                       point1,
                       point2
                     );
-  
+
                     if (isOverlapping) {
                       // Add the marked selection to the markedSelectionArray
                       this.markedSelectionArray.push(selection);
-  
+
                       const points = question.points || 0;
-                      const currentScore = parseInt(student.score[question.question_number!] || '0', 10);
-                      student.score[question.question_number!] = (currentScore + points).toString();
+                      const currentScore = parseInt(
+                        student.score[question.question_number!] || '0',
+                        10
+                      );
+                      student.score[question.question_number!] = (
+                        currentScore + points
+                      ).toString();
                       totalMarks += points;
-  
+
                       console.log(
-                        `Marked point for Question ${question.question_number}: ${JSON.stringify(
+                        `Marked point for Question ${
+                          question.question_number
+                        }: ${JSON.stringify(
                           selection
                         )}, Updated Total Marks: ${totalMarks}`
                       );
@@ -513,7 +533,7 @@ data:any;
             });
           }
         });
-  
+
         student.totalGrades = totalMarks; // Update total grades
         console.log(
           `Final Total Grades for Student ID ${student.studentId}: ${student.totalGrades}`
@@ -521,13 +541,15 @@ data:any;
       }
     });
   }
-  
+
   currentScore: number = 0; // Store current score
   finalScore: number = 0; // Store final score
-  
-  
-   
-  isOverlap(selection: { x: number; y: number; width: number; height: number; }, point1: number[], point2: number[]): boolean {
+
+  isOverlap(
+    selection: { x: number; y: number; width: number; height: number },
+    point1: number[],
+    point2: number[]
+  ): boolean {
     // Calculate the selection's bottom-right corner
     const selectionMinX = selection.x;
     const selectionMinY = selection.y;
@@ -541,94 +563,112 @@ data:any;
     const rectMaxY = Math.max(point1[1], point2[1]);
 
     // Check if there's an overlap between the two rectangles
-    const isXOverlap = (selectionMaxX > rectMinX && selectionMinX < rectMaxX); // Check if the selection box is horizontally overlapping
-    const isYOverlap = (selectionMaxY > rectMinY && selectionMinY < rectMaxY); // Check if the selection box is vertically overlapping
+    const isXOverlap = selectionMaxX > rectMinX && selectionMinX < rectMaxX; // Check if the selection box is horizontally overlapping
+    const isYOverlap = selectionMaxY > rectMinY && selectionMinY < rectMaxY; // Check if the selection box is vertically overlapping
 
     // Return true if both x and y ranges overlap
     return isXOverlap && isYOverlap;
-}
+  }
 
+  onMouseMove(event: MouseEvent) {
+    if (!this.isSelecting) return;
+    const imageRect = (event.target as HTMLElement).getBoundingClientRect();
+    const currentX = event.clientX - imageRect.left;
+    const currentY = event.clientY - imageRect.top;
 
-onMouseMove(event: MouseEvent) {
-  if (!this.isSelecting) return;
-  const imageRect = (event.target as HTMLElement).getBoundingClientRect();
-  const currentX = event.clientX - imageRect.left;
-  const currentY = event.clientY - imageRect.top;
+    this.selectionBox.width = currentX - this.selectionBox.x;
+    this.selectionBox.height = currentY - this.selectionBox.y;
+  }
 
-  this.selectionBox.width = currentX - this.selectionBox.x;
-  this.selectionBox.height = currentY - this.selectionBox.y;
-}
-
-onMouseUp() {
-  if (this.isSelecting) {
- 
+  onMouseUp() {
+    if (this.isSelecting) {
       this.selectionBoxes.push({ ...this.selectionBox });
       this.updateScoreForSelectedQuestions();
       this.updateScores();
-      this.isSelecting=false
-  }
-}
-
-// Switch between global and page-specific selection
-showpay() {
-  this.isGlobal = !this.isGlobal; // Toggle between global and page selection
-  if (this.isGlobal) {
-    console.log('Global Box:', this.globalSelectionBox);
-  } else {
-    console.log('Page-Specific Selections:', this.selectionBoxes);
-  }
-}
-
-calculateLinePosition(): number {
-  const currentImage = this.pdfImages[this.currentPage] as { height: number };
-
-  const imageHeight = currentImage ? currentImage.height : 0;
-
-  return imageHeight / 2; // Middle height
-}
-
-
-// Update current score and final score based on current student and page
-updateScores() {
-  const student = this.studentsScores.find(s => s.page === this.currentPage + 1);
-  
-  if (student) {
-    if (this.currentPage === 0) {
-      // On the first page, set currentScore equal to finalScore
-      this.currentScore = student.maxGrades || 0;
-    } else {
-      // For other pages, use the regular logic
-      this.currentScore = student.totalGrades || 0;
+      this.isSelecting = false;
     }
-    this.finalScore = student.maxGrades || 0; // Set the final score regardless of the page
-  } else {
-    // Default values if no student data is found
-    this.currentScore = 0;
-    this.finalScore = 0;
   }
 
-  console.log(student);
-}
+  // Switch between global and page-specific selection
+  showpay() {
+    this.isGlobal = !this.isGlobal; // Toggle between global and page selection
+    if (this.isGlobal) {
+      console.log('Global Box:', this.globalSelectionBox);
+    } else {
+      console.log('Page-Specific Selections:', this.selectionBoxes);
+    }
+  }
 
+  calculateLinePosition(): number {
+    const currentImage = this.pdfImages[this.currentPage] as { height: number };
 
+    const imageHeight = currentImage ? currentImage.height : 0;
 
-selectionCircles: { [page: number]: { x: number; y: number; radius: number; isCorrect: boolean }[] } = {};
+    return imageHeight / 2; // Middle height
+  }
 
-  circleRadius: number = 6;  
-  validateSelection(selection: { x: number; y: number; isCorrect: boolean }, page: number) {
-    const pageData = this.omrResponse.find((p: any) => p.page_number === page + 1);
+  // Update current score and final score based on current student and page
+  updateScores() {
+    const student = this.studentsScores.find(
+      (s) => s.page === this.currentPage + 1
+    );
+
+    if (student) {
+      if (this.currentPage === 0) {
+        // On the first page, set currentScore equal to finalScore
+        this.currentScore = student.maxGrades || 0;
+      } else {
+        // For other pages, use the regular logic
+        this.currentScore = student.totalGrades || 0;
+      }
+      this.finalScore = student.maxGrades || 0; // Set the final score regardless of the page
+    } else {
+      // Default values if no student data is found
+      this.currentScore = 0;
+      this.finalScore = 0;
+    }
+
+    console.log(student);
+  }
+
+  selectionCircles: {
+    [page: number]: {
+      x: number;
+      y: number;
+      radius: number;
+      isCorrect: boolean;
+    }[];
+  } = {};
+
+  circleRadius: number = 6;
+  validateSelection(
+    selection: { x: number; y: number; isCorrect: boolean },
+    page: number
+  ) {
+    const pageData = this.omrResponse.find(
+      (p: any) => p.page_number === page + 1
+    );
     if (!pageData || !pageData.questions) return;
-  
+
     let isCorrect = false;
-  
+
     // Loop through all questions on the page
     Object.values(pageData.questions).forEach((question: any) => {
       question.groups.forEach((group: any) => {
-        if (group.circle && Array.isArray(group.circle) && group.circle.length === 2) {
+        if (
+          group.circle &&
+          Array.isArray(group.circle) &&
+          group.circle.length === 2
+        ) {
           const [[minX, minY], [maxX, maxY]] = group.circle;
-  
+
           // ✅ Check if the selected point is inside the correct range
-          if (selection.x >= minX && selection.x <= maxX && selection.y >= minY && selection.y <= maxY) {
+          if (
+            selection.x >= minX &&
+            selection.x <= maxX &&
+            selection.y >= minY &&
+            selection.y <= maxY
+          ) {
             if (group.correct) {
               isCorrect = true; // ✅ Mark selection as correct
             }
@@ -636,386 +676,481 @@ selectionCircles: { [page: number]: { x: number; y: number; radius: number; isCo
         }
       });
     });
-  
+
     // ✅ Update `isCorrect` status
     selection.isCorrect = isCorrect;
-  
+
     // ✅ Console log for debugging
-    console.log(`Page ${page + 1} - Selection (${selection.x}, ${selection.y}): ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
+    console.log(
+      `Page ${page + 1} - Selection (${selection.x}, ${selection.y}): ${
+        isCorrect ? '✅ Correct' : '❌ Incorrect'
+      }`
+    );
   }
 
-getNormalizedClick(event: MouseEvent, imgElement: HTMLImageElement) {
-  const fixedWidth = 600; // Fixed width
-  const rect = imgElement.getBoundingClientRect();
-  const scaleX = fixedWidth / rect.width;
-  const scaleY = scaleX; // Maintain aspect ratio
+  getNormalizedClick(event: MouseEvent, imgElement: HTMLImageElement) {
+    const fixedWidth = 600; // Fixed width
+    const rect = imgElement.getBoundingClientRect();
+    const scaleX = fixedWidth / rect.width;
+    const scaleY = scaleX; // Maintain aspect ratio
 
-  return {
-    offsetX: (event.clientX - rect.left) * scaleX,
-    offsetY: (event.clientY - rect.top) * scaleY
-  };
-}
+    return {
+      offsetX: (event.clientX - rect.left) * scaleX,
+      offsetY: (event.clientY - rect.top) * scaleY,
+    };
+  }
 
-
-/** ✅ Get the current page data */
-getPageData() {
-  const pageData = this.omrResponse.find((p: any) => p.page_number === this.currentPage);
-  if (!pageData) {
+  /** ✅ Get the current page data */
+  getPageData() {
+    const pageData = this.omrResponse.find(
+      (p: any) => p.page_number === this.currentPage
+    );
+    if (!pageData) {
       console.error(`⚠️ No data found for page ${this.currentPage + 1}`);
       return null;
+    }
+    return pageData;
   }
-  return pageData;
-}
 
+  errorQuestions: any[] = []; // ✅ Store errors for UI display
 
-
-errorQuestions: any[] = []; // ✅ Store errors for UI display
-
-/** ✅ Log errors and store them for display */
-logErrorQuestions(pageData: any) {
+  /** ✅ Log errors and store them for display */
+  logErrorQuestions(pageData: any) {
     this.errorQuestions = Object.entries(pageData.questions)
-        .filter(([_, questionData]: [string, any]) => questionData.errors)
-        .map(([questionNumber, questionData]: [string, any]) => ({
-            page: pageData.page_number,
-            questionNumber,
-            subQuestion: 2, // 🔥 Adjust if dynamic
-            errors: questionData.errors
-        }));
+      .filter(([_, questionData]: [string, any]) => questionData.errors)
+      .map(([questionNumber, questionData]: [string, any]) => ({
+        page: pageData.page_number,
+        questionNumber,
+        subQuestion: 2, // 🔥 Adjust if dynamic
+        errors: questionData.errors,
+      }));
 
     if (this.errorQuestions.length > 0) {
-        console.log(`🚨 الأخطاء في الصفحة ${this.getArabicNumber(pageData.page_number)}:`);
+      console.log(
+        `🚨 الأخطاء في الصفحة ${this.getArabicNumber(pageData.page_number)}:`
+      );
 
-        this.errorQuestions.forEach((error) => {
-            console.log(`❌ الصفحة ${this.getArabicNumber(error.page)}, السؤال ${this.getArabicNumber(error.questionNumber)}, الفرعي ${this.getArabicNumber(error.subQuestion)}`);
-            console.log(`🔹 ${error.errors}`);
-        });
+      this.errorQuestions.forEach((error) => {
+        console.log(
+          `❌ الصفحة ${this.getArabicNumber(
+            error.page
+          )}, السؤال ${this.getArabicNumber(
+            error.questionNumber
+          )}, الفرعي ${this.getArabicNumber(error.subQuestion)}`
+        );
+        console.log(`🔹 ${error.errors}`);
+      });
     }
-}
-/** ✅ Convert numbers to Arabic */
-getArabicNumber(num: any) {
-  const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-  return String(num)
-      .split("")
+  }
+  /** ✅ Convert numbers to Arabic */
+  getArabicNumber(num: any) {
+    const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return String(num)
+      .split('')
       .map((digit) => arabicNumbers[parseInt(digit, 10)])
-      .join("");
-}
-
-reviewOMR() {
-  const box = this._UploadService.getSelectedBox(); 
-
-  if (!box || !box.x_min || !box.y_min || !box.x_max || !box.y_max) {
-    console.error("❌ Invalid box data:", box);
-    return;
+      .join('');
   }
 
-  // Calculate the center and radius of the circle
-  const x_center = Math.round((box.x_min + box.x_max) / 2);
-  const y_center = Math.round((box.y_min + box.y_max) / 2);
-  const radius = Math.round(Math.max(box.x_max - box.x_min, box.y_max - box.y_min) / 2);
-
-  const circleData = {x: x_center,y_center,radius };
-  console.log("⭕ Circle Data:", circleData);
-
-  // Update OMR data with circular selection
-  const updatedOMR = {
-    ...this.omrResponse, // ✅ Keep existing OMR data
-    drag: circleData // ✅ Store circle instead of box
-  };
-
-  this._UploadService.reviewOmr(updatedOMR).subscribe({
-    next: (res) => {
-      console.log("✅ API Response:", res);
-    },
-    error: (err) => {
-      console.error("❌ API Error:", err);
+  reviewOMR() {
+    const box = this._UploadService.getSelectedBox(); 
+  
+    if (!Array.isArray(box) || box.length !== 2 || !Array.isArray(box[0]) || !Array.isArray(box[1])) {
+      console.error("❌ Invalid box data format:", box);
+      return;
     }
-  });
+  
+    // Extract coordinates from the array
+    const [x_min, y_min] = box[0];
+    const [x_max, y_max] = box[1];
+  
+    // Calculate the center and radius of the circle
+    const x_center = Math.round((x_min + x_max) / 2);
+    const y_center = Math.round((y_min + y_max) / 2);
+    const radius = Math.round(Math.max(x_max - x_min, y_max - y_min) / 2);
+  
+    const circleData = { x: x_center, y: y_center, radius: radius };
+    console.log("⭕ Circle Data:", circleData);
+  
+    // Update OMR data with circular selection
+    const updatedOMR = {
+      ...this.omrResponse, // ✅ Keep existing OMR data
+      drag: circleData // ✅ Store circle instead of box
+    };
+  
+    this._UploadService.reviewOmr(updatedOMR).subscribe({
+      next: (res) => {
+        console.log("✅ API Response:", res);
+      },
+      error: (err) => {
+        console.error("❌ API Error:", err);
+      }
+    });
+  
+    console.log("📄 Updated OMR JSON with Circle:", updatedOMR);
+    return updatedOMR;
+  }
+  
 
-  console.log("📄 Updated OMR JSON with Circle:", updatedOMR);
-  return updatedOMR;
-}
+  getAllPagesWithErrors() {
+    this.errorQuestions = [];
+    this.errorBorders = {}; // Ensure it's an object, not an array
+    const errorPagesSet = new Set<number>();
 
+    this.omrResponse.forEach((pageData: any) => {
+      const pageErrors: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        color: string;
+      }[] = []; // Explicit type
 
-getAllPagesWithErrors() {
-  this.errorQuestions = [];
-  this.errorBorders = {}; // Ensure it's an object, not an array
-  const errorPagesSet = new Set<number>();
-
-  this.omrResponse.forEach((pageData: any) => {
-      const pageErrors: { x: number; y: number; width: number; height: number; color: string }[] = []; // Explicit type
-
-      Object.entries(pageData.questions).forEach(([questionNumber, questionData]: [string, any]) => {
+      Object.entries(pageData.questions).forEach(
+        ([questionNumber, questionData]: [string, any]) => {
           questionData.groups.forEach((group: any, groupIndex: number) => {
-              if (group.errors) {
-                  this.errorQuestions.push({
-                      page: pageData.page_number,
-                      questionNumber,
-                      subQuestion: groupIndex + 1,
-                      errors: group.errors
-                  });
+            if (group.errors) {
+              this.errorQuestions.push({
+                page: pageData.page_number,
+                questionNumber,
+                subQuestion: groupIndex + 1,
+                errors: group.errors,
+              });
 
-                  errorPagesSet.add(pageData.page_number);
+              errorPagesSet.add(pageData.page_number);
 
-                  // Ensure we have valid bubbles
-                  if (!group.bubbles || group.bubbles.length === 0) return;
+              // Ensure we have valid bubbles
+              if (!group.bubbles || group.bubbles.length === 0) return;
 
-                  const bubbles = group.bubbles.map((b: any) => b.circle);
-                  const minX = Math.min(...bubbles.map((b: any) => b[0]));
-                  const minY = Math.min(...bubbles.map((b: any) => b[1]));
-                  const maxX = Math.max(...bubbles.map((b: any) => b[0]));
-                  const maxY = Math.max(...bubbles.map((b: any) => b[1]));
+              const bubbles = group.bubbles.map((b: any) => b.circle);
+              const minX = Math.min(...bubbles.map((b: any) => b[0]));
+              const minY = Math.min(...bubbles.map((b: any) => b[1]));
+              const maxX = Math.max(...bubbles.map((b: any) => b[0]));
+              const maxY = Math.max(...bubbles.map((b: any) => b[1]));
 
-                  // Add dynamic padding for small areas
-                  const padding = 10;
-                  const width = maxX - minX + padding;
-                  const height = maxY - minY + padding;
+              // Add dynamic padding for small areas
+              const padding = 10;
+              const width = maxX - minX + padding;
+              const height = maxY - minY + padding;
 
-                  // Determine border color
-                  let borderColor = "#ff0000"; // Default: No answer
-                  if (group.errors === "There's more than one answer") {
-                      borderColor = "#0000ff"; // Multiple answers
-                  }
-
-                  // Store errors per page
-                  pageErrors.push({
-                      x: minX - padding / 2,
-                      y: minY - padding / 2,
-                      width: width,
-                      height: height,
-                      color: borderColor
-                  });
+              // Determine border color
+              let borderColor = '#ff0000'; // Default: No answer
+              if (group.errors === "There's more than one answer") {
+                borderColor = '#0000ff'; // Multiple answers
               }
+
+              // Store errors per page
+              pageErrors.push({
+                x: minX - padding / 2,
+                y: minY - padding / 2,
+                width: width,
+                height: height,
+                color: borderColor,
+              });
+            }
           });
-      });
+        }
+      );
 
       // Assign page-specific errors
       if (pageErrors.length > 0) {
-          this.errorBorders[pageData.page_number] = pageErrors;
+        this.errorBorders[pageData.page_number] = pageErrors;
       }
-  });
+    });
 
-  this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
-  
-  if (this.errorPages.length > 0) {
+    this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
+
+    if (this.errorPages.length > 0) {
       this.currentErrorIndex = 0;
       this.currentPage = this.errorPages[this.currentErrorIndex];
+    }
+
+    console.log('🚨 Pages with errors:', this.errorPages);
+    console.log('🖼️ Error Borders:', this.errorBorders);
   }
 
-  console.log("🚨 Pages with errors:", this.errorPages);
-  console.log("🖼️ Error Borders:", this.errorBorders);
-}
+  onMouseDown(event: MouseEvent) {
+    const imgElement = event.target as HTMLImageElement;
+    if (!imgElement) return;
 
+    const { offsetX, offsetY } = this.getNormalizedClick(event, imgElement);
 
+    const insideErrorArea = (this.errorBorders[this.currentPage] || []).some(
+      (border) => {
+        return (
+          offsetX >= border.x &&
+          offsetX <= border.x + border.width &&
+          offsetY >= border.y &&
+          offsetY <= border.y + border.height
+        );
+      }
+    );
 
-onMouseDown(event: MouseEvent) {
-  const imgElement = event.target as HTMLImageElement;
-  if (!imgElement) return;
-
-  const { offsetX, offsetY } = this.getNormalizedClick(event, imgElement);
-
-  const insideErrorArea = (this.errorBorders[this.currentPage] || []).some((border) => {
-    return offsetX >= border.x && offsetX <= border.x + border.width &&
-           offsetY >= border.y && offsetY <= border.y + border.height;
-  });
-
-  if (!insideErrorArea) {
-      console.warn("❌ Click ignored! Not inside an error-marked area.");
+    if (!insideErrorArea) {
+      console.warn('❌ Click ignored! Not inside an error-marked area.');
       return;
+    }
+
+    // Proceed with question selection logic
+    const pageData = this.getPageData();
+    if (!pageData) return;
+
+    const foundQuestionKey = this.getClickedQuestion(
+      offsetX,
+      offsetY,
+      pageData
+    );
+    if (!foundQuestionKey) return;
+
+    this.updateBubbleSelection(
+      offsetX,
+      offsetY,
+      pageData.questions[foundQuestionKey],
+      foundQuestionKey
+    );
   }
 
-  // Proceed with question selection logic
-  const pageData = this.getPageData();
-  if (!pageData) return;
+  getClickedQuestion(offsetX: number, offsetY: number, pageData: any) {
+    const tolerance = 12;
+    let foundQuestionKey = null;
 
-  const foundQuestionKey = this.getClickedQuestion(offsetX, offsetY, pageData);
-  if (!foundQuestionKey) return;
-
-  this.updateBubbleSelection(offsetX, offsetY, pageData.questions[foundQuestionKey], foundQuestionKey);
-}
-
-
-getClickedQuestion(offsetX: number, offsetY: number, pageData: any) {
-  const tolerance = 12;
-  let foundQuestionKey = null;
-
-  for (const questionKey in pageData.questions) {
+    for (const questionKey in pageData.questions) {
       const question = pageData.questions[questionKey];
 
       if (!question.points || question.points.length < 1) continue;
 
       const [[minX, minY], [maxX, maxY]] = question.points[0];
-      if (offsetX >= minX - tolerance && offsetX <= maxX + tolerance &&
-          offsetY >= minY - tolerance && offsetY <= maxY + tolerance) {
-          
-          console.log(`✅ Found question: ${questionKey}`);
-          foundQuestionKey = questionKey;
-          break;
+      if (
+        offsetX >= minX - tolerance &&
+        offsetX <= maxX + tolerance &&
+        offsetY >= minY - tolerance &&
+        offsetY <= maxY + tolerance
+      ) {
+        console.log(`✅ Found question: ${questionKey}`);
+        foundQuestionKey = questionKey;
+        break;
       }
-  }
+    }
 
-  if (!foundQuestionKey) {
+    if (!foundQuestionKey) {
       console.warn(`❌ No matching question found.`);
       return null;
+    }
+    return foundQuestionKey;
   }
-  return foundQuestionKey;
-}
 
-updateBubbleSelection(offsetX: number, offsetY: number, foundQuestionData: any, questionKey: string) {
-  const circleRadius = 8;
-  const tolerance = 12;
-  let bestMatch: any = null;
-  let bestDistance = Infinity;
-  let foundGroupIndex: number | null = null;
+  updateBubbleSelection(
+    offsetX: number,
+    offsetY: number,
+    foundQuestionData: any,
+    questionKey: string
+  ) {
+    const circleRadius = 8;
+    const tolerance = 12;
+    let bestMatch: any = null;
+    let bestDistance = Infinity;
+    let foundGroupIndex: number | null = null;
 
-  for (let groupIndex = 0; groupIndex < foundQuestionData.groups.length; groupIndex++) {
+    for (
+      let groupIndex = 0;
+      groupIndex < foundQuestionData.groups.length;
+      groupIndex++
+    ) {
       const group = foundQuestionData.groups[groupIndex];
       for (const bubble of group.bubbles) {
-          const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
-          const distance = Math.sqrt((offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2);
-          if (distance <= bubbleRadius + tolerance) {
-              if (distance < bestDistance) {
-                  bestDistance = distance;
-                  bestMatch = bubble;
-                  foundGroupIndex = groupIndex;
-              }
+        const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
+        const distance = Math.sqrt(
+          (offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2
+        );
+        if (distance <= bubbleRadius + tolerance) {
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestMatch = bubble;
+            foundGroupIndex = groupIndex;
           }
+        }
       }
-  }
+    }
 
-  if (bestMatch && foundGroupIndex !== null) {
-      console.log(`✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`);
+    if (bestMatch && foundGroupIndex !== null) {
+      console.log(
+        `✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`
+      );
       console.log(`🔍 Distance from click: ${bestDistance}px`);
 
       // Find Model Answer Page (Page 1)
-      const modelAnswerPage = this.omrResponse.find((p: any) => p.page_number === 1);
+      const modelAnswerPage = this.omrResponse.find(
+        (p: any) => p.page_number === 1
+      );
       if (!modelAnswerPage) {
-          console.warn("⚠️ Model Answer Page (Page 1) Not Found!");
-          return;
+        console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
+        return;
       }
 
-      console.log("📄 Model Answer Page Structure:", modelAnswerPage);
-      console.log("🔍 Searching for Question Key:", questionKey);
-      
-      if (!modelAnswerPage.questions || !modelAnswerPage.questions[questionKey]) {
-          console.warn(`⚠️ No matching question '${questionKey}' found in Model Answer Page!`);
-          console.log("🧐 Available Questions:", Object.keys(modelAnswerPage.questions));
-          return;
+      console.log('📄 Model Answer Page Structure:', modelAnswerPage);
+      console.log('🔍 Searching for Question Key:', questionKey);
+
+      if (
+        !modelAnswerPage.questions ||
+        !modelAnswerPage.questions[questionKey]
+      ) {
+        console.warn(
+          `⚠️ No matching question '${questionKey}' found in Model Answer Page!`
+        );
+        console.log(
+          '🧐 Available Questions:',
+          Object.keys(modelAnswerPage.questions)
+        );
+        return;
       }
 
       const modelQuestion = modelAnswerPage.questions[questionKey];
-      
+
       // Find the corresponding group in Model Answer Page
       const modelGroup = modelQuestion.groups[foundGroupIndex];
       if (!modelGroup) {
-          console.warn("⚠️ No matching group found in Model Answer Page!");
-          return;
+        console.warn('⚠️ No matching group found in Model Answer Page!');
+        return;
       }
 
       // Check if the selected bubble is correct
       let isCorrect = false;
       for (const bubble of modelGroup.bubbles) {
-          if (bubble.choice === bestMatch.choice) {
-              isCorrect = bubble.selected === true; // Bubble is correct only if selected in Page 1
-              break;
-          }
+        if (bubble.choice === bestMatch.choice) {
+          isCorrect = bubble.selected === true; // Bubble is correct only if selected in Page 1
+          break;
+        }
       }
 
       // Unselect previously selected bubble in the same group
-      foundQuestionData.groups[foundGroupIndex].bubbles.forEach((bubble: any) => {
+      foundQuestionData.groups[foundGroupIndex].bubbles.forEach(
+        (bubble: any) => {
           bubble.selected = false;
-      });
-      
+        }
+      );
+
       // Select new bubble
       bestMatch.selected = true;
 
       // Store Selection for Dynamic Update
       if (!this.selectionCircles[this.currentPage]) {
-          this.selectionCircles[this.currentPage] = [];
+        this.selectionCircles[this.currentPage] = [];
       }
 
       // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
       this.selectionCircles[this.currentPage].push({
-          x: bestMatch.circle[0],  // Use found bubble X
-          y: bestMatch.circle[1],  // Use found bubble Y
-          radius: circleRadius,
-          isCorrect,
+        x: bestMatch.circle[0], // Use found bubble X
+        y: bestMatch.circle[1], // Use found bubble Y
+        radius: circleRadius,
+        isCorrect,
       });
 
-      console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
-  } else {
+      console.log(
+        `🎯 Selected choice: ${bestMatch.choice} → ${
+          isCorrect ? '✅ Correct' : '❌ Incorrect'
+        }`
+      );
+    } else {
       console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
-  }
-}
-
-getPagesWithErrors() {
-  if (!Array.isArray(this.omrResponse)) {
-    console.error("❌ Error: this.omrResponse is not an array", this.omrResponse);
-    return;
+    }
   }
 
-  this.errorPages = this.omrResponse
-    .filter((page: any) => page.page_number !== 1) // Exclude Model Answer Page 1
-    .filter((page: any) => page.questions && Object.values(page.questions).some((q: any) => q.errors))
-    .map((page: any) => page.page_number);
+  getPagesWithErrors() {
+    if (!Array.isArray(this.omrResponse)) {
+      console.error(
+        '❌ Error: this.omrResponse is not an array',
+        this.omrResponse
+      );
+      return;
+    }
 
-  if (this.errorPages.length > 0) {
-    this.currentErrorIndex = 0; // Start from the first error page
+    this.errorPages = this.omrResponse
+      .filter((page: any) => page.page_number !== 1) // Exclude Model Answer Page 1
+      .filter(
+        (page: any) =>
+          page.questions &&
+          Object.values(page.questions).some((q: any) => q.errors)
+      )
+      .map((page: any) => page.page_number);
+
+    if (this.errorPages.length > 0) {
+      this.currentErrorIndex = 0; // Start from the first error page
+    }
+
+    console.log(`🚨 Pages with errors: ${this.errorPages.join(', ')}`);
   }
 
-  console.log(`🚨 Pages with errors: ${this.errorPages.join(', ')}`);
-}
-
-
-goToPreviousPage() {
-  if (this.currentErrorIndex > 0) {
-    this.currentErrorIndex--;
-    this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to previous error page
+  goToPreviousPage() {
+    if (this.currentErrorIndex > 0) {
+      this.currentErrorIndex--;
+      this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to previous error page
+    }
   }
-}
 
-goToNextPage() {
-  if (this.currentErrorIndex < this.errorPages.length - 1) {
-    this.currentErrorIndex++;
-    this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to next error page
+  goToNextPage() {
+    if (this.currentErrorIndex < this.errorPages.length - 1) {
+      this.currentErrorIndex++;
+      this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to next error page
+    }
   }
-}
 
-filteredPages: any[] = [];
-detectedCircles: { [key: number]: { x: number; y: number; radius: number; isCorrect: boolean }[] } = {};
+  filteredPages: any[] = [];
+  detectedCircles: {
+    [key: number]: {
+      x: number;
+      y: number;
+      radius: number;
+      isCorrect: boolean;
+    }[];
+  } = {};
 
-processOmrResponse(): void {
-  if (!this.omrResponse) return;
+  processOmrResponse(): void {
+    if (!this.omrResponse) return;
 
-  this.detectedCircles = {}; // Reset detected circles for each page
+    this.detectedCircles = {}; // Reset detected circles for each page
 
-  this.omrResponse.forEach((page: { page_number: number; questions: any }) => {
-    let pageCircles: { x: number; y: number; radius: number; isCorrect: boolean }[] = [];
+    this.omrResponse.forEach(
+      (page: { page_number: number; questions: any }) => {
+        let pageCircles: {
+          x: number;
+          y: number;
+          radius: number;
+          isCorrect: boolean;
+        }[] = [];
 
-    Object.keys(page.questions).forEach((questionKey: string) => {
-      let question = page.questions[questionKey];
+        Object.keys(page.questions).forEach((questionKey: string) => {
+          let question = page.questions[questionKey];
 
-      if (question.groups && Array.isArray(question.groups)) {
-        question.groups.forEach((group: { bubbles: any[]; errors?: string }) => {
-          if (!group.errors) { // Only process groups without errors
-            group.bubbles.forEach((bubble: { circle: number[]; selected: boolean; correct: boolean }) => {
-              if (bubble.selected) {
-                pageCircles.push({
-                  x: bubble.circle[0],
-                  y: bubble.circle[1],
-                  radius: bubble.circle[2],
-                  isCorrect: bubble.correct
-                });
+          if (question.groups && Array.isArray(question.groups)) {
+            question.groups.forEach(
+              (group: { bubbles: any[]; errors?: string }) => {
+                if (!group.errors) {
+                  // Only process groups without errors
+                  group.bubbles.forEach(
+                    (bubble: {
+                      circle: number[];
+                      selected: boolean;
+                      correct: boolean;
+                    }) => {
+                      if (bubble.selected) {
+                        pageCircles.push({
+                          x: bubble.circle[0],
+                          y: bubble.circle[1],
+                          radius: bubble.circle[2],
+                          isCorrect: bubble.correct,
+                        });
+                      }
+                    }
+                  );
+                }
               }
-            });
+            );
           }
         });
+
+        this.detectedCircles[page.page_number] = pageCircles;
       }
-    });
-
-    this.detectedCircles[page.page_number] = pageCircles;
-  });
-}
-
+    );
+  }
 }
 interface Page {
   page_number: number;

@@ -12,15 +12,19 @@ export class UploadService {
 
   private fileSubject = new BehaviorSubject<File | null>(null);
   file$ = this.fileSubject.asObservable();
+  private baseUrl = '/scoob-api'; // Use proxy path
 
   constructor(
     private _HttpClient:HttpClient
   ) { }
   upload(data: any): Observable<any> {
-    const apiUrl = 'https://scoob.cc/step-1'; // Use full URL
+    const apiUrl = 'http://127.0.0.1:8000'; // Use full URL
     return this._HttpClient.post(apiUrl, data);
   }
   
+  // upload(data: any): Observable<any> {
+  //   return this._HttpClient.post(`${this.baseUrl}/step-1`, data);
+  // }
   pdfFile:any;
   setdata(data: any, file: File) {
     this.dataSubject.next(data);
@@ -62,7 +66,10 @@ export class UploadService {
     return this.selectedBoxSubject.value; 
   }
    reviewOmr(data:any): Observable<any> {
-    const apiUrl = 'https://scoob.cc/final'; // Use full URL
+    const apiUrl = 'http://127.0.0.1:8000'; // Use full URL
     return this._HttpClient.post(apiUrl, data);
   }
+  // reviewOmr(data: any): Observable<any> {
+  //   return this._HttpClient.post(`${this.baseUrl}/final`, data);
+  // }
 }
