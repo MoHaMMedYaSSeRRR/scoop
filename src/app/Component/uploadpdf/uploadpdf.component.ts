@@ -245,15 +245,18 @@ export class UploadpdfComponent {
             [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
           ]),
           roi_type: 'question',
-          entities_count: currentQuestionForm.value.entities_count || 10,
-          choices: currentQuestionForm.value.choices && currentQuestionForm.value.choices.trim()
-            ? currentQuestionForm.value.choices.split(/[-,]/).map((choice: string) => choice.trim()) // Fix splitting choices
-            : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],        
-          orientation: currentQuestionForm.value.orientation || 'horizontal', // Ensure default value
+          entities_count: currentQuestionForm.value.choices && currentQuestionForm.value.choices.trim()
+          ? currentQuestionForm.value.choices.split(/[-,]/).map((choice: string) => choice.trim()).length
+          : 10, 
+        choices: currentQuestionForm.value.choices && currentQuestionForm.value.choices.trim()
+          ? currentQuestionForm.value.choices.split(/[-,]/).map((choice: string) => choice.trim()) 
+          : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+             
+          orientation: currentQuestionForm.value.orientation || 'horizontal',
           direction: currentQuestionForm.value.direction || "right-to-left",
           worth: currentQuestionForm.value.worth || 1,
-          corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === true, // Ensure boolean value
-          id: this.selectedIdType === 'student_id' ? false : true, // Assign ID correctly
+          corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === true, 
+          id: this.selectedIdType === 'student_id' ? false : true, 
         };
         console.log(roiData)
         const questionKey = `question_${Object.keys(this.selectedQuestions).length + 1}`;

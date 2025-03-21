@@ -104,7 +104,7 @@ export class ReviewComponent implements OnInit {
     this._UploadService.file$.subscribe((file) => {
       if (file) {
         this.pdfFile = file;
-        this.loadPdfImages(file); // Move inside subscription to ensure correct processing
+        this.loadPdfImages(this.pdfFile);
         console.log(this.pdfFile);
       }
     });
@@ -114,7 +114,6 @@ export class ReviewComponent implements OnInit {
     console.log(this.currentPage);
     // this.processOmrResponse();
     console.log(this.currentPage);
-    // this.loadPdfImages(this.pdfFile);
     this.getAllPagesWithErrors();
     console.log(this.currentPage);
     console.log(this.currentPage);
@@ -150,6 +149,7 @@ export class ReviewComponent implements OnInit {
   async convertPdfToImages(file: File): Promise<string[]> {
     const images: string[] = [];
 
+    // Read file as ArrayBuffer
     const fileReader = new FileReader();
     const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
       fileReader.onload = () => resolve(fileReader.result as ArrayBuffer);
@@ -157,7 +157,10 @@ export class ReviewComponent implements OnInit {
       fileReader.readAsArrayBuffer(file);
     });
 
+    // Convert ArrayBuffer to Uint8Array
     const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Load PDF from Uint8Array
     const pdf = await pdfjsLib.getDocument(uint8Array).promise;
     const numPages = pdf.numPages;
 
@@ -168,13 +171,14 @@ export class ReviewComponent implements OnInit {
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d', { willReadFrequently: true });
 
-      if (!context) throw new Error('Failed to get canvas context');
+      if (!context) {
+        throw new Error('Failed to get canvas context');
+      }
 
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
       await page.render({ canvasContext: context, viewport }).promise;
-      console.log(`✅ Processed PDF page ${index + 1}`);
       return canvas.toDataURL('image/png');
     });
 
@@ -186,89 +190,13 @@ export class ReviewComponent implements OnInit {
     try {
       this.pdfImages = await this.convertPdfToImages(file);
       this.userPageCount = this.pdfImages.length;
-
-      console.log('🖼️ PDF converted to images:', this.pdfImages);
-
-      // Ensure the images are properly sorted
-      this.pdfImages.sort((a, b) => parseInt(a.match(/\d+/)?.[0] || '0') - parseInt(b.match(/\d+/)?.[0] || '0'));
-
+      console.log('PDF converted to images:', this.pdfImages);
     } catch (error) {
-      console.error('❌ Error converting PDF to images:', error);
+      console.error('Error converting PDF to images:', error);
     } finally {
       this.isLoading = false;
     }
   }
-
-  getAllPagesWithErrors() {
-    this.errorQuestions = [];
-    this.errorBorders = {}; 
-    const errorPagesSet = new Set<number>();
-
-    this.omrResponse.forEach((pageData: any) => {
-      const pageErrors: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        color: string;
-      }[] = [];
-
-      Object.entries(pageData.questions).forEach(([questionNumber, questionData]: [string, any]) => {
-        questionData.groups.forEach((group: any, groupIndex: number) => {
-          if (group.errors) {
-            this.errorQuestions.push({
-              page: pageData.page_number,
-              questionNumber,
-              subQuestion: groupIndex + 1,
-              errors: group.errors,
-            });
-
-            errorPagesSet.add(pageData.page_number);
-
-            if (!group.bubbles || group.bubbles.length === 0) return;
-
-            const bubbles = group.bubbles.map((b: any) => b.circle);
-            const minX = Math.min(...bubbles.map((b: any) => b[0]));
-            const minY = Math.min(...bubbles.map((b: any) => b[1]));
-            const maxX = Math.max(...bubbles.map((b: any) => b[0]));
-            const maxY = Math.max(...bubbles.map((b: any) => b[1]));
-
-            const padding = 10;
-            const width = maxX - minX + padding;
-            const height = maxY - minY + padding;
-
-            let borderColor = '#ff0000'; 
-            if (group.errors === "There's more than one answer") {
-              borderColor = '#0000ff';
-            }
-
-            pageErrors.push({
-              x: minX - padding / 2,
-              y: minY - padding / 2,
-              width: width,
-              height: height,
-              color: borderColor,
-            });
-          }
-        });
-      });
-
-      if (pageErrors.length > 0) {
-        this.errorBorders[pageData.page_number] = pageErrors;
-      }
-    });
-
-    this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
-
-    if (this.errorPages.length > 0) {
-      this.currentErrorIndex = 0;
-      this.currentPage = this.errorPages[this.currentErrorIndex];
-    }
-
-    console.log('🚨 Pages with errors:', this.errorPages);
-    console.log('🖼️ Error Borders:', this.errorBorders);
-  }
-  
 
   downloadMarkedPdf() {
     if (!this.pdfImages || this.pdfImages.length === 0) {
@@ -863,82 +791,82 @@ export class ReviewComponent implements OnInit {
   }
   
 
-  // getAllPagesWithErrors() {
-  //   this.errorQuestions = [];
-  //   this.errorBorders = {}; // Ensure it's an object, not an array
-  //   const errorPagesSet = new Set<number>();
+  getAllPagesWithErrors() {
+    this.errorQuestions = [];
+    this.errorBorders = {}; // Ensure it's an object, not an array
+    const errorPagesSet = new Set<number>();
 
-  //   this.omrResponse.forEach((pageData: any) => {
-  //     const pageErrors: {
-  //       x: number;
-  //       y: number;
-  //       width: number;
-  //       height: number;
-  //       color: string;
-  //     }[] = []; // Explicit type
+    this.omrResponse.forEach((pageData: any) => {
+      const pageErrors: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        color: string;
+      }[] = []; // Explicit type
 
-  //     Object.entries(pageData.questions).forEach(
-  //       ([questionNumber, questionData]: [string, any]) => {
-  //         questionData.groups.forEach((group: any, groupIndex: number) => {
-  //           if (group.errors) {
-  //             this.errorQuestions.push({
-  //               page: pageData.page_number,
-  //               questionNumber,
-  //               subQuestion: groupIndex + 1,
-  //               errors: group.errors,
-  //             });
+      Object.entries(pageData.questions).forEach(
+        ([questionNumber, questionData]: [string, any]) => {
+          questionData.groups.forEach((group: any, groupIndex: number) => {
+            if (group.errors) {
+              this.errorQuestions.push({
+                page: pageData.page_number,
+                questionNumber,
+                subQuestion: groupIndex + 1,
+                errors: group.errors,
+              });
 
-  //             errorPagesSet.add(pageData.page_number);
+              errorPagesSet.add(pageData.page_number);
 
-  //             // Ensure we have valid bubbles
-  //             if (!group.bubbles || group.bubbles.length === 0) return;
+              // Ensure we have valid bubbles
+              if (!group.bubbles || group.bubbles.length === 0) return;
 
-  //             const bubbles = group.bubbles.map((b: any) => b.circle);
-  //             const minX = Math.min(...bubbles.map((b: any) => b[0]));
-  //             const minY = Math.min(...bubbles.map((b: any) => b[1]));
-  //             const maxX = Math.max(...bubbles.map((b: any) => b[0]));
-  //             const maxY = Math.max(...bubbles.map((b: any) => b[1]));
+              const bubbles = group.bubbles.map((b: any) => b.circle);
+              const minX = Math.min(...bubbles.map((b: any) => b[0]));
+              const minY = Math.min(...bubbles.map((b: any) => b[1]));
+              const maxX = Math.max(...bubbles.map((b: any) => b[0]));
+              const maxY = Math.max(...bubbles.map((b: any) => b[1]));
 
-  //             // Add dynamic padding for small areas
-  //             const padding = 10;
-  //             const width = maxX - minX + padding;
-  //             const height = maxY - minY + padding;
+              // Add dynamic padding for small areas
+              const padding = 10;
+              const width = maxX - minX + padding;
+              const height = maxY - minY + padding;
 
-  //             // Determine border color
-  //             let borderColor = '#ff0000'; // Default: No answer
-  //             if (group.errors === "There's more than one answer") {
-  //               borderColor = '#0000ff'; // Multiple answers
-  //             }
+              // Determine border color
+              let borderColor = '#ff0000'; // Default: No answer
+              if (group.errors === "There's more than one answer") {
+                borderColor = '#0000ff'; // Multiple answers
+              }
 
-  //             // Store errors per page
-  //             pageErrors.push({
-  //               x: minX - padding / 2,
-  //               y: minY - padding / 2,
-  //               width: width,
-  //               height: height,
-  //               color: borderColor,
-  //             });
-  //           }
-  //         });
-  //       }
-  //     );
+              // Store errors per page
+              pageErrors.push({
+                x: minX - padding / 2,
+                y: minY - padding / 2,
+                width: width,
+                height: height,
+                color: borderColor,
+              });
+            }
+          });
+        }
+      );
 
-  //     // Assign page-specific errors
-  //     if (pageErrors.length > 0) {
-  //       this.errorBorders[pageData.page_number] = pageErrors;
-  //     }
-  //   });
+      // Assign page-specific errors
+      if (pageErrors.length > 0) {
+        this.errorBorders[pageData.page_number] = pageErrors;
+      }
+    });
 
-  //   this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
+    this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
 
-  //   if (this.errorPages.length > 0) {
-  //     this.currentErrorIndex = 0;
-  //     this.currentPage = this.errorPages[this.currentErrorIndex];
-  //   }
+    if (this.errorPages.length > 0) {
+      this.currentErrorIndex = 0;
+      this.currentPage = this.errorPages[this.currentErrorIndex];
+    }
 
-  //   console.log('🚨 Pages with errors:', this.errorPages);
-  //   console.log('🖼️ Error Borders:', this.errorBorders);
-  // }
+    console.log('🚨 Pages with errors:', this.errorPages);
+    console.log('🖼️ Error Borders:', this.errorBorders);
+  }
 
   onMouseDown(event: MouseEvent) {
     const imgElement = event.target as HTMLImageElement;
