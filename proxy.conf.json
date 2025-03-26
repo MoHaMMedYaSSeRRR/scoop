@@ -11,7 +11,7 @@
     
       "/scoob-api": {
         "target": "https://scoob.cc",
-        "secure": false,
+        "secure": false,  
         "changeOrigin": true,
         "logLevel": "debug",
         "pathRewrite": {

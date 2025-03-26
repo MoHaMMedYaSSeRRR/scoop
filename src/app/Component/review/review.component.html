@@ -8,7 +8,7 @@
             </div>
     
             <img *ngIf="!isLoading && pdfImages.length > 0"
-                 [src]="pdfImages[currentPage]"
+                 [src]="pdfImages[currentPage-1]"
                  (mousedown)="onMouseDown($event)"
                  class="selectable-image" />
     
@@ -17,10 +17,10 @@
                  [ngStyle]="{
                     left: circle.x + 'px',
                     top: circle.y + 'px',
-                    width: circle.radius * 2 + 'px',
-                    height: circle.radius * 2 + 'px',
-                    backgroundColor: circle.isCorrect ? 'green' : 'red'
-                }">
+                    width: circle.radius *1.5 + 'px',
+                    height: circle.radius *1.5 + 'px',
+                    border: '3px solid ' + (circle.isCorrect ? 'green' : 'red'),
+                  }">
             </div>
 
             <div *ngFor="let border of errorBorders[currentPage] || []"
@@ -81,14 +81,6 @@
                 <h5>عدد الاسئلة التي تحتاج الي مراجعة : {{ errorQuestions.length }} أسئلة</h5>
             </div>
     
-            <div *ngIf="errorQuestions.length > 0" class="error-list text-end mt-3">
-                <h5>الأسئلة التي تحتوي على أخطاء:</h5>
-                <ul>
-                    <li *ngFor="let error of errorQuestions">
-                        ❌ الصفحة {{ getArabicNumber(error.page) }}, السؤال {{ getArabicNumber(error.questionNumber) }}, الفرعي {{ getArabicNumber(error.subQuestion) }}
-                    </li>
-                </ul>
-            </div>
     
             <button (click)="reviewOMR()" class="btn px-5 py-2 d-block text-start mt-3">مراجعة</button>
         </div>
@@ -104,7 +96,6 @@
         التالي
       </button> -->
       <button
-        (click)="downloadMarkedPdf()"
         type="button"
         class="sendBtn ms-1 p-2 border-0 text-white d-block me-auto mt-3"
       >
