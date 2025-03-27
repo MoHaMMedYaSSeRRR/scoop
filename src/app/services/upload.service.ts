@@ -12,7 +12,7 @@ export class UploadService {
 
   private fileSubject = new BehaviorSubject<File | null>(null);
   file$ = this.fileSubject.asObservable();
-  private baseUrl = 'https://scoob.cc'; // Use proxy path
+  private baseUrl = '/api'; // Use proxy path
 
   constructor(
     private _HttpClient:HttpClient
