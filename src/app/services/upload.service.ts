@@ -17,14 +17,14 @@ export class UploadService {
   constructor(
     private _HttpClient:HttpClient
   ) { }
-  upload(data: any): Observable<any> {
-    const apiUrl = 'https://scoob.cc/step-1'; // Use full URL
-    return this._HttpClient.post(apiUrl, data);
-  }
-  
   // upload(data: any): Observable<any> {
-  //   return this._HttpClient.post(`${this.baseUrl}/step-1`, data);
+  //   const apiUrl = 'https://scoob.cc/step-1'; // Use full URL
+  //   return this._HttpClient.post(apiUrl, data);
   // }
+  
+  upload(data: any): Observable<any> {
+    return this._HttpClient.post(`${this.baseUrl}/step-1`, data);
+  }
   pdfFile:any;
   setdata(data: any, file: File) {
     this.dataSubject.next(data);
@@ -65,11 +65,11 @@ export class UploadService {
   getSelectedBox() {
     return this.selectedBoxSubject.value; 
   }
-   reviewOmr(data:any): Observable<any> {
-    const apiUrl = 'https://scoob.cc/final'; // Use full URL
-    return this._HttpClient.post(apiUrl, data);
-  }
-  // reviewOmr(data: any): Observable<any> {
-  //   return this._HttpClient.post(`${this.baseUrl}/final`, data);
+  //  reviewOmr(data:any): Observable<any> {
+  //   const apiUrl = 'https://scoob.cc/final'; // Use full URL
+  //   return this._HttpClient.post(apiUrl, data);
   // }
+  reviewOmr(data: any): Observable<any> {
+    return this._HttpClient.post(`${this.baseUrl}/final`, data);
+  }
 }
