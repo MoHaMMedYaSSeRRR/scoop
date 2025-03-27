@@ -540,8 +540,8 @@ export class ReviewComponent implements OnInit {
       // Select new bubble
       bestMatch.selected = true;
   
-      // ✅ Clear error when a bubble is selected
-      foundQuestionData.error = null;
+      // ✅ Clear error message when a bubble is selected
+      foundQuestionData.errors = null;
   
       // Store Selection for Dynamic Update
       if (!this.selectionCircles[this.currentPage]) {
@@ -561,6 +561,7 @@ export class ReviewComponent implements OnInit {
       console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
     }
   }
+  
   
 
   getPagesWithErrors() {
