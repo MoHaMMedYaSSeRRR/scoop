@@ -63,10 +63,10 @@ export class UploadService {
   getSelectedBox() {
     return this.selectedBoxSubject.value; 
   }
-  //  reviewOmr(data:any): Observable<any> {
-  //   return this._HttpClient.post('https://scoob.cc/final', data);
-  // }
-  reviewOmr(data: any): Observable<any> {
-    return this._HttpClient.post(`${this.baseUrl}/final`, data);
+   reviewOmr(data:any): Observable<any> {
+    return this._HttpClient.post('https://scoob.cc/final', data);
   }
+  // reviewOmr(data: any): Observable<any> {
+  //   return this._HttpClient.post(`${this.baseUrl}/final`, data);
+  // }
 }
