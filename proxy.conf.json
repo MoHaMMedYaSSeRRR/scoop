@@ -1,23 +1,21 @@
 {
-    "/myfatoorah-api": {
-      "target": "https://apitest.myfatoorah.com",
-      "secure": false,
-      "changeOrigin": true,
-      "logLevel": "debug",
-      "pathRewrite": {
-        "^/myfatoorah-api": ""
-      }
-    } ,
-    
-      "/scoob-api": {
-        "target": "https://scoob.cc",
-        "secure": false,  
-        "changeOrigin": true,
-        "logLevel": "debug",
-        "pathRewrite": {
-          "^/scoob-api": ""
-        }
-      }
-    
+  "/myfatoorah-api": {
+    "target": "https://apitest.myfatoorah.com",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/myfatoorah-api": ""
+    }
+  },
+  "/scoob-api": {
+    "target": "https://scoob.cc",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/scoob-api": "/"
+    }
   }
-  
+}
+ 

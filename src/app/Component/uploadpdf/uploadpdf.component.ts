@@ -494,7 +494,7 @@ onCurrentQuestionSubmit(): void {
     } else {
       console.error('Please define a selection area before submitting.');
     }
-
+ 
     this.direction = '';
     this.isID = false;
   }
