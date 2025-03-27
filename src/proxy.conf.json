@@ -8,13 +8,13 @@
       "^/myfatoorah-api": ""
     }
   },
- "/api": {
+  "/scoob": {
     "target": "https://scoob.cc",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug",
     "pathRewrite": {
-      "^/api": ""
+      "^/scoob": ""
     }
   }
 }

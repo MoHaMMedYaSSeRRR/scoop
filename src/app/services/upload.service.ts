@@ -20,9 +20,8 @@ export class UploadService {
   // upload(data: any): Observable<any> {
   //   return this._HttpClient.post('https://scoob.cc/step-1', data);
   // }
-  
   upload(data: any): Observable<any> {
-    return this._HttpClient.post(`${this.baseUrl}/step-1`, data);
+    return this._HttpClient.post('/scoob/step-1', data);
   }
   pdfFile:any;
   setdata(data: any, file: File) {
