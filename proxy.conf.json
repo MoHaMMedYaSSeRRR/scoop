@@ -14,7 +14,7 @@
     "changeOrigin": true,
     "logLevel": "debug",
     "pathRewrite": {
-      "^/scoob-api": "/"
+      "^/scoob-api": ""
     }
   }
 }
