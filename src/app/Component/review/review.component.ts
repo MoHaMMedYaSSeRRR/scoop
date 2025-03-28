@@ -542,32 +542,21 @@ export class ReviewComponent implements OnInit {
       // Select new bubble
       bestMatch.selected = true;
   
-      // ✅ Forcefully clear error message if a selection is made
-      foundQuestionData.errors = null;
-      console.log('✅ Error cleared:', foundQuestionData.errors);
-  
-      // Force update to reflect the change
-      this.cdRef.detectChanges(); // Make sure to inject ChangeDetectorRef
-  
-      // Store Selection for Dynamic Update
-      if (!this.selectionCircles[this.currentPage]) {
-        this.selectionCircles[this.currentPage] = [];
-      }
-  
-      // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
-      this.selectionCircles[this.currentPage].push({
-        x: bestMatch.circle[0], // Use found bubble X
-        y: bestMatch.circle[1], // Use found bubble Y
-        radius: circleRadius,
-        isCorrect,
+      // ✅ Set ALL group errors to null
+      foundQuestionData.groups.forEach((group: any) => {
+        group.errors = null;
       });
   
-      console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
-      console.log('🚀 Updated foundQuestionData:', JSON.stringify(foundQuestionData, null, 2));
-    } else {
-      console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
+      // ✅ Set general errors to null
+      foundQuestionData.errors = null;
+  
+      console.log('✅ All errors cleared:', foundQuestionData);
+  
+      // Force update to reflect the change
+      this.cdRef.detectChanges();
     }
   }
+  
   
   
 
