@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { UploadService } from 'src/app/services/upload.service';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import { jsPDF } from 'jspdf';
-import examData from '../../../assets/EXAM-12-response.json';
+import examData from '../../../assets/EXAM-2-response.json';
 
 interface Question {
   position: number[][][];
@@ -93,9 +93,7 @@ export class ReviewComponent implements OnInit {
     }[];
   } = {};
 
-  constructor(private _UploadService: UploadService ,
-    private cdRef: ChangeDetectorRef
-  ) {}
+  constructor(private _UploadService: UploadService) {}
 
   ngOnInit(): void {
     this._UploadService.data$.subscribe((response) => {
@@ -110,7 +108,7 @@ export class ReviewComponent implements OnInit {
       }
     });
 
-    // this.omrResponse =examData;
+    //  this.omrResponse =examData;
     this.getAllPagesWithErrors();
     this.processOmrResponse();
     this.loadPdfImages(this.pdfFile);
@@ -497,18 +495,18 @@ export class ReviewComponent implements OnInit {
     }
   
     if (bestMatch && foundGroupIndex !== null) {
-      console.log(`✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`);
-      console.log(`🔍 Distance from click: ${bestDistance}px`);
+      // console.log(`✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`);
+      // console.log(`🔍 Distance from click: ${bestDistance}px`);
   
       // Find Model Answer Page (Page 1)
       const modelAnswerPage = this.omrResponse.find((p: any) => p.page_number === 1);
       if (!modelAnswerPage) {
-        console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
+        // console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
         return;
       }
   
-      console.log('📄 Model Answer Page Structure:', modelAnswerPage);
-      console.log('🔍 Searching for Question Key:', questionKey);
+      // console.log('📄 Model Answer Page Structure:', modelAnswerPage);
+      // console.log('🔍 Searching for Question Key:', questionKey);
   
       if (!modelAnswerPage.questions || !modelAnswerPage.questions[questionKey]) {
         console.warn(`⚠️ No matching question '${questionKey}' found in Model Answer Page!`);
@@ -521,13 +519,14 @@ export class ReviewComponent implements OnInit {
       // Find the corresponding group in Model Answer Page
       const modelGroup = modelQuestion.groups[foundGroupIndex];
       if (!modelGroup) {
-        console.warn('⚠️ No matching group found in Model Answer Page!');
+        // console.warn('⚠️ No matching group found in Model Answer Page!');
         return;
       }
   
       // Check if the selected bubble is correct
       let isCorrect = false;
       for (const bubble of modelGroup.bubbles) {
+        console.log(bestMatch)
         if (bubble.choice === bestMatch.choice) {
           isCorrect = bubble.selected === true; // Bubble is correct only if selected in Page 1
           break;
@@ -537,26 +536,39 @@ export class ReviewComponent implements OnInit {
       // Unselect previously selected bubble in the same group
       foundQuestionData.groups[foundGroupIndex].bubbles.forEach((bubble: any) => {
         bubble.selected = false;
+        console.log(bubble)
       });
-  
+      // console.log(foundQuestionData.groups[foundGroupIndex].errors)
+
       // Select new bubble
       bestMatch.selected = true;
   
-      // ✅ Set ALL group errors to null
-      foundQuestionData.groups.forEach((group: any) => {
-        group.errors = null;
+      // ✅ Clear error message when a bubble is selected
+      if (foundQuestionData.groups[foundGroupIndex].errors) {
+        // console.log('🔄 Removing error message:',foundQuestionData.groups[foundGroupIndex].errors);
+        foundQuestionData.groups[foundGroupIndex].errors = null;
+      }
+      // console.log(foundQuestionData.groups[foundGroupIndex].errors);
+
+      // Store Selection for Dynamic Update
+      if (!this.selectionCircles[this.currentPage]) {
+        this.selectionCircles[this.currentPage] = [];
+      }
+  
+      // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
+      this.selectionCircles[this.currentPage].push({
+        x: bestMatch.circle[0], // Use found bubble X
+        y: bestMatch.circle[1], // Use found bubble Y
+        radius: circleRadius,
+        isCorrect,
       });
   
-      // ✅ Set general errors to null
-      foundQuestionData.errors = null;
-  
-      console.log('✅ All errors cleared:', foundQuestionData);
-  
-      // Force update to reflect the change
-      this.cdRef.detectChanges();
+      // console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
+      // console.log('🚀 Updated foundQuestionData:', foundQuestionData);
+    } else {
+      console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
     }
   }
-  
   
   
 

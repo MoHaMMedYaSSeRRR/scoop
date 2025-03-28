@@ -402,7 +402,8 @@ onFinalSubmit(): void {
 
   const pdfJson = JSON.stringify(finalPayload);
   this.formData.append('data', pdfJson);
-
+  // this._UploadService.setdata(pdfJson, this.selectedFile);
+  // this.router.navigate(['/review']);
   this.isshow = false;
   this._UploadService.upload(this.formData).subscribe({
     next: (res) => {
