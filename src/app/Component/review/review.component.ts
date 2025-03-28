@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { UploadService } from 'src/app/services/upload.service';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import { jsPDF } from 'jspdf';
@@ -93,7 +93,9 @@ export class ReviewComponent implements OnInit {
     }[];
   } = {};
 
-  constructor(private _UploadService: UploadService) {}
+  constructor(private _UploadService: UploadService ,
+    private cdRef: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this._UploadService.data$.subscribe((response) => {
@@ -540,11 +542,12 @@ export class ReviewComponent implements OnInit {
       // Select new bubble
       bestMatch.selected = true;
   
-      // ✅ Clear error message when a bubble is selected
-      if (foundQuestionData.errors) {
-        console.log('🔄 Removing error message:', foundQuestionData.errors);
-        foundQuestionData.errors = null;
-      }
+      // ✅ Forcefully clear error message if a selection is made
+      foundQuestionData.errors = null;
+      console.log('✅ Error cleared:', foundQuestionData.errors);
+  
+      // Force update to reflect the change
+      this.cdRef.detectChanges(); // Make sure to inject ChangeDetectorRef
   
       // Store Selection for Dynamic Update
       if (!this.selectionCircles[this.currentPage]) {
@@ -560,7 +563,7 @@ export class ReviewComponent implements OnInit {
       });
   
       console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
-      console.log('🚀 Updated foundQuestionData:', foundQuestionData);
+      console.log('🚀 Updated foundQuestionData:', JSON.stringify(foundQuestionData, null, 2));
     } else {
       console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
     }
