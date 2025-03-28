@@ -541,7 +541,10 @@ export class ReviewComponent implements OnInit {
       bestMatch.selected = true;
   
       // ✅ Clear error message when a bubble is selected
-      foundQuestionData.errors = null;
+      if (foundQuestionData.errors) {
+        console.log('🔄 Removing error message:', foundQuestionData.errors);
+        foundQuestionData.errors = null;
+      }
   
       // Store Selection for Dynamic Update
       if (!this.selectionCircles[this.currentPage]) {
@@ -557,6 +560,7 @@ export class ReviewComponent implements OnInit {
       });
   
       console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
+      console.log('🚀 Updated foundQuestionData:', foundQuestionData);
     } else {
       console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
     }
