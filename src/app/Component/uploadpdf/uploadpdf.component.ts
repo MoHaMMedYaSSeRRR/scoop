@@ -86,16 +86,22 @@ export class UploadpdfComponent {
   }
 
   onFileSelected(event: any) {
-    const file = event.target.files[0];
-    this.fileName = file.name;
-
+    const file = event.target.files?.[0];
+  
     if (file && file.type === 'application/pdf') {
+      this.fileName = file.name;
       this.selectedFile = file;
+  
+      // Patch file into your form if needed
       this.pdfForm.patchValue({ pdfFile: file });
     } else {
       console.error('Please select a valid PDF file.');
+      this.fileName = '';
+      this.selectedFile = null;
+      this.pdfForm.patchValue({ pdfFile: null });
     }
   }
+  
 
   get languageDirection(): string {
     return this.pdfForm.get('language')?.value === 'ar'
@@ -428,7 +434,7 @@ onCurrentQuestionSubmit(): void {
 
     if (this.selectionBoxes.length > 0) {
       const userEntitiesCount = currentQuestionForm.value.entities_count || 0; // Take from input field
-      const worth = currentQuestionForm.value.worth || 0; // Take from input field
+      const worth = currentQuestionForm.value.worth || 1; // Take from input field
 
       const points = this.selectionBoxes.map((box) => [
         [Math.floor(box.x), Math.floor(box.y)],
@@ -457,7 +463,7 @@ onCurrentQuestionSubmit(): void {
             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         orientation: currentQuestionForm.value.orientation || 'vertical',
         direction: currentQuestionForm.value.direction || 'top-to-bottom',
-        worth: worth,
+        worth: worth || 1,
         corrected_by_teacher:
           currentQuestionForm.value.gradedByTeacher === true,
         id: this.selectedIdType === 'student_id' ? false : true,
@@ -485,7 +491,7 @@ onCurrentQuestionSubmit(): void {
         marked: '',
         gradedByTeacher: false,
         choices: '',
-        worth: 0,
+        worth: 1,
         id: false,
         entities_count: '',
       });
@@ -509,30 +515,64 @@ onCurrentQuestionSubmit(): void {
     height: number;
   }[] = [];
 
-  onCallApi() {
-
-    this._UploadService.upload(this.formData).subscribe({
-      next: (res) => {
-        console.log(res);
-        this.pdfUrl = res.pdf_file_path;
-        this._UploadService.setPdfUrl(this.pdfUrl);
-        this.router.navigate(['/review']);
-        setTimeout(() => {
-          const anchor = document.createElement('a');
-          anchor.href = this.pdfUrl;
-          anchor.target = '_blank';
-          anchor.click();
-        }, 100);
-      },
-      error: (err) => {
-        console.log(err);
-      },
-    });
-  }
   removeBox(index: number, event: any): void {
     event.stopPropagation();
+  
+    const removedBox = this.selectionBoxesByPage[this.currentPage][index];
+  
+    // 1. Remove from selectionBoxesByPage
     this.selectionBoxesByPage[this.currentPage].splice(index, 1);
+  
+    // 2. Remove from selectionBoxes (match by coordinates)
+    this.selectionBoxes = this.selectionBoxes.filter(box =>
+      !(
+        box.x === removedBox.x &&
+        box.y === removedBox.y &&
+        box.width === removedBox.width &&
+        box.height === removedBox.height
+      )
+    );
+  
+    // 3. Remove from visibleSelectionBoxes
+    this.visibleSelectionBoxes = this.visibleSelectionBoxes.filter(box =>
+      !(
+        box.x === removedBox.x &&
+        box.y === removedBox.y &&
+        box.width === removedBox.width &&
+        box.height === removedBox.height
+      )
+    );
+  
+    // 4. Remove from selectedQuestions structure
+    const pageKey = `page-${this.currentPage + 1}`;
+    const questionsOnPage = this.selectedQuestions[pageKey];
+  
+    if (questionsOnPage) {
+      for (const questionKey of Object.keys(questionsOnPage)) {
+        const question = questionsOnPage[questionKey];
+  
+        question.points = question.points.filter(([topLeft, bottomRight]) => {
+          const isSame =
+            topLeft[0] === Math.floor(removedBox.x) &&
+            topLeft[1] === Math.floor(removedBox.y) &&
+            bottomRight[0] === Math.floor(removedBox.x + removedBox.width) &&
+            bottomRight[1] === Math.floor(removedBox.y + removedBox.height);
+  
+          return !isSame;
+        });
+  
+        // Remove the question entirely if no points left
+        if (question.points.length === 0) {
+          delete questionsOnPage[questionKey];
+        } else {
+          // Update roi_type if only one box left
+          question.roi_type = question.points.length === 1 ? 'question' : 'complementary';
+        }
+      }
+    }
   }
+  
+  
   
   direction: any;
   checkdirection(direction: any) {
@@ -586,12 +626,16 @@ onCurrentQuestionSubmit(): void {
       this.isSelecting = false;
   
       if (this.isGlobal) {
-        // Store the global selection box for the current page
+        // Force width and height to be 100
+        const fixedWidth = 100;
+        const fixedHeight = 100;
+  
+        // Store the global selection box for the current page with fixed size
         this.globalSelectionBoxesByPage[this.currentPage] = {
           x: this.selectionBox.x,
           y: this.selectionBox.y,
-          width: this.selectionBox.width,
-          height: this.selectionBox.height,
+          width: fixedWidth,
+          height: fixedHeight,
         };
   
         this.globalSelectionBox = this.globalSelectionBoxesByPage[this.currentPage];
@@ -599,22 +643,19 @@ onCurrentQuestionSubmit(): void {
         const selectionPoints: [[number, number], [number, number]] = [
           [this.globalSelectionBox.x, this.globalSelectionBox.y],
           [
-            this.globalSelectionBox.x + this.globalSelectionBox.width,
-            this.globalSelectionBox.y + this.globalSelectionBox.height,
+            this.globalSelectionBox.x + fixedWidth,
+            this.globalSelectionBox.y + fixedHeight,
           ],
         ];
   
         this._UploadService.setSelectedBox(selectionPoints);
         console.log('Corrected Global Selection:', this.globalSelectionBox);
       } else {
-        // Initialize selection boxes for the current page if not already initialized
         if (!this.selectionBoxesByPage[this.currentPage]) {
           this.selectionBoxesByPage[this.currentPage] = [];
         }
   
-        // Add the selection box to the current page's array
         this.selectionBoxesByPage[this.currentPage].push({ ...this.selectionBox });
-  
         this.selectionBoxes.push({ ...this.selectionBox });
         this.visibleSelectionBoxes.push({ ...this.selectionBox });
   
@@ -624,7 +665,7 @@ onCurrentQuestionSubmit(): void {
       this.resetSelectionBox();
     }
   }
-
+  
   setOpacityForSameName(name: string, value: any): void {
     const radios = document.querySelectorAll(
       `input[name="${name}"]`
@@ -669,6 +710,38 @@ onCurrentQuestionSubmit(): void {
       }
     });
   }
+
+
+
+onDragOver(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.currentTarget && (event.currentTarget as HTMLElement).classList.add('dragover');
+}
+
+onDragLeave(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.currentTarget && (event.currentTarget as HTMLElement).classList.remove('dragover');
+}
+
+onDrop(event: DragEvent) {
+  event.preventDefault();
+  event.stopPropagation();
+  (event.currentTarget as HTMLElement).classList.remove('dragover');
+
+  const file = event.dataTransfer?.files?.[0];
+  if (file && file.type === 'application/pdf') {
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+
+    this.fileInput.nativeElement.files = dataTransfer.files;
+
+    // Manually trigger file select logic
+    this.onFileSelected({ target: this.fileInput.nativeElement } as any);
+  }
+}
+
 }
 // onCurrentQuestionSubmit(): void {
 //   if (this.isGlobal) {
