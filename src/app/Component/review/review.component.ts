@@ -467,108 +467,108 @@ export class ReviewComponent implements OnInit {
     return foundQuestionKey;
   }
 
-  updateBubbleSelection(
-    offsetX: number,
-    offsetY: number,
-    foundQuestionData: any,
-    questionKey: string
-  ) {
-    const circleRadius = 8;
-    const tolerance = 12;
-    let bestMatch: any = null;
-    let bestDistance = Infinity;
-    let foundGroupIndex: number | null = null;
-  
-    for (let groupIndex = 0; groupIndex < foundQuestionData.groups.length; groupIndex++) {
-      const group = foundQuestionData.groups[groupIndex];
-      for (const bubble of group.bubbles) {
-        const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
-        const distance = Math.sqrt((offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2);
-        if (distance <= bubbleRadius + tolerance) {
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            bestMatch = bubble;
-            foundGroupIndex = groupIndex;
+    updateBubbleSelection(
+      offsetX: number,
+      offsetY: number,
+      foundQuestionData: any,
+      questionKey: string
+    ) {
+      const circleRadius = 8;
+      const tolerance = 12;
+      let bestMatch: any = null;
+      let bestDistance = Infinity;
+      let foundGroupIndex: number | null = null;
+    
+      for (let groupIndex = 0; groupIndex < foundQuestionData.groups.length; groupIndex++) {
+        const group = foundQuestionData.groups[groupIndex];
+        for (const bubble of group.bubbles) {
+          const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
+          const distance = Math.sqrt((offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2);
+          if (distance <= bubbleRadius + tolerance) {
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              bestMatch = bubble;
+              foundGroupIndex = groupIndex;
+            }
           }
         }
       }
-    }
-  
-    if (bestMatch && foundGroupIndex !== null) {
-      // console.log(`✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`);
-      // console.log(`🔍 Distance from click: ${bestDistance}px`);
-  
-      // Find Model Answer Page (Page 1)
-      const modelAnswerPage = this.omrResponse.find((p: any) => p.page_number === 1);
-      if (!modelAnswerPage) {
-        // console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
-        return;
-      }
-  
-      // console.log('📄 Model Answer Page Structure:', modelAnswerPage);
-      // console.log('🔍 Searching for Question Key:', questionKey);
-  
-      if (!modelAnswerPage.questions || !modelAnswerPage.questions[questionKey]) {
-        console.warn(`⚠️ No matching question '${questionKey}' found in Model Answer Page!`);
-        console.log('🧐 Available Questions:', Object.keys(modelAnswerPage.questions));
-        return;
-      }
-  
-      const modelQuestion = modelAnswerPage.questions[questionKey];
-  
-      // Find the corresponding group in Model Answer Page
-      const modelGroup = modelQuestion.groups[foundGroupIndex];
-      if (!modelGroup) {
-        // console.warn('⚠️ No matching group found in Model Answer Page!');
-        return;
-      }
-  
-      // Check if the selected bubble is correct
-      let isCorrect = false;
-      for (const bubble of modelGroup.bubbles) {
-        console.log(bestMatch)
-        if (bubble.choice === bestMatch.choice) {
-          isCorrect = bubble.selected === true; // Bubble is correct only if selected in Page 1
-          break;
+    
+      if (bestMatch && foundGroupIndex !== null) {
+        // console.log(`✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`);
+        // console.log(`🔍 Distance from click: ${bestDistance}px`);
+    
+        // Find Model Answer Page (Page 1)
+        const modelAnswerPage = this.omrResponse.find((p: any) => p.page_number === 1);
+        if (!modelAnswerPage) {
+          // console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
+          return;
         }
-      }
-  
-      // Unselect previously selected bubble in the same group
-      foundQuestionData.groups[foundGroupIndex].bubbles.forEach((bubble: any) => {
-        bubble.selected = false;
-        console.log(bubble)
-      });
-      // console.log(foundQuestionData.groups[foundGroupIndex].errors)
+    
+        // console.log('📄 Model Answer Page Structure:', modelAnswerPage);
+        // console.log('🔍 Searching for Question Key:', questionKey);
+    
+        if (!modelAnswerPage.questions || !modelAnswerPage.questions[questionKey]) {
+          console.warn(`⚠️ No matching question '${questionKey}' found in Model Answer Page!`);
+          console.log('🧐 Available Questions:', Object.keys(modelAnswerPage.questions));
+          return;
+        }
+    
+        const modelQuestion = modelAnswerPage.questions[questionKey];
+    
+        // Find the corresponding group in Model Answer Page
+        const modelGroup = modelQuestion.groups[foundGroupIndex];
+        if (!modelGroup) {
+          // console.warn('⚠️ No matching group found in Model Answer Page!');
+          return;
+        }
+    
+        // Check if the selected bubble is correct
+        let isCorrect = false;
+        for (const bubble of modelGroup.bubbles) {
+          console.log(bestMatch)
+          if (bubble.choice === bestMatch.choice) {
+            isCorrect = bubble.selected === true; // Bubble is correct only if selected in Page 1
+            break;
+          }
+        }
+    
+        // Unselect previously selected bubble in the same group
+        foundQuestionData.groups[foundGroupIndex].bubbles.forEach((bubble: any) => {
+          bubble.selected = false;
+          console.log(bubble)
+        });
+        // console.log(foundQuestionData.groups[foundGroupIndex].errors)
 
-      // Select new bubble
-      bestMatch.selected = true;
-  
-      // ✅ Clear error message when a bubble is selected
-      if (foundQuestionData.groups[foundGroupIndex].errors) {
-        // console.log('🔄 Removing error message:',foundQuestionData.groups[foundGroupIndex].errors);
-        foundQuestionData.groups[foundGroupIndex].errors = null;
-      }
-      // console.log(foundQuestionData.groups[foundGroupIndex].errors);
+        // Select new bubble
+        bestMatch.selected = true;
+    
+        // ✅ Clear error message when a bubble is selected
+        if (foundQuestionData.groups[foundGroupIndex].errors) {
+          // console.log('🔄 Removing error message:',foundQuestionData.groups[foundGroupIndex].errors);
+          foundQuestionData.groups[foundGroupIndex].errors = null;
+        }
+        // console.log(foundQuestionData.groups[foundGroupIndex].errors);
 
-      // Store Selection for Dynamic Update
-      if (!this.selectionCircles[this.currentPage]) {
-        this.selectionCircles[this.currentPage] = [];
+        // Store Selection for Dynamic Update
+        if (!this.selectionCircles[this.currentPage]) {
+          this.selectionCircles[this.currentPage] = [];
+        }
+    
+        // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
+        this.selectionCircles[this.currentPage].push({
+          x: bestMatch.circle[0], // Use found bubble X
+          y: bestMatch.circle[1], // Use found bubble Y
+          radius: circleRadius,
+          isCorrect,
+        });
+    
+        // console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
+        // console.log('🚀 Updated foundQuestionData:', foundQuestionData);
+      } else {
+        console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
       }
-  
-      // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
-      this.selectionCircles[this.currentPage].push({
-        x: bestMatch.circle[0], // Use found bubble X
-        y: bestMatch.circle[1], // Use found bubble Y
-        radius: circleRadius,
-        isCorrect,
-      });
-  
-      // console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
-      // console.log('🚀 Updated foundQuestionData:', foundQuestionData);
-    } else {
-      console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
     }
-  }
   
   
 

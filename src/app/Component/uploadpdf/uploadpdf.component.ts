@@ -465,7 +465,7 @@ onCurrentQuestionSubmit(): void {
         direction: currentQuestionForm.value.direction || 'top-to-bottom',
         worth: worth || 1,
         corrected_by_teacher:
-          currentQuestionForm.value.gradedByTeacher === true,
+          currentQuestionForm.value.gradedByTeacher === 'true',
         id: this.selectedIdType === 'student_id' ? false : true,
       };
 
