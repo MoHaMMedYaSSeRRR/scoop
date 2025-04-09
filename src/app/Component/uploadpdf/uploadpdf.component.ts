@@ -19,7 +19,7 @@ interface ROI {
   choices?: string[];
   orientation: string; // Add this field
   direction: string; // Add this field
-  worth: number; // Add this field
+  worth?: number; // Add this field
   corrected_by_teacher: boolean; // Add this field
   id: boolean; // Add this field
   page_number?: number;
@@ -387,13 +387,15 @@ onFinalSubmit(): void {
         choices: questionData.choices || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         orientation: questionData.orientation || 'horizontal',
         direction: questionData.direction || 'right-to-left',
-        worth: questionData.worth || 1,
         corrected_by_teacher: questionData.corrected_by_teacher || false,
         id: questionData.id,
+        worth: questionData.worth || 1 
       };
 
       // Calculate total exam score
-      totalExamScore += questionData.entities_count * questionData.worth;
+      if(questionData.worth){
+        totalExamScore += questionData.entities_count * questionData.worth;
+      }
     });
   });
 
@@ -443,7 +445,6 @@ onCurrentQuestionSubmit(): void {
 
       // Determine roi_type dynamically
       const roi_type = points.length === 1 ? 'question' : 'complementary';
-
       const roiData: ROI = {
         points: points,
         roi_type: roi_type,
@@ -453,7 +454,7 @@ onCurrentQuestionSubmit(): void {
             ? currentQuestionForm.value.choices
                 .split(/[-,]/)
                 .map((choice: string) => choice.trim()).length
-            : 10, // **Keep this unchanged**
+            : 10,
         choices:
           currentQuestionForm.value.choices &&
           currentQuestionForm.value.choices.trim()
@@ -463,11 +464,11 @@ onCurrentQuestionSubmit(): void {
             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         orientation: currentQuestionForm.value.orientation || 'vertical',
         direction: currentQuestionForm.value.direction || 'top-to-bottom',
-        worth: worth || 1,
-        corrected_by_teacher:
-          currentQuestionForm.value.gradedByTeacher === 'true',
+        corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
         id: this.selectedIdType === 'student_id' ? false : true,
+        ...(currentQuestionForm.value.gradedByTeacher !== 'true' ? { worth: worth } : {})
       };
+      
 
       console.log(roiData);
 
