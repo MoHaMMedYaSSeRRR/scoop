@@ -291,7 +291,7 @@ export class ReviewComponent implements OnInit {
     // Update OMR data with circular selection
     const updatedOMR = {
       pages: { ...this.omrResponse }, // Wrap existing data inside 'pages'
-      number_of_pages: this.omrResponse.length, // Count total pages
+      number_of_pages: Object.keys(this.omrResponse).length,
       drag: circleData, // Store circle data
     };
   
@@ -319,7 +319,7 @@ export class ReviewComponent implements OnInit {
     this.errorBorders = {}; // Ensure it's an object, not an array
     const errorPagesSet = new Set<number>();
 
-    this.omrResponse.forEach((pageData: any) => {
+    Object.values(this.omrResponse).forEach((pageData: any) => {
       const pageErrors: {
         x: number;
         y: number;
@@ -340,7 +340,6 @@ export class ReviewComponent implements OnInit {
               });
 
               errorPagesSet.add(pageData.page_number);
-
               // Ensure we have valid bubbles
               if (!group.bubbles || group.bubbles.length === 0) return;
 
