@@ -389,8 +389,8 @@ onFinalSubmit(): void {
         direction: questionData.direction || 'right-to-left',
         corrected_by_teacher: questionData.corrected_by_teacher || false,
         id: questionData.id,
-        ...(questionData.corrected_by_teacher !== true ? { worth: questionData.worth || 1 } : {})
-      };
+        worth: questionData.worth
+            };
 
       // Calculate total exam score
       if(questionData.worth){
@@ -466,8 +466,8 @@ onCurrentQuestionSubmit(): void {
         direction: currentQuestionForm.value.direction || 'top-to-bottom',
         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
         id: this.selectedIdType === 'student_id' ? false : true,
-        ...(currentQuestionForm.value.gradedByTeacher !== 'true' ? { worth: worth } : {})
-      };
+        worth: worth 
+            };
       
 
       console.log(roiData);
