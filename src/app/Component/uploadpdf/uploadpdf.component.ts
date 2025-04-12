@@ -389,7 +389,7 @@ onFinalSubmit(): void {
         direction: questionData.direction || 'right-to-left',
         corrected_by_teacher: questionData.corrected_by_teacher || false,
         id: questionData.id,
-        worth: questionData.worth || 1 
+        ...(questionData.corrected_by_teacher !== true ? { worth: questionData.worth || 1 } : {})
       };
 
       // Calculate total exam score
