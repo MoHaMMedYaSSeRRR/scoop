@@ -444,7 +444,8 @@ onCurrentQuestionSubmit(): void {
       ]);
 
       // Determine roi_type dynamically
-      const roi_type = points.length === 1 ? 'question' : 'complementary';
+      // const roi_type = points.length === 1 ? 'question' : 'complementary';
+      const roi_type = 'question' ;
       const roiData: ROI = {
         points: points,
         roi_type: roi_type,
