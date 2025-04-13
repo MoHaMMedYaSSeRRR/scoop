@@ -627,7 +627,7 @@ export class ReviewComponent implements OnInit {
 
     this.detectedCircles = {}; // Reset detected circles for each page
 
-    this.omrResponse.forEach(
+    Object.values(this.omrResponse).forEach(
       (page: { page_number: number; questions: any }) => {
         let pageCircles: {
           x: number;
