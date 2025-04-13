@@ -160,6 +160,7 @@ export class UploadpdfComponent {
               this.formBuilder.group({
                 rowNumber: new FormControl('', Validators.required),
                 colNumber: new FormControl('', Validators.required),
+                roi_type: new FormControl('', Validators.required),
                 direction: new FormControl('', Validators.required),
                 orientation: new FormControl('', Validators.required),
                 marked: new FormControl(),
@@ -528,7 +529,7 @@ onCurrentQuestionSubmit(): void {
         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
       ]);
 
-      const roi_type = 'question';
+      const roi_type = currentQuestionForm.value.roi_type || 'question';
       const roiData: ROI = {
         points: points,
         roi_type: roi_type,
