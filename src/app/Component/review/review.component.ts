@@ -243,15 +243,18 @@ export class ReviewComponent implements OnInit {
 
   /** ✅ Get the current page data */
   getPageData() {
-    const pageData = this.omrResponse.find(
+    const pageData = Object.values(this.omrResponse).find(
       (p: any) => p.page_number === this.currentPage
     );
+  
     if (!pageData) {
       console.error(`⚠️ No data found for page ${this.currentPage + 1}`);
       return null;
     }
-    return pageData;
+  
+    return pageData as any; // 👈 simple cast to avoid TS error
   }
+  
 
   errorQuestions: any[] = []; // ✅ Store errors for UI display
 
