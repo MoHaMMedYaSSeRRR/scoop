@@ -178,7 +178,14 @@ input[type="number"] {
   height: 100px !important;
   border-radius:50% !important;
 }
-.blueboxes{
-  border: 2px dashed #007bffd8;
-background-color: rgba(0, 123, 255, 0.3);
+
+.greenboxes {
+  border: 2px dashed #01ff0ed8;
+  background-color: rgba(1, 255, 10, 0.3);
 }
+
+.blueboxes {
+  border: 2px dashed #007bffd8;
+  background-color: rgba(0, 123, 255, 0.3);
+}
+

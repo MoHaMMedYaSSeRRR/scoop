@@ -83,25 +83,29 @@
 
             <!-- Render all finalized selection boxes -->
             <!-- Render all finalized selection boxes for the current page -->
-            <div
-              *ngFor="
-                let box of selectionBoxesByPage[currentPage];
-                let i = index
-              "
-              class="selection-box blueboxes"
-              [ngStyle]="{
-                left: box.x + 'px',
-                top: box.y + 'px',
-                width: box.width + 'px',
-                height: box.height + 'px'
-              }"
-            >
-              <i
-                role="button"
-                class="fa fa-trash text-danger"
-                (click)="removeBox(i, $event)"
-              ></i>
-            </div>
+          <!-- Render all finalized selection boxes for the current page -->
+          <div
+          *ngFor="let box of selectionBoxesByPage[currentPage]; let i = index"
+          [ngClass]="{
+            'selection-box': true,
+            'greenboxes': !box.submitted,
+            'blueboxes': box.submitted
+          }"
+          [ngStyle]="{
+            left: box.x + 'px',
+            top: box.y + 'px',
+            width: box.width + 'px',
+            height: box.height + 'px'
+          }"
+          >
+          <i
+            role="button"
+            class="fa fa-trash text-danger"
+            *ngIf="!box.submitted"
+            (click)="removeBox(i, $event)"
+          ></i>
+          </div>
+
 
             <!-- Render current selection box while dragging -->
             <div
@@ -115,25 +119,26 @@
               }"
             ></div>
             <div
-              class="selection-boxx global"
-              *ngIf="globalSelectionBox.width > 0"
-              [ngStyle]="{
-                left: globalSelectionBox.x + 'px',
-                top: globalSelectionBox.y + 'px',
-                width: globalSelectionBox.width + 'px',
-                height: globalSelectionBox.height + 'px'
-              }"
-            >
-              <div class="score-line">
-                <div class="score-label">
-                  {{ currentScore }}
-                </div>
-                <div class="final-score">
-                  {{ finalScore }}
-                  <!-- Final score below the line -->
-                </div>
+            class="selection-boxx global"
+            *ngIf="globalSelectionBoxesByPage[currentPage] && globalSelectionBoxesByPage[currentPage].width > 0"
+            [ngStyle]="{
+              left: globalSelectionBoxesByPage[currentPage].x + 'px',
+              top: globalSelectionBoxesByPage[currentPage].y + 'px',
+              width: globalSelectionBoxesByPage[currentPage].width + 'px',
+              height: globalSelectionBoxesByPage[currentPage].height + 'px'
+            }"
+          >
+            <div class="score-line">
+              <div class="score-label">
+                {{ currentScore }}
+              </div>
+              <div class="final-score">
+                {{ finalScore }}
               </div>
             </div>
+          </div>
+          
+          
           </div>
           <div
             class="arrows d-flex justify-content-between align-items-center w-50 m-auto mt-3 text-center"

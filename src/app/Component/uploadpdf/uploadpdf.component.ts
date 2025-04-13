@@ -60,7 +60,8 @@ export class UploadpdfComponent {
   currentScore: any = 0;
   finalScore: any = 0;
   selectedIdType!: string;
-  selectionBoxesByPage: { [pageNumber: number]: { x: number; y: number; width: number; height: number }[] } = {};
+  selectionBoxesByPage: { [pageNumber: number]: { x: number; y: number; width: number; height: number ;  submitted?: boolean;
+    }[] } = {};
   constructor(
     private formBuilder: FormBuilder,
     private _UploadService: UploadService,
@@ -425,6 +426,90 @@ onFinalSubmit(): void {
   });
 }
 
+// onCurrentQuestionSubmit(): void {
+//   if (this.isGlobal) {
+//     this.isGlobal = false;
+//     this.isshow = true;
+//   }
+ 
+  
+//   if (this.isshow) {
+//     const currentQuestionForm = this.getCurrentQuestionFormGroup();
+
+//     if (this.selectionBoxes.length > 0) {
+//       const userEntitiesCount = currentQuestionForm.value.entities_count || 0; // Take from input field
+//       const worth = currentQuestionForm.value.worth || 1; // Take from input field
+
+//       const points = this.selectionBoxes.map((box) => [
+//         [Math.floor(box.x), Math.floor(box.y)],
+//         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
+//       ]);
+
+//       // Determine roi_type dynamically
+//       // const roi_type = points.length === 1 ? 'question' : 'complementary';
+//       const roi_type = 'question' ;
+//       const roiData: ROI = {
+//         points: points,
+//         roi_type: roi_type,
+//         entities_count:
+//           currentQuestionForm.value.choices &&
+//           currentQuestionForm.value.choices.trim()
+//             ? currentQuestionForm.value.choices
+//                 .split(/[-,]/)
+//                 .map((choice: string) => choice.trim()).length
+//             : 10,
+//         choices:
+//           currentQuestionForm.value.choices &&
+//           currentQuestionForm.value.choices.trim()
+//             ? currentQuestionForm.value.choices
+//                 .split(/[-,]/)
+//                 .map((choice: string) => choice.trim())
+//             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+//         orientation: currentQuestionForm.value.orientation || 'vertical',
+//         direction: currentQuestionForm.value.direction || 'top-to-bottom',
+//         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
+//         id: this.selectedIdType === 'student_id' ? false : true,
+//         worth: worth 
+//             };
+      
+
+//       console.log(roiData);
+
+//       // **Update Final Score Calculation (Use Input `entities_count`)**
+//       this.finalScore += userEntitiesCount * worth;
+
+//       // Store question under its respective page
+//       const pageKey = `page-${this.currentPage+1}`;
+//       if (!this.selectedQuestions[pageKey]) {
+//         this.selectedQuestions[pageKey] = {};
+//       }
+
+//       const questionNumber = Object.keys(this.selectedQuestions[pageKey]).length + 1;
+//       const questionKey = `question-${questionNumber}`;
+//       this.selectedQuestions[pageKey][questionKey] = roiData;
+
+//       currentQuestionForm.reset({
+//         roi_coordinates: [],
+//         colNumber: '',
+//         direction: '',
+//         marked: '',
+//         gradedByTeacher: false,
+//         choices: '',
+//         worth: 1,
+//         id: false,
+//         entities_count: '',
+//       });
+
+//       this.resetboxes();
+//       this.questionType = '';
+//     } else {
+//       console.error('Please define a selection area before submitting.');
+//     }
+ 
+//     this.direction = '';
+//     this.isID = false;
+//   }
+// }
 onCurrentQuestionSubmit(): void {
   if (this.isGlobal) {
     this.isGlobal = false;
@@ -435,17 +520,15 @@ onCurrentQuestionSubmit(): void {
     const currentQuestionForm = this.getCurrentQuestionFormGroup();
 
     if (this.selectionBoxes.length > 0) {
-      const userEntitiesCount = currentQuestionForm.value.entities_count || 0; // Take from input field
-      const worth = currentQuestionForm.value.worth || 1; // Take from input field
+      const userEntitiesCount = currentQuestionForm.value.entities_count || 0;
+      const worth = currentQuestionForm.value.worth || 1;
 
       const points = this.selectionBoxes.map((box) => [
         [Math.floor(box.x), Math.floor(box.y)],
         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
       ]);
 
-      // Determine roi_type dynamically
-      // const roi_type = points.length === 1 ? 'question' : 'complementary';
-      const roi_type = 'question' ;
+      const roi_type = 'question';
       const roiData: ROI = {
         points: points,
         roi_type: roi_type,
@@ -467,17 +550,14 @@ onCurrentQuestionSubmit(): void {
         direction: currentQuestionForm.value.direction || 'top-to-bottom',
         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
         id: this.selectedIdType === 'student_id' ? false : true,
-        worth: worth 
-            };
-      
+        worth: worth,
+      };
 
       console.log(roiData);
 
-      // **Update Final Score Calculation (Use Input `entities_count`)**
       this.finalScore += userEntitiesCount * worth;
 
-      // Store question under its respective page
-      const pageKey = `page-${this.currentPage+1}`;
+      const pageKey = `page-${this.currentPage + 1}`;
       if (!this.selectedQuestions[pageKey]) {
         this.selectedQuestions[pageKey] = {};
       }
@@ -485,6 +565,13 @@ onCurrentQuestionSubmit(): void {
       const questionNumber = Object.keys(this.selectedQuestions[pageKey]).length + 1;
       const questionKey = `question-${questionNumber}`;
       this.selectedQuestions[pageKey][questionKey] = roiData;
+
+      // 🔵 Mark boxes as submitted (change to blue)
+      if (this.selectionBoxesByPage[this.currentPage]) {
+        this.selectionBoxesByPage[this.currentPage] = this.selectionBoxesByPage[
+          this.currentPage
+        ].map((box) => ({ ...box, submitted: true }));
+      }
 
       currentQuestionForm.reset({
         roi_coordinates: [],
@@ -503,7 +590,7 @@ onCurrentQuestionSubmit(): void {
     } else {
       console.error('Please define a selection area before submitting.');
     }
- 
+
     this.direction = '';
     this.isID = false;
   }
@@ -628,11 +715,9 @@ onCurrentQuestionSubmit(): void {
       this.isSelecting = false;
   
       if (this.isGlobal) {
-        // Force width and height to be 100
         const fixedWidth = 100;
         const fixedHeight = 100;
   
-        // Store the global selection box for the current page with fixed size
         this.globalSelectionBoxesByPage[this.currentPage] = {
           x: this.selectionBox.x,
           y: this.selectionBox.y,
@@ -640,26 +725,23 @@ onCurrentQuestionSubmit(): void {
           height: fixedHeight,
         };
   
-        this.globalSelectionBox = this.globalSelectionBoxesByPage[this.currentPage];
-  
         const selectionPoints: [[number, number], [number, number]] = [
-          [this.globalSelectionBox.x, this.globalSelectionBox.y],
-          [
-            this.globalSelectionBox.x + fixedWidth,
-            this.globalSelectionBox.y + fixedHeight,
-          ],
+          [this.selectionBox.x, this.selectionBox.y],
+          [this.selectionBox.x + fixedWidth, this.selectionBox.y + fixedHeight],
         ];
   
         this._UploadService.setSelectedBox(selectionPoints);
-        console.log('Corrected Global Selection:', this.globalSelectionBox);
+        console.log('Corrected Global Selection for page', this.currentPage, ':', this.globalSelectionBoxesByPage[this.currentPage]);
       } else {
         if (!this.selectionBoxesByPage[this.currentPage]) {
           this.selectionBoxesByPage[this.currentPage] = [];
         }
   
-        this.selectionBoxesByPage[this.currentPage].push({ ...this.selectionBox });
-        this.selectionBoxes.push({ ...this.selectionBox });
-        this.visibleSelectionBoxes.push({ ...this.selectionBox });
+        const newBox = { ...this.selectionBox, submitted: false };
+  
+        this.selectionBoxesByPage[this.currentPage].push(newBox);
+        this.selectionBoxes.push(newBox);
+        this.visibleSelectionBoxes.push(newBox);
   
         console.log('Final Selection Box:', this.selectionBox);
       }
@@ -667,6 +749,8 @@ onCurrentQuestionSubmit(): void {
       this.resetSelectionBox();
     }
   }
+  
+  
   
   setOpacityForSameName(name: string, value: any): void {
     const radios = document.querySelectorAll(
