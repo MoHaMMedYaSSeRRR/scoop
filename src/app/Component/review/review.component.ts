@@ -624,21 +624,21 @@ export class ReviewComponent implements OnInit {
 
   processOmrResponse(): void {
     if (!this.omrResponse) return;
-
+  
     this.detectedCircles = {}; // Reset detected circles for each page
-
-    Object.values(this.omrResponse).forEach(
-      (page: { page_number: number; questions: any }) => {
+  
+    (Object.values(this.omrResponse) as { page_number: number; questions: any }[]).forEach(
+      (page) => {
         let pageCircles: {
           x: number;
           y: number;
           radius: number;
           isCorrect: boolean;
         }[] = [];
-
+  
         Object.keys(page.questions).forEach((questionKey: string) => {
           let question = page.questions[questionKey];
-
+  
           if (question.groups && Array.isArray(question.groups)) {
             question.groups.forEach(
               (group: { bubbles: any[]; errors?: string }) => {
@@ -665,11 +665,12 @@ export class ReviewComponent implements OnInit {
             );
           }
         });
-
+  
         this.detectedCircles[page.page_number] = pageCircles;
       }
     );
   }
+  
 }
 interface Page {
   page_number: number;
