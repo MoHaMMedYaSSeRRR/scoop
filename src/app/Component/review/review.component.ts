@@ -498,7 +498,9 @@ export class ReviewComponent implements OnInit {
         // console.log(`🔍 Distance from click: ${bestDistance}px`);
     
         // Find Model Answer Page (Page 1)
-        const modelAnswerPage = this.omrResponse.find((p: any) => p.page_number === 1);
+        const modelAnswerPage = Object.values(this.omrResponse).find(
+          (p: any) => p.page_number === 1
+        ) as { questions: any }; // Add correct type here
         if (!modelAnswerPage) {
           // console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
           return;
