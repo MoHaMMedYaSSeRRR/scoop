@@ -319,12 +319,13 @@
               />
               <div *ngIf="questionType == 'choicis'">
                 <input
-                  type="text"
-                  class="form-control p-2 rounded-1 my-2 text-end"
-                  formControlName="choices"
-                  placeholder=" أ-ب-ج-د :الاجابات"
-                  required
-                />
+                type="number"
+                class="form-control p-2 rounded-1 my-2 text-end"
+                formControlName="choices"
+                placeholder="عدد الاجابات"
+                required
+              />
+                
                 <input
                   *ngIf="questionType == 'choicis'"
                   type="number"
