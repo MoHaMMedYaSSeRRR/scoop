@@ -401,7 +401,7 @@ onFinalSubmit(): void {
     });
   });
 
-  this.finalScore = totalExamScore; // Update total score dynamically
+  // this.finalScore = totalExamScore; // Update total score dynamically
 
   const finalPayload = { ...pagesObject };
   this._UploadService.setdata(finalPayload, this.selectedFile);
@@ -528,7 +528,11 @@ onCurrentQuestionSubmit(): void {
         [Math.floor(box.x), Math.floor(box.y)],
         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
       ]);
-
+      const orientation = currentQuestionForm.value.orientation || 'vertical';
+      const direction = currentQuestionForm.value.direction?.trim()
+        ? currentQuestionForm.value.direction.trim()
+        : (orientation === 'vertical' ? 'top-to-bottom' : 'right-to-left');
+      
       const roi_type = currentQuestionForm.value.roi_type || 'question';
       const roiData: ROI = {
         points: points,
@@ -547,17 +551,24 @@ onCurrentQuestionSubmit(): void {
                 .split(/[-,]/)
                 .map((choice: string) => choice.trim())
             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-        orientation: currentQuestionForm.value.orientation || 'vertical',
-        direction: currentQuestionForm.value.direction || 'top-to-bottom',
+            orientation: orientation,
+            direction: direction,
         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
         id: this.selectedIdType === 'student_id' ? false : true,
         worth: worth,
       };
-
+ 
       console.log(roiData);
 
-      this.finalScore += userEntitiesCount * worth;
-
+      if (roiData.corrected_by_teacher) {
+        const numericChoices = (roiData.choices ?? []).map(Number);
+        const maxChoice = Math.max(...numericChoices, 0); // default to 0 if array is empty
+        this.finalScore += maxChoice;
+      } else {
+        this.finalScore += userEntitiesCount * worth;
+      }
+      
+      
       const pageKey = `page-${this.currentPage + 1}`;
       if (!this.selectedQuestions[pageKey]) {
         this.selectedQuestions[pageKey] = {};

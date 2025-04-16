@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { UploadService } from 'src/app/services/upload.service';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import { jsPDF } from 'jspdf';
-import examData from '../../../assets/EXAM-2-response.json';
+import examData from '../../../assets/EXAM-1-response.json';
 
 interface Question {
   position: number[][][];
@@ -108,7 +108,7 @@ export class ReviewComponent implements OnInit {
       }
     });
 
-    //  this.omrResponse =examData;
+      // this.omrResponse =examData;
     this.getAllPagesWithErrors();
     this.processOmrResponse();
     this.loadPdfImages(this.pdfFile);
@@ -317,82 +317,89 @@ export class ReviewComponent implements OnInit {
   }
   
 
-  getAllPagesWithErrors() {
-    this.errorQuestions = [];
-    this.errorBorders = {}; // Ensure it's an object, not an array
-    const errorPagesSet = new Set<number>();
+  // getAllPagesWithErrors() {
+  //   this.errorQuestions = [];
+  //   this.errorBorders = {}; // Ensure it's an object, not an array
+  //   const errorPagesSet = new Set<number>();
 
-    Object.values(this.omrResponse).forEach((pageData: any) => {
-      const pageErrors: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-        color: string;
-      }[] = []; // Explicit type
+  //   Object.values(this.omrResponse).forEach((pageData: any) => {
+  //     const pageErrors: {
+  //       x: number;
+  //       y: number;
+  //       width: number;
+  //       height: number;
+  //       color: string;
+  //     }[] = []; // Explicit type
 
-      Object.entries(pageData.questions).forEach(
-        ([questionNumber, questionData]: [string, any]) => {
-          questionData.groups.forEach((group: any, groupIndex: number) => {
-            if (group.errors) {
-              this.errorQuestions.push({
-                page: pageData.page_number,
-                questionNumber,
-                subQuestion: groupIndex + 1,
-                errors: group.errors,
-              });
+  //     Object.entries(pageData.questions).forEach(
+  //       ([questionNumber, questionData]: [string, any]) => {
+  //         questionData.groups.forEach((group: any, groupIndex: number) => {
+  //           if (group.errors) {
+  //             this.errorQuestions.push({
+  //               page: pageData.page_number,
+  //               questionNumber,
+  //               subQuestion: groupIndex + 1,
+  //               errors: group.errors,
+  //             });
 
-              errorPagesSet.add(pageData.page_number);
-              // Ensure we have valid bubbles
-              if (!group.bubbles || group.bubbles.length === 0) return;
+  //             errorPagesSet.add(pageData.page_number);
+  //             // Ensure we have valid bubbles
+  //             if (!group.bubbles || group.bubbles.length === 0) return;
 
-              const bubbles = group.bubbles.map((b: any) => b.circle);
-              const minX = Math.min(...bubbles.map((b: any) => b[0]));
-              const minY = Math.min(...bubbles.map((b: any) => b[1]));
-              const maxX = Math.max(...bubbles.map((b: any) => b[0]));
-              const maxY = Math.max(...bubbles.map((b: any) => b[1]));
+  //             const bubbles = group.bubbles.map((b: any) => b.circle);
+  //             const minX = Math.min(...bubbles.map((b: any) => b[0]));
+  //             const minY = Math.min(...bubbles.map((b: any) => b[1]));
+  //             const maxX = Math.max(...bubbles.map((b: any) => b[0]));
+  //             const maxY = Math.max(...bubbles.map((b: any) => b[1]));
 
-              // Add dynamic padding for small areas
-              const padding = 10;
-              const width = maxX - minX + padding;
-              const height = maxY - minY + padding;
+  //             // Add dynamic padding for small areas
+  //             const padding = 10;
+  //             const width = maxX - minX + padding;
+  //             const height = maxY - minY + padding;
 
-              // Determine border color
-              let borderColor = '#ff0000'; // Default: No answer
-              if (group.errors === "There's more than one answer") {
-                borderColor = '#0000ff'; // Multiple answers
-              }
+  //             // Determine border color
+  //             let borderColor = '#ff0000'; // Default: No answer
+  //             if (group.errors === "There's more than one answer") {
+  //               borderColor = '#0000ff'; // Multiple answers
+  //             }
 
-              // Store errors per page
-              pageErrors.push({
-                x: minX - padding / 2,
-                y: minY - padding / 2,
-                width: width,
-                height: height,
-                color: borderColor,
-              });
-            }
-          });
-        }
-      );
+  //             // Store errors per page
+  //             pageErrors.push({
+  //               x: minX - padding / 2,
+  //               y: minY - padding / 2,
+  //               width: width,
+  //               height: height,
+  //               color: borderColor,
+  //             });
+  //           }
+  //         });
+  //       }
+  //     );
 
-      // Assign page-specific errors
-      if (pageErrors.length > 0) {
-        this.errorBorders[pageData.page_number] = pageErrors;
-      }
-    });
+  //     // Assign page-specific errors
+  //     if (pageErrors.length > 0) {
+  //       this.errorBorders[pageData.page_number] = pageErrors;
+  //     }
+  //   });
 
-    this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
+  //   this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
 
-    if (this.errorPages.length > 0) {
-      this.currentErrorIndex = 0;
-      this.currentPage = this.errorPages[this.currentErrorIndex];
-    }
+  //   if (this.errorPages.length > 0) {
+  //     this.currentErrorIndex = 0;
+  //     this.currentPage = this.errorPages[this.currentErrorIndex];
+  //   }
 
-    console.log('🚨 Pages with errors:', this.errorPages);
-    console.log('🖼️ Error Borders:', this.errorBorders);
-  }
+  //   console.log('🚨 Pages with errors:', this.errorPages);
+  //   console.log('🖼️ Error Borders:', this.errorBorders);
+  // }
 
+  pageVisited: { [pageNumber: number]: boolean } = {}; // 👈 track which pages were counted
+
+  
+  
+  
+  
+  
   onMouseDown(event: MouseEvent) {
     const imgElement = event.target as HTMLImageElement;
     if (!imgElement) return;
@@ -443,13 +450,22 @@ export class ReviewComponent implements OnInit {
   getClickedQuestion(offsetX: number, offsetY: number, pageData: any) {
     const tolerance = 12;
     let foundQuestionKey = null;
-
+  
     for (const questionKey in pageData.questions) {
       const question = pageData.questions[questionKey];
-
+  
       if (!question.points || question.points.length < 1) continue;
-
-      const [[minX, minY], [maxX, maxY]] = question.points[0];
+  
+      // Get the first and last rectangle
+      const firstRect = question.points[0];
+      const lastRect = question.points[question.points.length - 1];
+  
+      // Calculate the bounding box that covers from the first to the last rectangle
+      const minX = Math.min(firstRect[0][0], lastRect[0][0]);
+      const minY = Math.min(firstRect[0][1], lastRect[0][1]);
+      const maxX = Math.max(firstRect[1][0], lastRect[1][0]);
+      const maxY = Math.max(firstRect[1][1], lastRect[1][1]);
+  
       if (
         offsetX >= minX - tolerance &&
         offsetX <= maxX + tolerance &&
@@ -461,13 +477,15 @@ export class ReviewComponent implements OnInit {
         break;
       }
     }
-
+  
     if (!foundQuestionKey) {
       console.warn(`❌ No matching question found.`);
       return null;
     }
+  
     return foundQuestionKey;
   }
+  
 
     updateBubbleSelection(
       offsetX: number,
@@ -574,7 +592,12 @@ export class ReviewComponent implements OnInit {
       }
     }
   
-  
+    errorQuestionsByPage: { [pageNumber: number]: any[] } = {};
+    totalErrors: number = 0;
+    totalErrorsRemaining: number = 0;
+    visitedPages: Set<number> = new Set();
+    subtractedIndexes = new Set<number>(); // 👈 Track which pages we've subtracted from
+
 
   getPagesWithErrors() {
     if (!Array.isArray(this.omrResponse)) {
@@ -601,19 +624,135 @@ export class ReviewComponent implements OnInit {
     console.log(`🚨 Pages with errors: ${this.errorPages.join(', ')}`);
   }
 
-  goToPreviousPage() {
-    if (this.currentErrorIndex > 0) {
-      this.currentErrorIndex--;
-      this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to previous error page
+  // goToPreviousPage() {
+  //   if (this.currentErrorIndex > 0) {
+  //     this.currentErrorIndex--;
+  //     this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to previous error page
+  //   }
+  // }
+
+  // goToNextPage() {
+  //   if (this.currentErrorIndex < this.errorPages.length - 1) {
+  //     this.currentErrorIndex++;
+  //     this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to next error page
+  //   }
+  // }
+  getAllPagesWithErrors() {
+    this.errorQuestions = [];
+    this.errorQuestionsByPage = {};
+    this.errorBorders = {};
+    this.errorPages = [];
+    this.subtractedIndexes.clear();
+  
+    const errorPagesSet = new Set<number>();
+  
+    Object.values(this.omrResponse).forEach((pageData: any) => {
+      const pageErrors:any = [];
+      const questionErrors:any = [];
+  
+      Object.entries(pageData.questions).forEach(
+        ([questionNumber, questionData]: [string, any]) => {
+          questionData.groups.forEach((group: any, groupIndex: number) => {
+            if (group.errors) {
+              const error = {
+                page: pageData.page_number,
+                questionNumber,
+                subQuestion: groupIndex + 1,
+                errors: group.errors,
+              };
+              questionErrors.push(error);
+              errorPagesSet.add(pageData.page_number);
+  
+              if (!group.bubbles?.length) return;
+  
+              const bubbles = group.bubbles.map((b: any) => b.circle);
+              const minX = Math.min(...bubbles.map((b: any) => b[0]));
+              const minY = Math.min(...bubbles.map((b: any) => b[1]));
+              const maxX = Math.max(...bubbles.map((b: any) => b[0]));
+              const maxY = Math.max(...bubbles.map((b: any) => b[1]));
+  
+              const padding = 10;
+              const width = maxX - minX + padding;
+              const height = maxY - minY + padding;
+  
+              const borderColor =
+                group.errors === "There's more than one answer"
+                  ? '#0000ff'
+                  : '#ff0000';
+  
+              pageErrors.push({
+                x: minX - padding / 2,
+                y: minY - padding / 2,
+                width,
+                height,
+                color: borderColor,
+              });
+            }
+          });
+        }
+      );
+  
+      if (questionErrors.length > 0) {
+        this.errorQuestionsByPage[pageData.page_number] = questionErrors;
+      }
+  
+      if (pageErrors.length > 0) {
+        this.errorBorders[pageData.page_number] = pageErrors;
+      }
+    });
+  
+    this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
+    this.totalErrors = Object.values(this.errorQuestionsByPage).reduce(
+      (sum, arr) => sum + arr.length,
+      0
+    );
+    this.totalErrorsRemaining = this.totalErrors;
+  
+    if (this.errorPages.length > 0) {
+      this.currentErrorIndex = 0;
+      this.currentPage = this.errorPages[0];
+      this.errorQuestions = this.errorQuestionsByPage[this.currentPage] || [];
     }
   }
-
+  
   goToNextPage() {
     if (this.currentErrorIndex < this.errorPages.length - 1) {
+      const currentIndex = this.currentErrorIndex;
+      const currentPageNumber = this.errorPages[currentIndex];
+      const errorsOnPage = this.errorQuestionsByPage[currentPageNumber]?.length || 0;
+  
+      // Only subtract once
+      if (!this.subtractedIndexes.has(currentIndex)) {
+        this.totalErrorsRemaining -= errorsOnPage;
+        this.subtractedIndexes.add(currentIndex);
+      }
+  
       this.currentErrorIndex++;
-      this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to next error page
+      this.currentPage = this.errorPages[this.currentErrorIndex];
+      this.errorQuestions = this.errorQuestionsByPage[this.currentPage] || [];
     }
   }
+  
+  
+  goToPreviousPage() {
+    if (this.currentErrorIndex > 0) {
+      const previousIndex = this.currentErrorIndex - 1;
+      const previousPageNumber = this.errorPages[previousIndex];
+      const errorsOnPage = this.errorQuestionsByPage[previousPageNumber]?.length || 0;
+  
+      // Only add back once
+      if (this.subtractedIndexes.has(previousIndex)) {
+        this.totalErrorsRemaining += errorsOnPage;
+        this.subtractedIndexes.delete(previousIndex);
+      }
+  
+      this.currentErrorIndex--;
+      this.currentPage = this.errorPages[this.currentErrorIndex];
+      this.errorQuestions = this.errorQuestionsByPage[this.currentPage] || [];
+    }
+  }
+  
+ 
 
   filteredPages: any[] = [];
   detectedCircles: {
