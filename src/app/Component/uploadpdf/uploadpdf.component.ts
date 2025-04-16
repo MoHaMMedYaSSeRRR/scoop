@@ -653,16 +653,7 @@ export class UploadpdfComponent {
 
         // ✅ NEW Arabic letters logic
         const arabicLetters = [
-          'أ',
-          'ب',
-          'ج',
-          'د',
-          'ه',
-          'و',
-          'ز',
-          'ح',
-          'ط',
-          'ي',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
         ];
         const choiceCount = Number(currentQuestionForm.value.choices);
         const entities_count =
@@ -721,7 +712,9 @@ export class UploadpdfComponent {
           worth: 1,
           id: false,
           entities_count: '',
+          roi_type: 'question' // <-- Set default explicitly
         });
+        
 
         this.resetboxes();
         this.questionType = '';
