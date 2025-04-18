@@ -18,6 +18,7 @@ import { NgxSpinnerModule } from 'ngx-spinner';
 import { ToastrModule } from 'ngx-toastr';
 import { MyhttpInterceptor } from './interceptors/myhttp.interceptor';
 import { ReviewTestComponent } from './Component/review-test/review-test.component';
+import { FinalSheetComponent } from './Component/final-sheet/final-sheet.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -28,6 +29,7 @@ import { ReviewTestComponent } from './Component/review-test/review-test.compone
     ReviewComponent,
     PaymentComponent,
     ReviewTestComponent,
+    FinalSheetComponent,
   ],
   imports: [
     BrowserModule,

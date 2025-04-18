@@ -1,0 +1,75 @@
+.pdfUpload{
+    border: 1px dashed gray;
+}
+label{
+    font-size: 14px;
+    font-weight: 400;
+    color: #191C1F;
+}
+button{
+    background-color: #115081;
+}
+img {
+  user-select: none; /* Disable text selection */
+  -webkit-user-drag: none; /* Disable drag in Webkit browsers */
+  -moz-user-drag: none; /* Disable drag in Firefox */
+  -ms-user-drag: none; /* Disable drag in Internet Explorer */
+}
+.selection-box i {
+  position: absolute;
+  top: -20px;
+  left: -5px;
+  z-index: 15020201502020 !important;
+  cursor: pointer;
+  pointer-events: auto; /* Allow clicking on the icon */
+
+}
+.selection-box i:hover {
+  color: #ff0000; /* Highlight on hover */
+}
+img{
+  width:100px;
+  height:100px;
+}
+
+    
+@media (max-width: 768px){
+  .container{
+    width: 100% !important;
+    margin: 0px!important;
+    padding: 5px !important;
+  }
+  .show{
+    img{
+      height: auto;
+    }
+  }
+  .sendBtn{
+    width: 40%;
+  }
+}
+.load{
+  font-size: 15px;
+  font-weight: 700;
+}
+.content{
+  .col-3{
+    width: 40%;
+    display: flex;
+    justify-content: end;
+    align-items: end;
+    flex-direction: row-reverse;
+  }
+}
+input[type="radio"] {
+  &.dimmed {
+    opacity: 0.5;
+  }
+}
+
+label {
+  &.dimmed {
+    opacity: 0.5;
+  }
+}
+

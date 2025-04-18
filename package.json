@@ -21,6 +21,7 @@
     "@fortawesome/fontawesome-free": "^6.6.0",
     "@syncfusion/ej2-angular-pdfviewer": "^26.2.9",
     "bootstrap": "^5.3.3",
+    "file-saver": "^2.0.5",
     "jquery": "^3.7.1",
     "jspdf": "^2.5.2",
     "ngx-owl-carousel-o": "^16.0.0",
@@ -32,12 +33,14 @@
     "rxjs": "~7.8.0",
     "swiper": "^11.1.9",
     "tslib": "^2.3.0",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.13.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^16.2.2",
     "@angular/cli": "~16.2.2",
     "@angular/compiler-cli": "^16.2.0",
+    "@types/file-saver": "^2.0.7",
     "@types/jasmine": "~4.3.0",
     "@types/jquery": "^3.5.30",
     "@types/pdfjs-dist": "^2.10.378",

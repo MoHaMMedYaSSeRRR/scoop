@@ -3,6 +3,7 @@ import { UploadService } from 'src/app/services/upload.service';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import { jsPDF } from 'jspdf';
 import examData from '../../../assets/EXAM-1-response.json';
+import { Router } from '@angular/router';
 
 interface Question {
   position: number[][][];
@@ -93,7 +94,9 @@ export class ReviewComponent implements OnInit {
     }[];
   } = {};
 
-  constructor(private _UploadService: UploadService) {}
+  constructor(private _UploadService: UploadService , 
+    private router:Router
+  ) {}
 
   ngOnInit(): void {
     this._UploadService.data$.subscribe((response) => {
@@ -305,6 +308,8 @@ export class ReviewComponent implements OnInit {
         // Open link in a new tab if the response contains a valid URL
         if (res.success && res.response) {
           window.open(res.response, '_blank');
+          this._UploadService.setOmrIds(res.ids);
+        // this.router.navigate(['/finalsheet']);
         }
       },
       error: (err) => {
@@ -446,7 +451,6 @@ export class ReviewComponent implements OnInit {
     this.updateBubbleSelection(offsetX, offsetY, pageData.questions[foundQuestionKey], foundQuestionKey);
   }
   
-
   getClickedQuestion(offsetX: number, offsetY: number, pageData: any) {
     const tolerance = 12;
     let foundQuestionKey = null;
@@ -456,16 +460,23 @@ export class ReviewComponent implements OnInit {
   
       if (!question.points || question.points.length < 1) continue;
   
-      // Get the first and last rectangle
-      const firstRect = question.points[0];
-      const lastRect = question.points[question.points.length - 1];
+      // Initialize bounding box with extreme values
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
   
-      // Calculate the bounding box that covers from the first to the last rectangle
-      const minX = Math.min(firstRect[0][0], lastRect[0][0]);
-      const minY = Math.min(firstRect[0][1], lastRect[0][1]);
-      const maxX = Math.max(firstRect[1][0], lastRect[1][0]);
-      const maxY = Math.max(firstRect[1][1], lastRect[1][1]);
+      // Loop through all rectangles and update the bounding box
+      for (const rect of question.points) {
+        const [topLeft, bottomRight] = rect;
   
+        minX = Math.min(minX, topLeft[0]);
+        minY = Math.min(minY, topLeft[1]);
+        maxX = Math.max(maxX, bottomRight[0]);
+        maxY = Math.max(maxY, bottomRight[1]);
+      }
+  
+      // Check if click is within the bounding box
       if (
         offsetX >= minX - tolerance &&
         offsetX <= maxX + tolerance &&
@@ -485,6 +496,8 @@ export class ReviewComponent implements OnInit {
   
     return foundQuestionKey;
   }
+  
+  
   
 
     updateBubbleSelection(
