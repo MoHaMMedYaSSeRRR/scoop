@@ -627,10 +627,11 @@ export class UploadpdfComponent {
         console.error('Please define a selection area before submitting.');
         return;
       }
-    
+        const userEntitiesCount = currentQuestionForm.value.entities_count || 0;
+
       const worth = currentQuestionForm.value.worth || 1;
       const isCorrectedByTeacher = currentQuestionForm.value.gradedByTeacher === 'true' || currentQuestionForm.value.gradedByTeacher === true;
-    
+  
       // Get points from selection boxes
       const points = this.selectionBoxes.map((box) => [
         [Math.floor(box.x), Math.floor(box.y)],
@@ -682,11 +683,8 @@ export class UploadpdfComponent {
         const numericChoices = (roiData.choices ?? []).map(Number).filter(n => !isNaN(n));
         const maxChoice = Math.max(...numericChoices, 0);
         this.finalScore += maxChoice;
-      } else if(roiData.id){
-        this.finalScore += 0 * worth;
-      }
-      else {
-        this.finalScore += entities_count * worth;
+      }      else {
+        this.finalScore += userEntitiesCount * worth;
       }
       // Store in selectedQuestions per page
       const pageKey = `page-${this.currentPage + 1}`;
