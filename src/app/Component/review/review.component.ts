@@ -94,9 +94,7 @@ export class ReviewComponent implements OnInit {
     }[];
   } = {};
 
-  constructor(private _UploadService: UploadService , 
-    private router:Router
-  ) {}
+  constructor(private _UploadService: UploadService, private router: Router) {}
 
   ngOnInit(): void {
     this._UploadService.data$.subscribe((response) => {
@@ -111,7 +109,7 @@ export class ReviewComponent implements OnInit {
       }
     });
 
-      // this.omrResponse =examData;
+    // this.omrResponse =examData;
     this.getAllPagesWithErrors();
     this.processOmrResponse();
     this.loadPdfImages(this.pdfFile);
@@ -210,8 +208,6 @@ export class ReviewComponent implements OnInit {
     height: number;
   }[] = [];
 
-
-
   showpay() {
     this.isGlobal = !this.isGlobal; // Toggle between global and page selection
     if (this.isGlobal) {
@@ -249,15 +245,14 @@ export class ReviewComponent implements OnInit {
     const pageData = Object.values(this.omrResponse).find(
       (p: any) => p.page_number === this.currentPage
     );
-  
+
     if (!pageData) {
       console.error(`⚠️ No data found for page ${this.currentPage + 1}`);
       return null;
     }
-  
+
     return pageData as any; // 👈 simple cast to avoid TS error
   }
-  
 
   errorQuestions: any[] = []; // ✅ Store errors for UI display
 
@@ -271,7 +266,7 @@ export class ReviewComponent implements OnInit {
   }
   reviewOMR() {
     const box = this._UploadService.getSelectedBox();
-  
+
     if (
       !Array.isArray(box) ||
       box.length !== 2 ||
@@ -281,46 +276,45 @@ export class ReviewComponent implements OnInit {
       console.error('❌ Invalid box data format:', box);
       return;
     }
-  
+
     // Extract coordinates from the array
     const [x_min, y_min] = box[0];
     const [x_max, y_max] = box[1];
-  
+
     // Calculate the center and radius of the circle
     const x_center = Math.round((x_min + x_max) / 2);
     const y_center = Math.round((y_min + y_max) / 2);
     const radius = Math.round(Math.max(x_max - x_min, y_max - y_min) / 2);
-  
+
     const circleData = { x: x_center, y: y_center, radius: radius };
     console.log('⭕ Circle Data:', circleData);
-  
+
     // Update OMR data with circular selection
     const updatedOMR = {
       pages: { ...this.omrResponse }, // Wrap existing data inside 'pages'
       number_of_pages: Object.keys(this.omrResponse).length,
       drag: circleData, // Store circle data
     };
-  
+
     this._UploadService.reviewOmr(updatedOMR).subscribe({
       next: (res) => {
         console.log('✅ API Response:', res);
-  
+
         // Open link in a new tab if the response contains a valid URL
         if (res.success && res.response) {
           window.open(res.response, '_blank');
           this._UploadService.setOmrIds(res.ids);
-        // this.router.navigate(['/finalsheet']);
+          // this.router.navigate(['/finalsheet']);
         }
       },
       error: (err) => {
         console.error('❌ API Error:', err);
       },
     });
-  
+
     console.log('📄 Updated OMR JSON with Circle:', updatedOMR);
     return updatedOMR;
   }
-  
 
   // getAllPagesWithErrors() {
   //   this.errorQuestions = [];
@@ -400,26 +394,23 @@ export class ReviewComponent implements OnInit {
 
   pageVisited: { [pageNumber: number]: boolean } = {}; // 👈 track which pages were counted
 
-  
-  
-  
-  
-  
   onMouseDown(event: MouseEvent) {
     console.log('🖱️ Mouse Down Triggered');
-  
+
     const imgElement = event.target as HTMLImageElement;
     if (!imgElement) {
       console.warn('❌ No image element detected from event target.');
       return;
     }
-  
+
     const { offsetX, offsetY } = this.getNormalizedClick(event, imgElement);
     console.log(`📍 Normalized Click Coordinates: X=${offsetX}, Y=${offsetY}`);
-  
+
     const currentErrorBorders = this.errorBorders[this.currentPage] || [];
-    console.log(`📦 Loaded ${currentErrorBorders.length} error borders for page ${this.currentPage}`);
-  
+    console.log(
+      `📦 Loaded ${currentErrorBorders.length} error borders for page ${this.currentPage}`
+    );
+
     const errorBorder = currentErrorBorders.find(
       (border) =>
         offsetX >= border.x &&
@@ -427,75 +418,90 @@ export class ReviewComponent implements OnInit {
         offsetY >= border.y &&
         offsetY <= border.y + border.height
     );
-  
+
     if (!errorBorder) {
       console.warn('❌ Click ignored! Not inside an error-marked area.');
       return;
     }
-  
+
     console.log(`✅ Click inside error border:`, errorBorder);
-  
+
     const pageData = this.getPageData();
     if (!pageData) {
       console.warn('❌ No page data found for current page.');
       return;
     }
-  
+
     console.log(`📄 Loaded page data for page ${this.currentPage}`);
     console.log(`🔎 Searching for clicked question in coordinates...`);
-  
-    const foundQuestionKey = this.getClickedQuestion(offsetX, offsetY, pageData);
-  
+
+    const foundQuestionKey = this.getClickedQuestion(
+      offsetX,
+      offsetY,
+      pageData
+    );
+
     if (!foundQuestionKey) {
       console.warn(`❌ No question found at (${offsetX}, ${offsetY})`);
       return;
     }
-  
+
     console.log(`✅ Found question: ${foundQuestionKey}`);
     console.log(`📌 Question Details:`, pageData.questions[foundQuestionKey]);
-  
+
     if (!this.selectionCircles[this.currentPage]) {
       this.selectionCircles[this.currentPage] = [];
-      console.log(`🌀 Initialized selectionCircles for page ${this.currentPage}`);
+      console.log(
+        `🌀 Initialized selectionCircles for page ${this.currentPage}`
+      );
     }
-  
+
     const prevCount = this.selectionCircles[this.currentPage].length;
-  
+
     // Remove any existing circle inside this error border
-    this.selectionCircles[this.currentPage] = this.selectionCircles[this.currentPage].filter(circle =>
-      !(
-        circle.x >= errorBorder.x &&
-        circle.x <= errorBorder.x + errorBorder.width &&
-        circle.y >= errorBorder.y &&
-        circle.y <= errorBorder.y + errorBorder.height
-      )
+    this.selectionCircles[this.currentPage] = this.selectionCircles[
+      this.currentPage
+    ].filter(
+      (circle) =>
+        !(
+          circle.x >= errorBorder.x &&
+          circle.x <= errorBorder.x + errorBorder.width &&
+          circle.y >= errorBorder.y &&
+          circle.y <= errorBorder.y + errorBorder.height
+        )
     );
-  
+
     const newCount = this.selectionCircles[this.currentPage].length;
-    console.log(`🔁 Removed ${prevCount - newCount} old circles inside this error area`);
-  
+    console.log(
+      `🔁 Removed ${prevCount - newCount} old circles inside this error area`
+    );
+
     // Update bubble selection
     console.log(`🆕 Calling updateBubbleSelection()...`);
-    this.updateBubbleSelection(offsetX, offsetY, pageData.questions[foundQuestionKey], foundQuestionKey);
+    this.updateBubbleSelection(
+      offsetX,
+      offsetY,
+      pageData.questions[foundQuestionKey],
+      foundQuestionKey
+    );
   }
-  
-  
+
   getClickedQuestion(offsetX: number, offsetY: number, pageData: any) {
     const tolerance = 12;
     let closestQuestionKey: string | null = null;
     let closestDistance = Infinity;
-  
+
     console.log(`🖱️ User clicked at: (${offsetX}, ${offsetY})`);
-  
+
     for (const questionKey in pageData.questions) {
       const question = pageData.questions[questionKey];
       if (!question.points || question.points.length < 1) continue;
-  
+
       let minX = Infinity;
       let minY = Infinity;
       let maxX = -Infinity;
       let maxY = -Infinity;
-  
+
       for (const rect of question.points) {
         const [topLeft, bottomRight] = rect;
         minX = Math.min(minX, topLeft[0]);
@@ -503,24 +509,32 @@ export class ReviewComponent implements OnInit {
         maxX = Math.max(maxX, bottomRight[0]);
         maxY = Math.max(maxY, bottomRight[1]);
       }
-  
-      console.log(`📦 Question ${questionKey} area: [${minX}, ${minY}] → [${maxX}, ${maxY}]`);
-  
+
+      console.log(
+        `📦 Question ${questionKey} area: [${minX}, ${minY}] → [${maxX}, ${maxY}]`
+      );
+
       const withinBounds =
         offsetX >= minX - tolerance &&
         offsetX <= maxX + tolerance &&
         offsetY >= minY - tolerance &&
         offsetY <= maxY + tolerance;
-  
-      console.log(`📍 Click is ${withinBounds ? '' : 'NOT '}inside question ${questionKey} area`);
-  
+
+      console.log(
+        `📍 Click is ${
+          withinBounds ? '' : 'NOT '
+        }inside question ${questionKey} area`
+      );
+
       if (withinBounds) {
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
-        const distance = Math.sqrt((offsetX - centerX) ** 2 + (offsetY - centerY) ** 2);
-  
+        const distance = Math.sqrt(
+          (offsetX - centerX) ** 2 + (offsetY - centerY) ** 2
+        );
+
         console.log(`📏 Distance to center of ${questionKey}: ${distance}`);
-  
+
         if (distance < closestDistance) {
           closestDistance = distance;
           closestQuestionKey = questionKey;
@@ -528,243 +542,297 @@ export class ReviewComponent implements OnInit {
         }
       }
     }
-  
+
     if (!closestQuestionKey) {
       console.warn(`❌ No matching question found.`);
       return null;
     }
-  
+
     console.log(`✅ Found question: ${closestQuestionKey}`);
     return closestQuestionKey;
   }
-  
-  
-  
 
-    // updateBubbleSelection(
-    //   offsetX: number,
-    //   offsetY: number,
-    //   foundQuestionData: any,
-    //   questionKey: string
-    // ) {
-    //   const circleRadius = 8;
-    //   const tolerance = 12;
-    //   let bestMatch: any = null;
-    //   let bestDistance = Infinity;
-    //   let foundGroupIndex: number | null = null;
-    
-    //   for (let groupIndex = 0; groupIndex < foundQuestionData.groups.length; groupIndex++) {
-    //     const group = foundQuestionData.groups[groupIndex];
-    //     for (const bubble of group.bubbles) {
-    //       const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
-    //       const distance = Math.sqrt((offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2);
-    //       if (distance <= bubbleRadius + tolerance) {
-    //         if (distance < bestDistance) {
-    //           bestDistance = distance;
-    //           bestMatch = bubble;
-    //           foundGroupIndex = groupIndex;
-    //         }
-    //       }
-    //     }
-    //   }
-    
-    //   if (bestMatch && foundGroupIndex !== null) {
-    //     // console.log(`✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`);
-    //     // console.log(`🔍 Distance from click: ${bestDistance}px`);
-    
-    //     // Find Model Answer Page (Page 1)
-    //     const modelAnswerPage = Object.values(this.omrResponse).find(
-    //       (p: any) => p.page_number === 1
-    //     ) as { questions: any }; // Add correct type here
-    //     if (!modelAnswerPage) {
-    //       // console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
-    //       return;
-    //     }
-    
-    //     // console.log('📄 Model Answer Page Structure:', modelAnswerPage);
-    //     // console.log('🔍 Searching for Question Key:', questionKey);
-    
-    //     if (!modelAnswerPage.questions || !modelAnswerPage.questions[questionKey]) {
-    //       console.warn(`⚠️ No matching question '${questionKey}' found in Model Answer Page!`);
-    //       console.log('🧐 Available Questions:', Object.keys(modelAnswerPage.questions));
-    //       return;
-    //     }
-    
-    //     const modelQuestion = modelAnswerPage.questions[questionKey];
-    
-    //     // Find the corresponding group in Model Answer Page
-    //     const modelGroup = modelQuestion.groups[foundGroupIndex];
-    //     if (!modelGroup) {
-    //       // console.warn('⚠️ No matching group found in Model Answer Page!');
-    //       return;
-    //     }
-    
-    //     // Check if the selected bubble is correct
-    //     let isCorrect = false;
-    //     for (const bubble of modelGroup.bubbles) {
-    //       console.log(bestMatch)
-    //       if (bubble.choice === bestMatch.choice) {
-    //         isCorrect = bubble.selected === true; // Bubble is correct only if selected in Page 1
-    //         break;
-    //       }
-    //     }
-    
-    //     // Unselect previously selected bubble in the same group
-    //     foundQuestionData.groups[foundGroupIndex].bubbles.forEach((bubble: any) => {
-    //       bubble.selected = false;
-    //       console.log(bubble)
-    //     });
-    //     // console.log(foundQuestionData.groups[foundGroupIndex].errors)
+  // updateBubbleSelection(
+  //   offsetX: number,
+  //   offsetY: number,
+  //   foundQuestionData: any,
+  //   questionKey: string
+  // ) {
+  //   const circleRadius = 8;
+  //   const tolerance = 12;
+  //   let bestMatch: any = null;
+  //   let bestDistance = Infinity;
+  //   let foundGroupIndex: number | null = null;
 
-    //     // Select new bubble
-    //     bestMatch.selected = true;
-    
-    //     // ✅ Clear error message when a bubble is selected
-    //     if (foundQuestionData.groups[foundGroupIndex].errors) {
-    //       // console.log('🔄 Removing error message:',foundQuestionData.groups[foundGroupIndex].errors);
-    //       foundQuestionData.groups[foundGroupIndex].errors = null;
-    //     }
-    //     // console.log(foundQuestionData.groups[foundGroupIndex].errors);
+  //   for (let groupIndex = 0; groupIndex < foundQuestionData.groups.length; groupIndex++) {
+  //     const group = foundQuestionData.groups[groupIndex];
+  //     for (const bubble of group.bubbles) {
+  //       const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
+  //       const distance = Math.sqrt((offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2);
+  //       if (distance <= bubbleRadius + tolerance) {
+  //         if (distance < bestDistance) {
+  //           bestDistance = distance;
+  //           bestMatch = bubble;
+  //           foundGroupIndex = groupIndex;
+  //         }
+  //       }
+  //     }
+  //   }
 
-    //     // Store Selection for Dynamic Update
-    //     if (!this.selectionCircles[this.currentPage]) {
-    //       this.selectionCircles[this.currentPage] = [];
-    //     }
-    
-    //     // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
-    //     this.selectionCircles[this.currentPage].push({
-    //       x: bestMatch.circle[0], // Use found bubble X
-    //       y: bestMatch.circle[1], // Use found bubble Y
-    //       radius: circleRadius,
-    //       isCorrect,
-    //     });
-    
-    //     // console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
-    //     // console.log('🚀 Updated foundQuestionData:', foundQuestionData);
-    //   } else {
-    //     console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
-    //   }
-    // }
-    updateBubbleSelection(
-      offsetX: number,
-      offsetY: number,
-      foundQuestionData: any,
-      questionKey: string
+  //   if (bestMatch && foundGroupIndex !== null) {
+  //     // console.log(`✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`);
+  //     // console.log(`🔍 Distance from click: ${bestDistance}px`);
+
+  //     // Find Model Answer Page (Page 1)
+  //     const modelAnswerPage = Object.values(this.omrResponse).find(
+  //       (p: any) => p.page_number === 1
+  //     ) as { questions: any }; // Add correct type here
+  //     if (!modelAnswerPage) {
+  //       // console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
+  //       return;
+  //     }
+
+  //     // console.log('📄 Model Answer Page Structure:', modelAnswerPage);
+  //     // console.log('🔍 Searching for Question Key:', questionKey);
+
+  //     if (!modelAnswerPage.questions || !modelAnswerPage.questions[questionKey]) {
+  //       console.warn(`⚠️ No matching question '${questionKey}' found in Model Answer Page!`);
+  //       console.log('🧐 Available Questions:', Object.keys(modelAnswerPage.questions));
+  //       return;
+  //     }
+
+  //     const modelQuestion = modelAnswerPage.questions[questionKey];
+
+  //     // Find the corresponding group in Model Answer Page
+  //     const modelGroup = modelQuestion.groups[foundGroupIndex];
+  //     if (!modelGroup) {
+  //       // console.warn('⚠️ No matching group found in Model Answer Page!');
+  //       return;
+  //     }
+
+  //     // Check if the selected bubble is correct
+  //     let isCorrect = false;
+  //     for (const bubble of modelGroup.bubbles) {
+  //       console.log(bestMatch)
+  //       if (bubble.choice === bestMatch.choice) {
+  //         isCorrect = bubble.selected === true; // Bubble is correct only if selected in Page 1
+  //         break;
+  //       }
+  //     }
+
+  //     // Unselect previously selected bubble in the same group
+  //     foundQuestionData.groups[foundGroupIndex].bubbles.forEach((bubble: any) => {
+  //       bubble.selected = false;
+  //       console.log(bubble)
+  //     });
+  //     // console.log(foundQuestionData.groups[foundGroupIndex].errors)
+
+  //     // Select new bubble
+  //     bestMatch.selected = true;
+
+  //     // ✅ Clear error message when a bubble is selected
+  //     if (foundQuestionData.groups[foundGroupIndex].errors) {
+  //       // console.log('🔄 Removing error message:',foundQuestionData.groups[foundGroupIndex].errors);
+  //       foundQuestionData.groups[foundGroupIndex].errors = null;
+  //     }
+  //     // console.log(foundQuestionData.groups[foundGroupIndex].errors);
+
+  //     // Store Selection for Dynamic Update
+  //     if (!this.selectionCircles[this.currentPage]) {
+  //       this.selectionCircles[this.currentPage] = [];
+  //     }
+
+  //     // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
+  //     this.selectionCircles[this.currentPage].push({
+  //       x: bestMatch.circle[0], // Use found bubble X
+  //       y: bestMatch.circle[1], // Use found bubble Y
+  //       radius: circleRadius,
+  //       isCorrect,
+  //     });
+
+  //     // console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
+  //     // console.log('🚀 Updated foundQuestionData:', foundQuestionData);
+  //   } else {
+  //     console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
+  //   }
+  // }
+  updateBubbleSelection(
+    offsetX: number,
+    offsetY: number,
+    foundQuestionData: any,
+    questionKey: string
+  ) {
+    console.log(
+      `🔘 updateBubbleSelection triggered for question '${questionKey}'`
+    );
+    console.log(`📍 Click position: (${offsetX}, ${offsetY})`);
+    const circleRadius = 8;
+    const tolerance = 12;
+    let bestMatch: any = null;
+    let bestDistance = Infinity;
+    let foundGroupIndex: number | null = null;
+
+    // Group comparison logic
+    const isSameGroup = (g1: any, g2: any): boolean => {
+      const threshold = 10; // pixels
+      return (
+        g1.bubbles.length === g2.bubbles.length &&
+        g1.bubbles.every((b: any, i: number) => {
+          const b2 = g2.bubbles[i];
+          return (
+            Math.abs(b.circle[0] - b2.circle[0]) < threshold &&
+            Math.abs(b.circle[1] - b2.circle[1]) < threshold
+          );
+        })
+      );
+    };
+
+    for (
+      let groupIndex = 0;
+      groupIndex < foundQuestionData.groups.length;
+      groupIndex++
     ) {
-      console.log(`🔘 updateBubbleSelection triggered for question '${questionKey}'`);
-      console.log(`📍 Click position: (${offsetX}, ${offsetY})`);
-      const circleRadius = 8;
-      const tolerance = 12;
-      let bestMatch: any = null;
-      let bestDistance = Infinity;
-      let foundGroupIndex: number | null = null;
-    
-      for (let groupIndex = 0; groupIndex < foundQuestionData.groups.length; groupIndex++) {
-        const group = foundQuestionData.groups[groupIndex];
-        console.log(`🔍 Checking group ${groupIndex} with ${group.bubbles.length} bubbles`);
-        
-        for (const bubble of group.bubbles) {
-          const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
-          const distance = Math.sqrt((offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2);
-    
-          console.log(`➡️ Bubble at (${bubbleX}, ${bubbleY}), distance: ${distance.toFixed(2)}px`);
-    
-          if (distance <= bubbleRadius + tolerance) {
-            console.log(`✅ Bubble within range (distance: ${distance.toFixed(2)} <= ${bubbleRadius + tolerance})`);
-    
-            if (distance < bestDistance) {
-              bestDistance = distance;
-              bestMatch = bubble;
-              foundGroupIndex = groupIndex;
-            }
+      const group = foundQuestionData.groups[groupIndex];
+      console.log(
+        `🔍 Checking group ${groupIndex} with ${group.bubbles.length} bubbles`
+      );
+
+      for (const bubble of group.bubbles) {
+        const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
+        const distance = Math.sqrt(
+          (offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2
+        );
+
+        console.log(
+          `➡️ Bubble at (${bubbleX}, ${bubbleY}), distance: ${distance.toFixed(
+            2
+          )}px`
+        );
+
+        if (distance <= bubbleRadius + tolerance) {
+          console.log(
+            `✅ Bubble within range (distance: ${distance.toFixed(2)} <= ${
+              bubbleRadius + tolerance
+            })`
+          );
+
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestMatch = bubble;
+            foundGroupIndex = groupIndex;
           }
         }
       }
-    
-      if (bestMatch && foundGroupIndex !== null) {
-        console.log(`🏹 Best bubble found in group ${foundGroupIndex} at:`, bestMatch.circle);
-    
-        const modelAnswerPage = Object.values(this.omrResponse).find(
-          (p: any) => p.page_number === 1
-        ) as { questions: any };
-    
-        if (!modelAnswerPage) {
-          console.warn('⚠️ Model Answer Page (Page 1) not found!');
-          return;
-        }
-    
-        const modelQuestion = modelAnswerPage.questions?.[questionKey];
-        if (!modelQuestion) {
-          console.warn(`⚠️ Model Question '${questionKey}' not found in Page 1.`);
-          console.log('📋 Available model question keys:', Object.keys(modelAnswerPage.questions));
-          return;
-        }
-    
-        const modelGroup = modelQuestion.groups?.[foundGroupIndex];
-        if (!modelGroup) {
-          console.warn(`⚠️ Group ${foundGroupIndex} not found in model answer for question '${questionKey}'.`);
-          return;
-        }
-    
-        let isCorrect = false;
+    }
+
+    if (bestMatch && foundGroupIndex !== null) {
+      console.log(
+        `🏹 Best bubble found in group ${foundGroupIndex} at:`,
+        bestMatch.circle
+      );
+
+      const modelAnswerPage = Object.values(this.omrResponse).find(
+        (p: any) => p.page_number === 1
+      ) as { questions: any };
+
+      if (!modelAnswerPage) {
+        console.warn('⚠️ Model Answer Page (Page 1) not found!');
+        return;
+      }
+
+      const modelQuestion = modelAnswerPage.questions?.[questionKey];
+      if (!modelQuestion) {
+        console.warn(`⚠️ Model Question '${questionKey}' not found in Page 1.`);
+        console.log(
+          '📋 Available model question keys:',
+          Object.keys(modelAnswerPage.questions)
+        );
+        return;
+      }
+
+      const modelGroups = modelQuestion.groups || [];
+      const clickedGroup = foundQuestionData.groups[foundGroupIndex];
+      const matchingModelGroupIndex = modelGroups.findIndex((g: any) =>
+        isSameGroup(g, clickedGroup)
+      );
+      const modelGroup =
+        matchingModelGroupIndex !== -1
+          ? modelGroups[matchingModelGroupIndex]
+          : null;
+
+      if (!modelGroup) {
+        console.warn(
+          `⚠️ Matching group not found in model answer for question '${questionKey}'.`
+        );
+      }
+
+      let isCorrect = false;
+      if (modelGroup) {
         for (const bubble of modelGroup.bubbles) {
-          console.log(`🧪 Comparing with model bubble choice '${bubble.choice}'`);
+          console.log(
+            `🧪 Comparing with model bubble choice '${bubble.choice}'`
+          );
           if (bubble.choice === bestMatch.choice) {
             isCorrect = bubble.selected === true;
-            console.log(`🎯 Choice matched: '${bubble.choice}', Correct: ${isCorrect}`);
+            console.log(
+              `🎯 Choice matched: '${bubble.choice}', Correct: ${isCorrect}`
+            );
             break;
           }
         }
-    
-        // Unselect all previous bubbles in that group
-        console.log(`🔄 Resetting previous bubble selections in group ${foundGroupIndex}`);
-        foundQuestionData.groups[foundGroupIndex].bubbles.forEach((bubble: any) => {
+      }
+
+      console.log(
+        `🔄 Resetting previous bubble selections in group ${foundGroupIndex}`
+      );
+      foundQuestionData.groups[foundGroupIndex].bubbles.forEach(
+        (bubble: any) => {
           bubble.selected = false;
           console.log(`🚫 Bubble '${bubble.choice}' unselected`);
-        });
-    
-        // Select the best matched bubble
-        bestMatch.selected = true;
-        console.log(`✅ Selected new bubble: '${bestMatch.choice}'`);
-    
-        // Remove error if present
-        if (foundQuestionData.groups[foundGroupIndex].errors) {
-          console.log(`🧹 Removing error message:`, foundQuestionData.groups[foundGroupIndex].errors);
-          foundQuestionData.groups[foundGroupIndex].errors = null;
         }
-    
-        // Ensure selectionCircles array exists
-        if (!this.selectionCircles[this.currentPage]) {
-          this.selectionCircles[this.currentPage] = [];
-        }
-    
-        // Store the selection
-        this.selectionCircles[this.currentPage].push({
-          x: bestMatch.circle[0],
-          y: bestMatch.circle[1],
-          radius: circleRadius,
-          isCorrect,
-        });
-    
-        console.log(`💾 Stored selection in selectionCircles for page ${this.currentPage}`);
-        console.log(`🧠 Final selected bubble data:`, {
-          x: bestMatch.circle[0],
-          y: bestMatch.circle[1],
-          choice: bestMatch.choice,
-          isCorrect,
-        });
-    
-      } else {
-        console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY})`);
-      }
-    }
-    
-    errorQuestionsByPage: { [pageNumber: number]: any[] } = {};
-    totalErrors: number = 0;
-    totalErrorsRemaining: number = 0;
-    visitedPages: Set<number> = new Set();
-    subtractedIndexes = new Set<number>(); // 👈 Track which pages we've subtracted from
+      );
 
+      bestMatch.selected = true;
+      console.log(`✅ Selected new bubble: '${bestMatch.choice}'`);
+
+      if (foundQuestionData.groups[foundGroupIndex].errors) {
+        console.log(
+          `🧹 Removing error message:`,
+          foundQuestionData.groups[foundGroupIndex].errors
+        );
+        foundQuestionData.groups[foundGroupIndex].errors = null;
+      }
+
+      if (!this.selectionCircles[this.currentPage]) {
+        this.selectionCircles[this.currentPage] = [];
+      }
+
+      this.selectionCircles[this.currentPage].push({
+        x: bestMatch.circle[0],
+        y: bestMatch.circle[1],
+        radius: circleRadius,
+        isCorrect,
+      });
+
+      console.log(
+        `💾 Stored selection in selectionCircles for page ${this.currentPage}`
+      );
+      console.log(`🧠 Final selected bubble data:`, {
+        x: bestMatch.circle[0],
+        y: bestMatch.circle[1],
+        choice: bestMatch.choice,
+        isCorrect,
+      });
+    } else {
+      console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY})`);
+    }
+  }
+
+  errorQuestionsByPage: { [pageNumber: number]: any[] } = {};
+  totalErrors: number = 0;
+  totalErrorsRemaining: number = 0;
+  visitedPages: Set<number> = new Set();
+  subtractedIndexes = new Set<number>(); // 👈 Track which pages we've subtracted from
 
   getPagesWithErrors() {
     if (!Array.isArray(this.omrResponse)) {
@@ -810,13 +878,13 @@ export class ReviewComponent implements OnInit {
     this.errorBorders = {};
     this.errorPages = [];
     this.subtractedIndexes.clear();
-  
+
     const errorPagesSet = new Set<number>();
-  
+
     Object.values(this.omrResponse).forEach((pageData: any) => {
-      const pageErrors:any = [];
-      const questionErrors:any = [];
-  
+      const pageErrors: any = [];
+      const questionErrors: any = [];
+
       Object.entries(pageData.questions).forEach(
         ([questionNumber, questionData]: [string, any]) => {
           questionData.groups.forEach((group: any, groupIndex: number) => {
@@ -829,24 +897,24 @@ export class ReviewComponent implements OnInit {
               };
               questionErrors.push(error);
               errorPagesSet.add(pageData.page_number);
-  
+
               if (!group.bubbles?.length) return;
-  
+
               const bubbles = group.bubbles.map((b: any) => b.circle);
               const minX = Math.min(...bubbles.map((b: any) => b[0]));
               const minY = Math.min(...bubbles.map((b: any) => b[1]));
               const maxX = Math.max(...bubbles.map((b: any) => b[0]));
               const maxY = Math.max(...bubbles.map((b: any) => b[1]));
-  
+
               const padding = 10;
               const width = maxX - minX + padding;
               const height = maxY - minY + padding;
-  
+
               const borderColor =
                 group.errors === "There's more than one answer"
                   ? '#0000ff'
                   : '#ff0000';
-  
+
               pageErrors.push({
                 x: minX - padding / 2,
                 y: minY - padding / 2,
@@ -858,68 +926,67 @@ export class ReviewComponent implements OnInit {
           });
         }
       );
-  
+
       if (questionErrors.length > 0) {
         this.errorQuestionsByPage[pageData.page_number] = questionErrors;
       }
-  
+
       if (pageErrors.length > 0) {
         this.errorBorders[pageData.page_number] = pageErrors;
       }
     });
-  
+
     this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
     this.totalErrors = Object.values(this.errorQuestionsByPage).reduce(
       (sum, arr) => sum + arr.length,
       0
     );
     this.totalErrorsRemaining = this.totalErrors;
-  
+
     if (this.errorPages.length > 0) {
       this.currentErrorIndex = 0;
       this.currentPage = this.errorPages[0];
       this.errorQuestions = this.errorQuestionsByPage[this.currentPage] || [];
     }
   }
-  
+
   goToNextPage() {
     if (this.currentErrorIndex < this.errorPages.length - 1) {
       const currentIndex = this.currentErrorIndex;
       const currentPageNumber = this.errorPages[currentIndex];
-      const errorsOnPage = this.errorQuestionsByPage[currentPageNumber]?.length || 0;
-  
+      const errorsOnPage =
+        this.errorQuestionsByPage[currentPageNumber]?.length || 0;
+
       // Only subtract once
       if (!this.subtractedIndexes.has(currentIndex)) {
         this.totalErrorsRemaining -= errorsOnPage;
         this.subtractedIndexes.add(currentIndex);
       }
-  
+
       this.currentErrorIndex++;
       this.currentPage = this.errorPages[this.currentErrorIndex];
       this.errorQuestions = this.errorQuestionsByPage[this.currentPage] || [];
     }
   }
-  
-  
+
   goToPreviousPage() {
     if (this.currentErrorIndex > 0) {
       const previousIndex = this.currentErrorIndex - 1;
       const previousPageNumber = this.errorPages[previousIndex];
-      const errorsOnPage = this.errorQuestionsByPage[previousPageNumber]?.length || 0;
-  
+      const errorsOnPage =
+        this.errorQuestionsByPage[previousPageNumber]?.length || 0;
+
       // Only add back once
       if (this.subtractedIndexes.has(previousIndex)) {
         this.totalErrorsRemaining += errorsOnPage;
         this.subtractedIndexes.delete(previousIndex);
       }
-  
+
       this.currentErrorIndex--;
       this.currentPage = this.errorPages[this.currentErrorIndex];
       this.errorQuestions = this.errorQuestionsByPage[this.currentPage] || [];
     }
   }
-  
- 
 
   filteredPages: any[] = [];
   detectedCircles: {
@@ -933,53 +1000,55 @@ export class ReviewComponent implements OnInit {
 
   processOmrResponse(): void {
     if (!this.omrResponse) return;
-  
+
     this.detectedCircles = {}; // Reset detected circles for each page
-  
-    (Object.values(this.omrResponse) as { page_number: number; questions: any }[]).forEach(
-      (page) => {
-        let pageCircles: {
-          x: number;
-          y: number;
-          radius: number;
-          isCorrect: boolean;
-        }[] = [];
-  
-        Object.keys(page.questions).forEach((questionKey: string) => {
-          let question = page.questions[questionKey];
-  
-          if (question.groups && Array.isArray(question.groups)) {
-            question.groups.forEach(
-              (group: { bubbles: any[]; errors?: string }) => {
-                if (!group.errors) {
-                  // Only process groups without errors
-                  group.bubbles.forEach(
-                    (bubble: {
-                      circle: number[];
-                      selected: boolean;
-                      correct: boolean;
-                    }) => {
-                      if (bubble.selected) {
-                        pageCircles.push({
-                          x: bubble.circle[0],
-                          y: bubble.circle[1],
-                          radius: bubble.circle[2],
-                          isCorrect: bubble.correct,
-                        });
-                      }
+
+    (
+      Object.values(this.omrResponse) as {
+        page_number: number;
+        questions: any;
+      }[]
+    ).forEach((page) => {
+      let pageCircles: {
+        x: number;
+        y: number;
+        radius: number;
+        isCorrect: boolean;
+      }[] = [];
+
+      Object.keys(page.questions).forEach((questionKey: string) => {
+        let question = page.questions[questionKey];
+
+        if (question.groups && Array.isArray(question.groups)) {
+          question.groups.forEach(
+            (group: { bubbles: any[]; errors?: string }) => {
+              if (!group.errors) {
+                // Only process groups without errors
+                group.bubbles.forEach(
+                  (bubble: {
+                    circle: number[];
+                    selected: boolean;
+                    correct: boolean;
+                  }) => {
+                    if (bubble.selected) {
+                      pageCircles.push({
+                        x: bubble.circle[0],
+                        y: bubble.circle[1],
+                        radius: bubble.circle[2],
+                        isCorrect: bubble.correct,
+                      });
                     }
-                  );
-                }
+                  }
+                );
               }
-            );
-          }
-        });
-  
-        this.detectedCircles[page.page_number] = pageCircles;
-      }
-    );
+            }
+          );
+        }
+      });
+
+      this.detectedCircles[page.page_number] = pageCircles;
+    });
   }
-  
 }
 interface Page {
   page_number: number;
