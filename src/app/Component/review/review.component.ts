@@ -453,48 +453,51 @@ export class ReviewComponent implements OnInit {
   
   getClickedQuestion(offsetX: number, offsetY: number, pageData: any) {
     const tolerance = 12;
-    let foundQuestionKey = null;
+    let closestQuestionKey: string | null = null;
+    let closestDistance = Infinity;
   
     for (const questionKey in pageData.questions) {
       const question = pageData.questions[questionKey];
-  
       if (!question.points || question.points.length < 1) continue;
   
-      // Initialize bounding box with extreme values
       let minX = Infinity;
       let minY = Infinity;
       let maxX = -Infinity;
       let maxY = -Infinity;
   
-      // Loop through all rectangles and update the bounding box
       for (const rect of question.points) {
         const [topLeft, bottomRight] = rect;
-  
         minX = Math.min(minX, topLeft[0]);
         minY = Math.min(minY, topLeft[1]);
         maxX = Math.max(maxX, bottomRight[0]);
         maxY = Math.max(maxY, bottomRight[1]);
       }
   
-      // Check if click is within the bounding box
       if (
         offsetX >= minX - tolerance &&
         offsetX <= maxX + tolerance &&
         offsetY >= minY - tolerance &&
         offsetY <= maxY + tolerance
       ) {
-        console.log(`✅ Found question: ${questionKey}`);
-        foundQuestionKey = questionKey;
-        break;
+        // Find center of the question box
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const distance = Math.sqrt((offsetX - centerX) ** 2 + (offsetY - centerY) ** 2);
+  
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestQuestionKey = questionKey;
+        }
       }
     }
   
-    if (!foundQuestionKey) {
+    if (!closestQuestionKey) {
       console.warn(`❌ No matching question found.`);
       return null;
     }
   
-    return foundQuestionKey;
+    console.log(`✅ Found question: ${closestQuestionKey}`);
+    return closestQuestionKey;
   }
   
   
