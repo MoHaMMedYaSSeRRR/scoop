@@ -682,7 +682,10 @@ export class UploadpdfComponent {
         const numericChoices = (roiData.choices ?? []).map(Number).filter(n => !isNaN(n));
         const maxChoice = Math.max(...numericChoices, 0);
         this.finalScore += maxChoice;
-      } else {
+      } else if(roiData.id){
+        this.finalScore += 0 * worth;
+      }
+      else {
         this.finalScore += entities_count * worth;
       }
       // Store in selectedQuestions per page
