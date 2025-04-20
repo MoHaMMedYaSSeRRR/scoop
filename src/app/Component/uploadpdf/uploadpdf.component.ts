@@ -618,120 +618,107 @@ export class UploadpdfComponent {
       this.isGlobal = false;
       this.isshow = true;
     }
-
-    if (this.isshow) {
-      const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-      if (this.selectionBoxes.length > 0) {
-        const userEntitiesCount = currentQuestionForm.value.entities_count || 0;
-        const worth = currentQuestionForm.value.worth || 1;
-
-        const points = this.selectionBoxes.map((box) => [
-          [Math.floor(box.x), Math.floor(box.y)],
-          [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-        ]);
-
-        const orientation =
-          currentQuestionForm.value.orientation === 'horizontal' ||
-          currentQuestionForm.value.orientation === 'vertical'
-            ? currentQuestionForm.value.orientation
-            : 'vertical';
-
-        const direction =
-          currentQuestionForm.value.direction === 'right-to-left' ||
-          currentQuestionForm.value.direction === 'top-to-bottom'
-            ? currentQuestionForm.value.direction
-            : orientation === 'vertical'
-            ? 'top-to-bottom'
-            : 'right-to-left';
-
-        const roi_type =
-          currentQuestionForm.value.roi_type === 'complementary' ||
-          currentQuestionForm.value.roi_type === 'question'
-            ? currentQuestionForm.value.roi_type
-            : 'question';
-  const isCorrectedByTeacher = currentQuestionForm.value.gradedByTeacher === 'true';
-
-        // ✅ NEW Arabic letters logic
-        const arabicLetters = [
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-        ];
-        const choiceCount = Number(currentQuestionForm.value.choices);
-        const entities_count =
-          choiceCount && choiceCount > 0 ? choiceCount : 10;
-        const choices = arabicLetters.slice(0, entities_count);
-
-        const roiData: ROI = {
-          points: points,
-          roi_type: roi_type,
-          entities_count: entities_count,
-          choices: choices,
-          orientation: orientation,
-          direction: direction,
-          corrected_by_teacher:
-            currentQuestionForm.value.gradedByTeacher === 'true',
-          id: this.selectedIdType === 'student_id' ? false : true,
-          worth: worth,
-        };
-
-        console.log(roiData);
-
-  if (isCorrectedByTeacher) {
-    // 👇 Parse the custom choices string (e.g. "0-0.5-1-2-3")
-    const rawChoices = currentQuestionForm.value.choices || '';
-    choices = rawChoices.split('-');
-    entities_count = choices.length;
-  } else {
-    // 👇 Use Arabic letters logic
-    const arabicLetters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const choiceCount = Number(currentQuestionForm.value.choices);
-    entities_count = choiceCount && choiceCount > 0 ? choiceCount : 10;
-    choices = arabicLetters.slice(0, entities_count);
-  }
-
-        const pageKey = `page-${this.currentPage + 1}`;
-        if (!this.selectedQuestions[pageKey]) {
-          this.selectedQuestions[pageKey] = {};
-        }
-
-        const questionNumber =
-          Object.keys(this.selectedQuestions[pageKey]).length + 1;
-        const questionKey = `question-${questionNumber}`;
-        this.selectedQuestions[pageKey][questionKey] = roiData;
-
-        // 🔵 Mark boxes as submitted (change to blue)
-        if (this.selectionBoxesByPage[this.currentPage]) {
-          this.selectionBoxesByPage[this.currentPage] =
-            this.selectionBoxesByPage[this.currentPage].map((box) => ({
-              ...box,
-              submitted: true,
-            }));
-        }
-
-        currentQuestionForm.reset({
-          roi_coordinates: [],
-          colNumber: '',
-          direction: '',
-          marked: '',
-          gradedByTeacher: false,
-          choices: '',
-          worth: 1,
-          id: false,
-          entities_count: '',
-          roi_type: 'question' // <-- Set default explicitly
-        });
-        
-
-        this.resetboxes();
-        this.questionType = '';
-      } else {
-        console.error('Please define a selection area before submitting.');
-      }
-
-      this.direction = '';
-      this.isID = false;
+  
+    if (!this.isshow) return;
+  
+    const currentQuestionForm = this.getCurrentQuestionFormGroup();
+  
+    if (this.selectionBoxes.length === 0) {
+      console.error('Please define a selection area before submitting.');
+      return;
     }
+  
+    const worth = currentQuestionForm.value.worth || 1;
+    const isCorrectedByTeacher = currentQuestionForm.value.gradedByTeacher === 'true' || currentQuestionForm.value.gradedByTeacher === true;
+  
+    // Get points from selection boxes
+    const points = this.selectionBoxes.map((box) => [
+      [Math.floor(box.x), Math.floor(box.y)],
+      [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
+    ]);
+  
+    // Orientation and direction defaults
+    const orientation = ['horizontal', 'vertical'].includes(currentQuestionForm.value.orientation)
+      ? currentQuestionForm.value.orientation
+      : 'vertical';
+  
+    const direction = ['right-to-left', 'top-to-bottom'].includes(currentQuestionForm.value.direction)
+      ? currentQuestionForm.value.direction
+      : orientation === 'vertical' ? 'top-to-bottom' : 'right-to-left';
+  
+    // ROI type
+    const roi_type = ['question', 'complementary'].includes(currentQuestionForm.value.roi_type)
+      ? currentQuestionForm.value.roi_type
+      : 'question';
+  
+    // Setup choices and entity count
+    let choices: string[] = [];
+    let entities_count: number;
+  
+    if (isCorrectedByTeacher) {
+      const rawChoices = currentQuestionForm.value.choices || '';
+      choices = rawChoices.split('-');
+      entities_count = choices.length;
+    } else {
+      const arabicLetters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+      const choiceCount = Number(currentQuestionForm.value.choices);
+      entities_count = choiceCount > 0 ? choiceCount : 10;
+      choices = arabicLetters.slice(0, entities_count);
+    }
+  
+    // Construct the ROI data object
+    const roiData: ROI = {
+      points: points,
+      roi_type: roi_type,
+      entities_count: entities_count,
+      choices: choices,
+      orientation: orientation,
+      direction: direction,
+      corrected_by_teacher: isCorrectedByTeacher,
+      id: this.selectedIdType === 'student_id' ? false : true,
+      worth: worth,
+    };
+  
+    // Store in selectedQuestions per page
+    const pageKey = `page-${this.currentPage + 1}`;
+    if (!this.selectedQuestions[pageKey]) {
+      this.selectedQuestions[pageKey] = {};
+    }
+  
+    const questionNumber = Object.keys(this.selectedQuestions[pageKey]).length + 1;
+    const questionKey = `question-${questionNumber}`;
+    this.selectedQuestions[pageKey][questionKey] = roiData;
+  
+    // Mark boxes as submitted
+    if (this.selectionBoxesByPage[this.currentPage]) {
+      this.selectionBoxesByPage[this.currentPage] = this.selectionBoxesByPage[this.currentPage].map((box) => ({
+        ...box,
+        submitted: true,
+      }));
+    }
+  
+    // Reset the form
+    currentQuestionForm.reset({
+      roi_coordinates: [],
+      colNumber: '',
+      direction: '',
+      marked: '',
+      gradedByTeacher: false,
+      choices: '',
+      worth: 1,
+      id: false,
+      entities_count: '',
+      roi_type: 'question',
+    });
+  
+    this.resetboxes();
+    this.questionType = '';
+    this.direction = '';
+    this.isID = false;
+  
+    console.log('ROI data submitted:', roiData);
   }
+  
   // onCurrentQuestionSubmit(): void {
   //   if (this.isGlobal) {
   //     this.isGlobal = false;
