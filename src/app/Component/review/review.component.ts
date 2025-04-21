@@ -304,7 +304,7 @@ export class ReviewComponent implements OnInit {
         if (res.success && res.response) {
           window.open(res.response, '_blank');
           this._UploadService.setOmrIds(res.ids);
-          // this.router.navigate(['/finalsheet']);
+          this.router.navigate(['/finalsheet']);
         }
       },
       error: (err) => {
