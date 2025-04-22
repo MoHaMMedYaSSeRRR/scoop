@@ -306,6 +306,7 @@ export class ReviewComponent implements OnInit {
         if (res.success && res.response) {
           window.open(res.response, '_blank');
           this._UploadService.setOmrIds(res.ids);
+          this.finalSheetComponent.omrIds = res.ids;
           this.finalSheetComponent.onSubmit();
           setTimeout(() => {
             this.finalSheetComponent.downloadUpdatedExcel();

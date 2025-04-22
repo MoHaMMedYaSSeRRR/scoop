@@ -16,7 +16,7 @@ export class FinalSheetComponent {
   updatedData: any[] = [];
   showDownloadButton = false;
 
-  private omrIds: { [key: string]: number } = {};
+  public omrIds: { [key: string]: number } = {};
 
   @ViewChild('fileInput') fileInput!: ElementRef;
 
@@ -93,55 +93,41 @@ export class FinalSheetComponent {
     return this.omrIds;
   }
 
-  onSubmit(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (this.pdfForm.invalid) {
-        return reject('Form is invalid');
-      }
-      this.isLoading = true;
+  onSubmit() {
+    if (this.pdfForm.invalid) return;
+    this.isLoading = true;
   
-      const file = this.pdfForm.value.pdf;
-      const reader = new FileReader();
+    const file = this.pdfForm.value.pdf;
+    const reader = new FileReader();
   
-      reader.onload = (e: any) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const excelData: any[] = XLSX.utils.sheet_to_json(sheet);
+    reader.onload = (e: any) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const excelData: any[] = XLSX.utils.sheet_to_json(sheet);
   
-        console.log('📊 Original Excel Data:', excelData);
+      console.log('📊 Original Excel Data:', excelData);
   
-        const omrMap = this.getOmrIds();
+      const omrMap = this.getOmrIds();
   
-        this.updatedData = excelData.map(row => {
-          const seatNumber = row['رقم الجلوس']?.toString().trim();
-          const score = omrMap[seatNumber];
+      this.updatedData = excelData.map(row => {
+        const seatNumber = row['رقم الجلوس']?.toString();
+        const score = omrMap[seatNumber];
+        console.log(`🎯 Seat Number: ${seatNumber} - New Score: ${score}`);
   
-          console.log(`🎯 Seat Number: ${seatNumber} - Score: ${score}`);
+        return {
+          ...row,
+          'النتيجة': score ?? '' // add new column 'النتيجة'
+        };
+      });
   
-          return {
-            ...row,
-            'النتيجة': score ?? ''  // Add new column 'النتيجة'
-          };
-        });
+      console.log('✅ Updated Excel Data with النتيجة:', this.updatedData);
+      this.showDownloadButton = true;
+      this.isLoading = false;
+    };
   
-        console.log('✅ Updated Excel Data with النتيجة:', this.updatedData);
-        this.showDownloadButton = true;
-        this.isLoading = false;
-  
-        resolve();  // Resolve when processing is done
-      };
-  
-      reader.onerror = (error) => {
-        console.error('❌ Error reading file:', error);
-        this.isLoading = false;
-        reject(error);  // Reject if there's an error
-      };
-  
-      reader.readAsArrayBuffer(file);
-    });
+    reader.readAsArrayBuffer(file);
   }
-  
   
 
   downloadUpdatedExcel() {
