@@ -94,39 +94,48 @@ export class FinalSheetComponent {
   }
 
   onSubmit() {
+
     if (this.pdfForm.invalid) return;
     this.isLoading = true;
-
+  
     const file = this.pdfForm.value.pdf;
     const reader = new FileReader();
-
+  
     reader.onload = (e: any) => {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const excelData: any[] = XLSX.utils.sheet_to_json(sheet);
-
+  
       console.log('📊 Original Excel Data:', excelData);
-
+  
       const omrMap = this.getOmrIds();
-
+  
       this.updatedData = excelData.map(row => {
-        const seatNumber = row['رقم الجلوس']?.toString();
+        const seatNumber = row['رقم الجلوس']?.toString().trim();
         const score = omrMap[seatNumber];
-        console.log(`🎯 Seat Number: ${seatNumber} - New Score: ${score}`);
+  
+        console.log(`🎯 Seat Number: ${seatNumber} - Score: ${score}`);
+  
         return {
           ...row,
-          'Total Score': score ?? row['Total Score']
+          'النتيجة': score ?? ''  // Add new column 'النتيجة'
         };
       });
-
-      console.log('✅ Updated Excel Data:', this.updatedData);
+  
+      console.log('✅ Updated Excel Data with النتيجة:', this.updatedData);
       this.showDownloadButton = true;
       this.isLoading = false;
     };
-
+  
+    reader.onerror = (error) => {
+      console.error('❌ Error reading file:', error);
+      this.isLoading = false;
+    };
+  
     reader.readAsArrayBuffer(file);
   }
+  
 
   downloadUpdatedExcel() {
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(this.updatedData);

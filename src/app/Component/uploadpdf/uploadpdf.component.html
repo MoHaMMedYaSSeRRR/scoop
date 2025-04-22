@@ -217,6 +217,9 @@
                   </label>
                 </div>
               </div>
+              <div *ngIf="getCurrentQuestionFormGroup().get('marked')?.touched && getCurrentQuestionFormGroup().get('marked')?.invalid" class="text-danger text-end">
+                الرجاء اختيار نوع التحديد
+              </div>
               <div *ngIf="isID" class="row justify-content-end align-items-center mt-4">
                 <div class="col-3">
                   <input
@@ -226,10 +229,10 @@
                     formControlName="roi_type"
                     value="complementary"
                     class="mx-2"
-                    (click)="setOpacityForBoolean('roi_type', false)"
+                    (click)="setOpacityForSameName('roi_type','complementary') ; checkShow('nocomp')"
                   />
                   <label
-                    (click)="setOpacityForBoolean('roi_type', false)"
+                    (click)="setOpacityForSameName('roi_type', 'complementary') ; checkShow('comp')"
                     for="complementary"
                   >
                     الحاق ربط
@@ -243,15 +246,18 @@
                     formControlName="roi_type"
                     value="question"
                     class="mx-2"
-                    (click)="setOpacityForBoolean('roi_type', true)"
+                    (click)="setOpacityForSameName('roi_type', 'question')"
                   />
                   <label
-                    (click)="setOpacityForBoolean('roi_type', true)"
+                    (click)="setOpacityForSameName('roi_type', 'question')"
                     for="question"
                   >
                     سؤال
                   </label>
                 </div>
+              </div>
+              <div *ngIf="getCurrentQuestionFormGroup().get('roi_type')?.touched && getCurrentQuestionFormGroup().get('roi_type')?.invalid" class="text-danger text-end">
+                الرجاء اختيار نوع السؤال
               </div>
               
 
@@ -283,7 +289,7 @@
                     خيارات
                   </label>
                 </div>
-                <div class="col-3">
+                <div *ngIf="isshowcomp" class="col-3">
                   <input
                     type="radio"
                     id="teacher-yes"
@@ -307,7 +313,10 @@
                   </label>
                 </div>
               </div>
-
+              <div *ngIf="getCurrentQuestionFormGroup().get('gradedByTeacher')?.touched && getCurrentQuestionFormGroup().get('gradedByTeacher')?.invalid" class="text-danger text-end">
+                الرجاء اختيار نوع التصحيح
+              </div>
+              
               <!-- Choices Field -->
               <input
                 *ngIf="questionType == 'nochoicis'"
@@ -343,7 +352,9 @@
                   required
                 />
               </div>
-
+              <div *ngIf="getCurrentQuestionFormGroup().get('choices')?.touched && getCurrentQuestionFormGroup().get('choices')?.invalid" class="text-danger text-end">
+                 الرجاء إدخال عدد الإجابات والفرات والدرجة
+              </div>
               <!-- Direction Field -->
               <div
                 *ngIf="isID"
@@ -375,7 +386,7 @@
                     افقي
                   </label>
                 </div>
-                <div (click)="checkdirection('vertical')" class="col-3">
+                <div (click)="checkdirection('vertical')" *ngIf="questionType == 'choicis'" class="col-3">
                   <input
                     type="radio"
                     id="vertical"
@@ -500,6 +511,7 @@
           </div>
           <div class="w-100 text-center">
             <button
+            
               type="button"
               class="sendBtn ms-1 p-2 border-0 text-white m-auto text-center mt-3"
               (click)="onCurrentQuestionSubmit()"

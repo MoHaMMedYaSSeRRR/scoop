@@ -19,7 +19,7 @@
                     top: circle.y + 'px',
                     width: circle.radius *1.5 + 'px',
                     height: circle.radius *1.5 + 'px',
-                    border: '3px solid #124261'
+                    border: '3px solid #A0C7E2'
                   }">
             </div>
 
@@ -82,9 +82,11 @@
             <div class="hint p-2 w-100 ms-auto text-center">
               <h5>عدد الاسئلة التي تحتاج الي مراجعة : {{ totalErrorsRemaining }} فقرة</h5>
             </div>
-    
-    
-            <button (click)="reviewOMR()" class="btn px-5 py-2 d-inline-block me-auto text-start mt-3">النتيجة</button>
+            <div class="d-flex justify-content-center  align-items-center mx-auto">
+              <app-final-sheet></app-final-sheet>
+              <button (click)="reviewOMR()" class="btn px-5 py-2 d-inline-block me-auto text-start mt-3">النتيجة</button>
+
+            </div>
         </div>
     </div>
     

@@ -164,8 +164,6 @@ export class UploadpdfComponent {
           for (let i = 0; i < pageCount; i++) {
             this.questions.push(
               this.formBuilder.group({
-                rowNumber: new FormControl('', Validators.required),
-                colNumber: new FormControl('', Validators.required),
                 roi_type: new FormControl('', Validators.required),
                 direction: new FormControl('', Validators.required),
                 orientation: new FormControl('', Validators.required),
@@ -709,6 +707,7 @@ export class UploadpdfComponent {
         roi_coordinates: [],
         colNumber: '',
         direction: '',
+        orientation: '',
         marked: '',
         gradedByTeacher: false,
         choices: '',
@@ -1083,6 +1082,15 @@ export class UploadpdfComponent {
 
       // Manually trigger file select logic
       this.onFileSelected({ target: this.fileInput.nativeElement } as any);
+    }
+  }
+  isshowcomp:boolean=true;
+  checkShow(x:any){
+    if(x='comp'){
+      this.isshowcomp=false;
+    }
+    else{
+      this.isshowcomp=true;
     }
   }
 }

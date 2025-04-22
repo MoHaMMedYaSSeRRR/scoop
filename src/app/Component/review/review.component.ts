@@ -4,6 +4,7 @@ import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 import { jsPDF } from 'jspdf';
 import examData from '../../../assets/EXAM-1-response.json';
 import { Router } from '@angular/router';
+import { FinalSheetComponent } from '../final-sheet/final-sheet.component';
 
 interface Question {
   position: number[][][];
@@ -93,8 +94,9 @@ export class ReviewComponent implements OnInit {
       color: string;
     }[];
   } = {};
+  @ViewChild(FinalSheetComponent) finalSheetComponent!: FinalSheetComponent; // Reference FinalSheetComponent
 
-  constructor(private _UploadService: UploadService, private router: Router) {}
+  constructor(private _UploadService: UploadService, private router: Router   ) {}
 
   ngOnInit(): void {
     this._UploadService.data$.subscribe((response) => {
@@ -304,7 +306,8 @@ export class ReviewComponent implements OnInit {
         if (res.success && res.response) {
           window.open(res.response, '_blank');
           this._UploadService.setOmrIds(res.ids);
-          this.router.navigate(['/finalsheet']);
+          this.finalSheetComponent.onSubmit();
+          this.finalSheetComponent.downloadUpdatedExcel();
         }
       },
       error: (err) => {
@@ -1049,6 +1052,10 @@ export class ReviewComponent implements OnInit {
       this.detectedCircles[page.page_number] = pageCircles;
     });
   }
+
+
+
+
 }
 interface Page {
   page_number: number;
