@@ -309,7 +309,7 @@ export class ReviewComponent implements OnInit {
           this.finalSheetComponent.onSubmit();
           setTimeout(() => {
             this.finalSheetComponent.downloadUpdatedExcel();
-          }, 10000);
+          }, 5000);
         }
       },
       error: (err) => {
