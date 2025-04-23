@@ -27,9 +27,7 @@ export class PaymentComponent {
       console.log(this.packages);
     }
    })
-   this.getPacageDetails();
-   this._PayService.checkTokenEnvironment();
-    
+   this.getPacageDetails();    
   }
   selectedPackageId: number | null = null; 
   selectedPackage: any ;
@@ -68,19 +66,19 @@ getPacageDetails(){
 
 
   testMyFatoorah() {
-    const amount = this.selectedPackage.final_price; 
-    const currency = 'KWD'; // Change based on your preference
+    const amount = this.selectedPackage.final_price;
+    const currency = 'KWD';
     const customerName = 'Test User';
-    const returnUrl = 'http://localhost:4200/uploadpdf'; // Your return URL
-
+    const returnUrl = 'http://localhost:4200/uploadpdf'; // Change in production
+  
     this._PayService.createPayment(amount, currency, customerName, returnUrl).subscribe(response => {
       if (response.IsSuccess) {
-        // Redirect user to payment URL
         window.location.href = response.Data.PaymentURL;
       } else {
         console.error('Payment Failed:', response);
       }
     });
   }
+  
   }
 

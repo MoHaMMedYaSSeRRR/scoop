@@ -1,13 +1,12 @@
 {
-  "/myfatoorah-api": {
-    "target": "https://api.myfatoorah.com",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug",
-    "pathRewrite": {
-      "^/myfatoorah-api": ""
-    }
-  },
+    "/myfatoorah-api": {
+  "target": "https://api.myfatoorah.com",
+  "secure": true,
+  "changeOrigin": true,
+  "logLevel": "debug"
+}
+
+  ,
   "/scoob": {
     "target": "https://scoob.cc",
     "secure": false,

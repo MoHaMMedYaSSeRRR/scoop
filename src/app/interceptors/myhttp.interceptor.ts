@@ -15,21 +15,19 @@ export class MyhttpInterceptor implements HttpInterceptor {
     request: HttpRequest<unknown>,
     next: HttpHandler
   ): Observable<HttpEvent<unknown>> {
-  
     const uToken = localStorage.getItem('scoobToken');
-  
+
     // Exclude MyFatoorah API from automatic token injection
-    if (!request.url.includes('myfatoorah-api')) {
+    if (!request.url.includes('ExecutePayment')) {
       if (uToken) {
         request = request.clone({
           setHeaders: {
-            'Authorization': `Bearer ${uToken}`  // Ensure correct format
-          }
+            Authorization: `Bearer ${uToken}`,
+          },
         });
       }
     }
-  
+
     return next.handle(request);
   }
-  
 }
