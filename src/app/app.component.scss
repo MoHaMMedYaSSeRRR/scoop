@@ -3,3 +3,69 @@
     display: flex;
     flex-direction: column;
 }
+.whatsapp-container {
+    position: fixed;
+    top: 70%;
+    left: 50px;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+  }
+  
+  .whatsapp-icon {
+    width: 70px;
+    height: 70px;
+    position: absolute;
+    z-index: 1200;
+    opacity: 2;
+  }
+  
+  .circle {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 2px solid #0be15a;
+    opacity: 1;
+    animation: ripple 2s infinite ease-out;
+  }
+  
+  .circle:nth-child(1) {
+    animation-delay: 0s;
+  }
+  .circle:nth-child(2) {
+    animation-delay: 0.5s;
+  }
+  .circle:nth-child(3) {
+    animation-delay: 1s;
+  }
+  
+  @keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+  }
+  
+  /* 🔹 Reduce Scale on Small Screens */
+  @media (max-width: 768px) {
+    .whatsapp-container {
+        left: 20px;
+    }
+   .circle{
+    width: 60px;
+    height: 60px;
+   }
+   .whatsapp-icon {
+    width: 60px;
+    height: 60px;
+  }
+  }
+  

@@ -28,12 +28,14 @@ export class PaymentComponent {
     }
    })
    this.getPacageDetails();
+   this._PayService.checkTokenEnvironment();
     
   }
   selectedPackageId: number | null = null; 
-
+  selectedPackage: any ;
 selectPackage(item: any) {
   this.selectedPackageId = item.id; 
+  this.selectedPackage = item;
   console.log("Selected Package:", item); 
 }
 
@@ -66,7 +68,7 @@ getPacageDetails(){
 
 
   testMyFatoorah() {
-    const amount = 10; 
+    const amount = this.selectedPackage.final_price; 
     const currency = 'KWD'; // Change based on your preference
     const customerName = 'Test User';
     const returnUrl = 'http://localhost:4200/uploadpdf'; // Your return URL

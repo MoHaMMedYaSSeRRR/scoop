@@ -18,7 +18,7 @@ export class UploadService {
     private _HttpClient:HttpClient
   ) { }
   upload(data: any): Observable<any> {
-    return this._HttpClient.post('https://scoob.cc/step-1', data);
+    return this._HttpClient.post('https://scoob.cc/api/step-1', data);
   }
   // upload(data: any): Observable<any> {
   //   return this._HttpClient.post('/scoob/step-1', data);
@@ -64,7 +64,7 @@ export class UploadService {
     return this.selectedBoxSubject.value;  
   }
    reviewOmr(data:any): Observable<any> {
-    return this._HttpClient.post('https://scoob.cc/final', data);
+    return this._HttpClient.post('https://scoob.cc/api/final', data);
   }
   // reviewOmr(data: any): Observable<any> {
   //   return this._HttpClient.post(`/scoob/final`, data);

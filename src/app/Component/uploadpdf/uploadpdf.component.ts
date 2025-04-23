@@ -388,7 +388,7 @@ export class UploadpdfComponent {
 
           pagesObject[pageKey][`question-${index + 1}`] = {
             points: questionData.points,
-            roi_type: questionData.roi_type || 'question',
+            roi_type: (questionData.roi_type === 'complementary') ? 'complementary' : 'question',
             entities_count:
               questionData.entities_count ||
               (questionData.choices ? questionData.choices.length : 10),
@@ -620,7 +620,7 @@ export class UploadpdfComponent {
       if (!this.isshow) return;
     
       const currentQuestionForm = this.getCurrentQuestionFormGroup();
-    
+      
       if (this.selectionBoxes.length === 0) {
         console.error('Please define a selection area before submitting.');
         return;
@@ -647,8 +647,8 @@ export class UploadpdfComponent {
     
       // ROI type
       const roi_type = ['question', 'complementary'].includes(currentQuestionForm.value.roi_type)
-        ? currentQuestionForm.value.roi_type
-        : 'question';
+    ? currentQuestionForm.value.roi_type
+    : 'question';
     
       // Setup choices and entity count
       let choices: string[] = [];
