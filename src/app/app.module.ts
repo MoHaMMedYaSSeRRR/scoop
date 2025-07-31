@@ -19,6 +19,7 @@ import { ToastrModule } from 'ngx-toastr';
 import { MyhttpInterceptor } from './interceptors/myhttp.interceptor';
 import { ReviewTestComponent } from './Component/review-test/review-test.component';
 import { FinalSheetComponent } from './Component/final-sheet/final-sheet.component';
+import { TestComponent } from './Component/test/test.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -30,6 +31,7 @@ import { FinalSheetComponent } from './Component/final-sheet/final-sheet.compone
     PaymentComponent,
     ReviewTestComponent,
     FinalSheetComponent,
+    TestComponent,
   ],
   imports: [
     BrowserModule,

@@ -54,10 +54,11 @@
                  السابق
             </span>
             <span>{{ errorPages[currentErrorIndex] }} / {{ errorPages.length }}</span>
-            <span role="button" (click)="goToNextPage()" [class.disabled]="currentErrorIndex === errorPages.length - 1">
+            <span role="button" (click)="goToNextPage()" >
                 <!-- <i class="fa fa-arrow-right"></i> -->
                  التالي
             </span>
+            <!-- [class.disabled]="currentErrorIndex === errorPages.length - 1" -->
         </div>
     </div>
     
@@ -87,7 +88,15 @@
               <button (click)="reviewOMR()" class="btn px-5 py-2 d-inline-block me-auto text-start mt-3">النتيجة</button>
 
             </div>
+            <!-- <button
+            *ngIf="showDownloadButton"
+            class="btn d-inline-block me-auto btn-success  mt-3"
+            (click)="downloadFile()"
+          >
+            تحميل ملف excel
+          </button> -->
         </div>
+       
     </div>
     
 
@@ -109,6 +118,4 @@
   </div>
 </div>
 
-<section *ngIf="ispay">
-  <app-payment></app-payment>
-</section>
+

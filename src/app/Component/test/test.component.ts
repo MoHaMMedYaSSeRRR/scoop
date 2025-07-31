@@ -10,9 +10,9 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+import { PDFDocument } from 'pdf-lib';
 import { UploadService } from 'src/app/services/upload.service';
 import { ToastrService } from 'ngx-toastr';
-
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
 
 interface ROI {
@@ -21,6 +21,7 @@ interface ROI {
   entities_count: number;
   choices?: string[];
   orientation: string; // Add this field
+  direction: string; // Add this field
   worth?: number; // Add this field
   corrected_by_teacher: boolean; // Add this field
   id: boolean; // Add this field
@@ -28,13 +29,12 @@ interface ROI {
 }
 
 type SelectedQuestions = Record<string, Record<string, ROI>>;
-
 @Component({
-  selector: 'app-uploadpdf',
-  templateUrl: './uploadpdf.component.html',
-  styleUrls: ['./uploadpdf.component.scss'],
+  selector: 'app-test',
+  templateUrl: './test.component.html',
+  styleUrls: ['./test.component.scss']
 })
-export class UploadpdfComponent {
+export class TestComponent {
   private readonly ORIGINAL_IMAGE_WIDTH = 600;
   private readonly ORIGINAL_IMAGE_HEIGHT = 800;
   step1: boolean = true;
@@ -73,6 +73,7 @@ export class UploadpdfComponent {
       submitted?: boolean;
     }[];
   } = {};
+  modifiedFile: any;
   constructor(
     private formBuilder: FormBuilder,
     private _UploadService: UploadService,
@@ -92,161 +93,9 @@ export class UploadpdfComponent {
       language: new FormControl('ar', Validators.required),
     });
   }
-  userPackageId: any;
-  isPending=true;
-  ngOnInit(): void {
-    this._AuthService.setLoginState(true);
-    this.route.queryParams.subscribe((params) => {
-      const paymentId = params['paymentId']; // or params['Id'] if needed
-
-      if (paymentId) {
-        localStorage.setItem('userPaymentId' , paymentId)
-        this._PayService.getPaymentStatus(paymentId).subscribe({
-          next: (res) => {
-            console.log(res);
-            console.log(res.Data.InvoiceTransactions[0].TransactionStatus)
-            if (res.Data.InvoiceStatus == 'Paid') {
-              this.subscribePackage();
-              this.getUserPackage();
-              localStorage.removeItem('userPaymentId');
-              this.ispay = false;
-            } else if (res.Data.InvoiceStatus == "Pending"){
-              this._ToastrService.info('جاري تاكيد عملية الدفع، برجاء الانتظار');
-              setTimeout(() => {
-                this._PayService.getPaymentStatus(paymentId).subscribe({
-                  next: (res) => {
-                    console.log(res);
-                    if (res.Data.InvoiceStatus == 'Paid') {
-                      this._ToastrService.success('تم تاكيد عملية الدفع');
-                      this.getUserPackage();
-                      localStorage.removeItem('userPaymentId');
-                      console.log('subsribeSecond');
-                      this.ispay = false;
-                      this.subscribePackage();
-                    }
-                  },
-                  error: (err) => {
-                    console.error('Error fetching payment status:', err);
-                  },
-                });
-
-              }, 10000);
-            }
-          },
-          error: (err) => {
-            console.error('Error fetching payment status:', err);
-          },
-        });
-      } else if(localStorage.getItem('userPaymentId')) {
-        const secondPaymentId = localStorage.getItem('userPaymentId');
-        this._PayService.getPaymentStatus(secondPaymentId).subscribe({
-          next: (res) => {
-            console.log(res);
-            if (res.Data.InvoiceStatus == 'Paid') {
-              localStorage.removeItem('userPaymentId');
-              console.log('subsribeSecond');
-              this.ispay = false;
-              this.subscribePackage();
-            }
-          },
-          error: (err) => {
-            console.error('Error fetching payment status:', err);
-          },
-        });
-      }
-      else {
-        console.error('paymentId not found in URL');
-      }   
-    });
-   this.getUserPackage();
-    // this.checkRemainingpages();
-  }
-  getUserPackage() {
-    this._AuthService.getUserPackage().subscribe({
-      next: (res) => {
-        console.log(res);
-        if (res.data) {
-          if (res.data[0].is_valid) {
-            this.ispay = false;
-            this.userPackageId = res.data[0].id;
-            this._AuthService.updateSubscriptionStatus(res.data[0]);
-            console.log(this.userPackageId);
-          }
-        }
-      },
-    });
-  }
-  subscribePackage() {
-    const selectedPackageId = localStorage.getItem('selectedPackageId');
-
-    if (selectedPackageId) {
-      const data = {
-        package_id: selectedPackageId,
-      };
-
-      this._PayService.subscriveToPackage(data).subscribe({
-        next: (res) => {
-          console.log('Subscribed Package:', res);
-          this._ToastrService.success('تم الاشتراك بنجاح');
-          // Optionally navigate to another page after subscription
-          // this._Router.navigate(['/uploadpdf']);
-        },
-        error: (err) => {
-          console.error('Error subscribing package:', err);
-        },
-      });
-    } else {
-      console.error('No package selected in local storage');
-    }
-  }
-  async checkRemainingpages() {
-    const pdfFile = this.pdfForm.get('pdfFile')?.value;
-    if (!pdfFile) return;
+ 
   
-    try {
-      const pageCount = await this.getPdfPageCount(pdfFile);  // Get pages directly
-      this.userPageCount = pageCount;  // store it if needed
   
-      this._AuthService.checkRemainingpages(this.userPackageId, pageCount , false).subscribe({
-        next: (res) => { 
-          localStorage.setItem('userPackageId',this.userPackageId);
-          localStorage.setItem('pageCount',pageCount.toString());
-
-          console.log(this.userPackageId, pageCount);
-          this.onSubmit();  // Now safely call onSubmit
-        },
-        error: (err) => {
-          console.log(err);
-          if (err.error.message == 'Not enough remaining pages.') {
-            console.log(err.error.message);
-            this.ispay = true;
-            this._ToastrService.error("عدد صفحات الملف أكبر من عدد الصفحات المتبقية في باقتك");
-          }
-        },
-      });
-    } catch (error) {
-      console.error('Error reading PDF:', error);
-      this._ToastrService.error("حدث خطأ أثناء قراءة الملف");
-    }
-  }
-  
-  async getPdfPageCount(pdfFile: File): Promise<number> {
-    const fileReader = new FileReader();
-  
-    return new Promise((resolve, reject) => {
-      fileReader.onloadend = async () => {
-        try {
-          const pdfData = new Uint8Array(fileReader.result as ArrayBuffer);
-          const pdf = await pdfjsLib.getDocument(pdfData).promise; // <-- fixed here
-          resolve(pdf.numPages);
-        } catch (error) {
-          reject(error);
-        }
-      };
-  
-      fileReader.readAsArrayBuffer(pdfFile);
-    });
-  }
   
   showPay() {
     this.ispay = !this.ispay;
@@ -262,13 +111,19 @@ export class UploadpdfComponent {
 
   onFileSelected(event: any) {
     const file = event.target.files?.[0];
-
+    
     if (file && file.type === 'application/pdf') {
       this.fileName = file.name;
       this.selectedFile = file;
-
-      // Patch file into your form if needed
+      
+      // Patch the selected file into the form
       this.pdfForm.patchValue({ pdfFile: file });
+      
+      // Cut the PDF to the first 10 pages
+      this.cutPdfToFirst10Pages(file).then((modifiedPdf) => {
+        // Store the new modified PDF for submission
+        this.modifiedFile = modifiedPdf;
+      });
     } else {
       console.error('Please select a valid PDF file.');
       this.fileName = '';
@@ -276,6 +131,33 @@ export class UploadpdfComponent {
       this.pdfForm.patchValue({ pdfFile: null });
     }
   }
+  
+  // Function to cut the PDF to the first 10 pages
+  async cutPdfToFirst10Pages(file: File): Promise<File> {
+    const pdfBytes = await file.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    
+    // Create a new PDF document to store the first 10 pages
+    const newPdf = await PDFDocument.create();
+  
+    // Get the total number of pages in the original PDF
+    const totalPages = pdfDoc.getPages().length;
+    const pagesToCopy = Math.min(totalPages, 10); // Limit to 10 pages
+  
+    // Copy the first 10 pages (or fewer if the PDF has less than 10 pages)
+    for (let i = 0; i < pagesToCopy; i++) {
+      const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
+      newPdf.addPage(copiedPage);
+    }
+  
+    // Save the new PDF
+    const modifiedPdfBytes = await newPdf.save();
+    const modifiedFile = new File([modifiedPdfBytes], 'modified.pdf', { type: 'application/pdf' });
+  
+    return modifiedFile;
+  }
+  
+  
 
   get languageDirection(): string {
     return this.pdfForm.get('language')?.value === 'ar'
@@ -284,50 +166,58 @@ export class UploadpdfComponent {
   }
 
   // Handle PDF to Image conversion
-  async convertPdfToImages(pdfUrl: string): Promise<string[]> {
+  async convertPdfToImages(pdfUrl: string, maxPages: number = 10): Promise<string[]> {
     const images: string[] = [];
     const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-    const numPages = pdf.numPages;
-
+    const numPages = Math.min(pdf.numPages, maxPages); // Limit to the maxPages (e.g., 10 pages)
+  
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const viewport = page.getViewport({ scale: 1.5 });
-
+  
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d', { willReadFrequently: true });
-
+  
       if (!context) {
         throw new Error('Failed to get canvas context');
       }
-
+  
       canvas.height = viewport.height;
       canvas.width = viewport.width;
-
+  
       const renderContext = {
         canvasContext: context,
         viewport: viewport,
       };
-
+  
       await page.render(renderContext).promise;
       images.push(canvas.toDataURL('image/png'));
     }
-
+  
     return images;
   }
-
+  
+  
+  
   async onSubmit(): Promise<void> {
     this.isLoading = true;
     if (this.pdfForm.valid) {
       const pdfFile = this.pdfForm.get('pdfFile')?.value;
       const fileReader = new FileReader();
-
+  
       fileReader.onloadend = async () => {
         const pdfUrl = URL.createObjectURL(pdfFile);
-        this.pdfImages = await this.convertPdfToImages(pdfUrl);
+  
+        // Convert PDF only to the first 10 pages
+        this.pdfImages = await this.convertPdfToImages(pdfUrl, 10); // Passing 10 as a parameter
+  
+        // Ensure we only keep the first 10 pages
+        this.pdfImages = this.pdfImages.slice(0, 10);
+  
         this.userPageCount = this.pdfForm.get('pageCount')?.value || 0;
-
+  
         if (this.questions.length === 0) {
-          const pageCount = this.pdfForm.get('pageCount')?.value || 0;
+          const pageCount = Math.min(this.pdfImages.length, this.userPageCount); // Limit questions to the number of images
           for (let i = 0; i < pageCount; i++) {
             this.questions.push(
               this.formBuilder.group({
@@ -346,14 +236,20 @@ export class UploadpdfComponent {
             );
           }
         }
-        this.step1=false;
-        this.step2=true;
+        this.step1 = false;
+        this.step2 = true;
         this.isLoading = false;
       };
-
+  
       fileReader.readAsArrayBuffer(pdfFile);
     }
   }
+  
+  
+  
+  
+  
+  
 
   // Get the current question FormGroup
   getCurrentQuestionFormGroup(): FormGroup {
@@ -400,85 +296,7 @@ export class UploadpdfComponent {
 
   another: any = [];
 
-  // onCurrentQuestionSubmit(): void {
-  //   if (this.isGlobal) {
-  //     this.isGlobal = false;
-  //     this.isshow = true;
-  //   }
-
-  //   if (this.isshow) {
-  //     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-  //     if (this.selectionBoxes.length > 0) {
-  //       const userEntitiesCount = currentQuestionForm.value.entities_count || 0; // Take from input field
-  //       const worth = currentQuestionForm.value.worth || 0; // Take from input field
-
-  //       const points = this.selectionBoxes.map((box) => [
-  //         [Math.floor(box.x), Math.floor(box.y)],
-  //         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-  //       ]);
-
-  //       // Determine roi_type dynamically
-  //       const roi_type = points.length === 1 ? 'question' : 'complementary';
-
-  //       const roiData: ROI = {
-  //         points: points,
-  //         roi_type: roi_type,
-  //         entities_count:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim()).length
-  //             : 10, // **Keep this unchanged**
-  //         choices:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim())
-  //             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  //         orientation: currentQuestionForm.value.orientation || 'vertical',
-  //         direction: currentQuestionForm.value.direction || 'top-to-bottom',
-  //         worth: worth,
-  //         corrected_by_teacher:
-  //           currentQuestionForm.value.gradedByTeacher === true,
-  //         id: this.selectedIdType === 'student_id' ? false : true,
-  //       };
-
-  //       console.log(roiData);
-
-  //       // **Update Final Score Calculation (Use Input `entities_count`)**
-  //       this.finalScore += userEntitiesCount * worth;
-
-  //       // Store question data
-  //       const questionKey = `question_${
-  //         Object.keys(this.selectedQuestions).length + 1
-  //       }`;
-  //       this.selectedQuestions[questionKey] = roiData;
-
-  //       currentQuestionForm.reset({
-  //         roi_coordinates: [],
-  //         colNumber: '',
-  //         direction: '',
-  //         marked: '',
-  //         gradedByTeacher: false,
-  //         choices: '',
-  //         worth: 0,
-  //         id: false,
-  //         entities_count: '',
-  //       });
-
-  //       this.resetboxes();
-  //       this.questionType = '';
-  //     } else {
-  //       console.error('Please define a selection area before submitting.');
-  //     }
-
-  //     this.direction = '';
-  //     this.isID = false;
-  //   }
-  // }
+ 
 
   checkifid(x: any) {
     if (x == true) {
@@ -493,115 +311,62 @@ export class UploadpdfComponent {
   checkQuestionType(x: any) {
     this.questionType = x;
   }
-  // onFinalSubmit(): void {
-  //   this.onCurrentQuestionSubmit(); // Ensure the last question is submitted
-
-  //   const pagesObject: Record<string, any> = {};
-  //   let totalExamScore = 0; // Initialize total score
-
-  //   Object.keys(this.selectedQuestions).forEach((key, index) => {
-  //     const questionData = this.selectedQuestions[key];
-  //     const pageKey = `page-${questionData.page_number || 1}`;
-
-  //     // Ensure the page object exists
-  //     if (!pagesObject[pageKey]) {
-  //       pagesObject[pageKey] = {};
-  //     }
-
-  //     // Get the next available question key for this page
-  //     const questionNumber = Object.keys(pagesObject[pageKey]).length + 1;
-  //     const questionKey = `question-${questionNumber}`;
-
-  //     pagesObject[pageKey][questionKey] = {
-  //       points: questionData.points,
-  //       roi_type: questionData.roi_type || 'question',
-  //       entities_count: questionData.entities_count || 10,
-  //       choices: questionData.choices || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  //       orientation: questionData.orientation || 'horizontal',
-  //       direction: questionData.direction || 'right-to-left',
-  //       worth: questionData.worth || 1,
-  //       corrected_by_teacher: questionData.corrected_by_teacher || false,
-  //       id: questionData.id,
-  //     };
-
-  //     // Use user-entered entities_count for total score calculation
-  //     totalExamScore += questionData.entities_count * questionData.worth;
-  //   });
-
-  //   this.finalScore = totalExamScore; // Update total score dynamically
-
-  //   const finalPayload = { ...pagesObject };
-  //   this._UploadService.setdata(finalPayload, this.selectedFile);
-
-  //   if (this.selectedFile) {
-  //     this.formData.append('file', this.selectedFile);
-  //   }
-
-  //   const pdfJson = JSON.stringify(finalPayload);
-  //   this.formData.append('data', pdfJson);
-
-  //   this.isshow = false;
-  //   this._UploadService.upload(this.formData).subscribe({
-  //     next: (res) => {
-  //       console.log(res);
-  //       this._UploadService.setdata(res.response, this.selectedFile);
-  //       this.router.navigate(['/review']);
-  //     },
-  //     error: (err) => {
-  //       console.log(err);
-  //     },
-  //   });
-  // }
+ 
 
   onFinalSubmit(): void {
     this.onCurrentQuestionSubmit(); // Ensure the last question is submitted
-
+  
     const pagesObject: Record<string, any> = {};
     let totalExamScore = 0; // Initialize total score
-
+  
+    // Process the questions and limit them to 10 pages
     Object.keys(this.selectedQuestions).forEach((pageKey) => {
       if (!pagesObject[pageKey]) {
         pagesObject[pageKey] = {};
       }
-
+  
       Object.keys(this.selectedQuestions[pageKey]).forEach(
         (questionKey, index) => {
           const questionData = this.selectedQuestions[pageKey][questionKey];
-
-          pagesObject[pageKey][questionKey] = {
+  
+          pagesObject[pageKey][`question-${index + 1}`] = {
             points: questionData.points,
-           roi_type: questionData.roi_type,
+            roi_type:
+              questionData.roi_type === 'complementary'
+                ? 'complementary'
+                : 'question',
             entities_count:
               questionData.entities_count ||
               (questionData.choices ? questionData.choices.length : 10),
             choices: questionData.choices || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
             orientation: questionData.orientation || 'horizontal',
+            direction: questionData.direction || 'right-to-left',
             corrected_by_teacher: questionData.corrected_by_teacher || false,
             id: questionData.id,
             worth: questionData.worth,
           };
-
+  
           // Calculate total exam score
           if (questionData.worth) {
             totalExamScore += questionData.entities_count * questionData.worth;
           }
-       questionData.roi_type='question' }
+        }
       );
     });
-
-    // this.finalScore = totalExamScore; // Update total score dynamically
-
+  
+    // finalPayload is generated based on the questions (limited to 10 pages)
     const finalPayload = { ...pagesObject };
     this._UploadService.setdata(finalPayload, this.selectedFile);
-
-    if (this.selectedFile) {
-      this.formData.append('file', this.selectedFile);
+  
+    if (this.modifiedFile) {
+      // Send the modified file (first 10 pages only)
+      this.formData.append('file', this.modifiedFile);
     }
-
+  
     const pdfJson = JSON.stringify(finalPayload);
     this.formData.append('data', pdfJson);
-    // this._UploadService.setdata(pdfJson, this.selectedFile);
-    // this.router.navigate(['/review']);
+  
+    // Send the data (full PDF file + processed data for the first 10 pages)
     this.isshow = false;
     this._UploadService.upload(this.formData).subscribe({
       next: (res) => {
@@ -614,6 +379,9 @@ export class UploadpdfComponent {
       },
     });
   }
+  
+  
+  
 
   // onCurrentQuestionSubmit(): void {
   //   if (this.isGlobal) {
@@ -801,7 +569,7 @@ export class UploadpdfComponent {
     if (!this.isshow) return;
 
     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-    console.log(currentQuestionForm.value)
+
     if (this.selectionBoxes.length === 0) {
       console.error('Please define a selection area before submitting.');
       return;
@@ -826,15 +594,20 @@ export class UploadpdfComponent {
       ? currentQuestionForm.value.orientation
       : 'vertical';
 
-  
+    const direction = ['right-to-left', 'top-to-bottom'].includes(
+      currentQuestionForm.value.direction
+    )
+      ? currentQuestionForm.value.direction
+      : orientation === 'vertical'
+      ? 'top-to-bottom'
+      : 'right-to-left';
 
     // ROI type
- const roiTypeValue = currentQuestionForm.value.roi_type;
-console.log('Selected ROI Type:', roiTypeValue);
-
-const roi_type = roiTypeValue === 'question' || roiTypeValue === 'complementary'
-  ? roiTypeValue
-  : 'question';
+    const roi_type = ['question', 'complementary'].includes(
+      currentQuestionForm.value.roi_type
+    )
+      ? currentQuestionForm.value.roi_type
+      : 'question';
 
     // Setup choices and entity count
     let choices: string[] = [];
@@ -845,19 +618,20 @@ const roi_type = roiTypeValue === 'question' || roiTypeValue === 'complementary'
       choices = rawChoices.split('-');
       entities_count = choices.length;
     } else {
-      const arabicLetters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9','10','11' , '12' , '13' , '14' , '15' , '16', '17' , '18' , '19' , '20'];
+      const arabicLetters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
       const choiceCount = Number(currentQuestionForm.value.choices);
-      entities_count = currentQuestionForm.value.choices || 10;
+      entities_count = choiceCount > 0 ? choiceCount : 10;
       choices = arabicLetters.slice(0, entities_count);
     }
 
     // Construct the ROI data object
     const roiData: ROI = {
-      points: points, 
+      points: points,
       roi_type: roi_type,
       entities_count: entities_count,
       choices: choices,
       orientation: orientation,
+      direction: direction,
       corrected_by_teacher: isCorrectedByTeacher,
       id: this.selectedIdType === 'student_id' ? false : true,
       worth: worth,
@@ -880,7 +654,7 @@ const roi_type = roiTypeValue === 'question' || roiTypeValue === 'complementary'
     const questionNumber =
       Object.keys(this.selectedQuestions[pageKey]).length + 1;
     const questionKey = `question-${questionNumber}`;
-    this.selectedQuestions[pageKey][questionKey] = roiData; 
+    this.selectedQuestions[pageKey][questionKey] = roiData;
 
     // Mark boxes as submitted
     if (this.selectionBoxesByPage[this.currentPage]) {
@@ -896,6 +670,7 @@ const roi_type = roiTypeValue === 'question' || roiTypeValue === 'complementary'
     currentQuestionForm.reset({
       roi_coordinates: [],
       colNumber: '',
+      direction: '',
       orientation: '',
       marked: '',
       gradedByTeacher: false,
@@ -905,7 +680,6 @@ const roi_type = roiTypeValue === 'question' || roiTypeValue === 'complementary'
       entities_count: '',
       roi_type: 'question',
     });
-    this.setOpacityForSameName('roi_type', 'question');
 
     this.resetboxes();
     this.questionType = '';
@@ -1386,3 +1160,5 @@ const roi_type = roiTypeValue === 'question' || roiTypeValue === 'complementary'
 //     },
 //   });
 //  }
+
+

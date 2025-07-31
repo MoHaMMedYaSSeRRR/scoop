@@ -27,3 +27,43 @@ footer{
         justify-content: center !important;
     }
 }
+.youtube{
+    width: 70px;
+    height: 70px;
+}
+.whatsapp-container {
+    position: fixed;
+    bottom: 80px;
+    right: 50px;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+  }
+  
+  .whatsapp-icon {
+    width: 70px;
+    height: 70px;
+    position: absolute;
+    z-index: 1200;
+    opacity: 2;
+  }
+  
+  
+  
+  /* 🔹 Reduce Scale on Small Screens */
+  @media (max-width: 768px) {
+    .whatsapp-container {
+        right: 20px;
+    }
+  
+  }
+  h6{
+    color: #fefefe;
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 10px;
+    text-align: center;
+  }

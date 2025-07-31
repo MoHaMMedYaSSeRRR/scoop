@@ -1,11 +1,12 @@
-// .layer {
-//     left: 0;
-//     bottom: 0;
-//     top: 0;
-//     right: 0;
-//     position: fixed;
-//     background-color: #00000033;
-//   }
+.layer {
+    left: 0;
+    bottom: 0;
+    top: 0;
+    right: 0;
+    position: fixed;
+    background-color: #00000033;
+    z-index: 120;
+  }
   
   .pay {
     position: relative;
@@ -13,7 +14,9 @@
     padding: 2rem;
     border-radius: 1rem;
     max-width: 100%;
+    max-height: 90%;
     text-align: right;
+    overflow-y: auto;
   }
   
   .circle {

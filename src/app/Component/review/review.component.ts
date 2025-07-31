@@ -5,6 +5,8 @@ import { jsPDF } from 'jspdf';
 import examData from '../../../assets/EXAM-1-response.json';
 import { Router } from '@angular/router';
 import { FinalSheetComponent } from '../final-sheet/final-sheet.component';
+import { AuthService } from 'src/app/services/auth.service';
+import { ToastrService } from 'ngx-toastr';
 
 interface Question {
   position: number[][][];
@@ -38,7 +40,7 @@ interface StudentMarks {
 })
 export class ReviewComponent implements OnInit {
   question_data: any[] = [];
-
+  showDownloadButton:boolean=false;
   pdfImages: any[] = [];
   currentPage: number = 0;
   userPageCount: number = 0;
@@ -96,7 +98,10 @@ export class ReviewComponent implements OnInit {
   } = {};
   @ViewChild(FinalSheetComponent) finalSheetComponent!: FinalSheetComponent; // Reference FinalSheetComponent
 
-  constructor(private _UploadService: UploadService, private router: Router   ) {}
+  constructor(private _UploadService: UploadService, private router: Router ,
+    private _AuthService: AuthService,
+    private _ToastrService:ToastrService
+    ) {}
 
   ngOnInit(): void {
     this._UploadService.data$.subscribe((response) => {
@@ -307,10 +312,8 @@ export class ReviewComponent implements OnInit {
           window.open(res.response, '_blank');
           this._UploadService.setOmrIds(res.ids);
           this.finalSheetComponent.omrIds = res.ids;
+          this.checkRemainingpages();
           this.finalSheetComponent.onSubmit();
-          setTimeout(() => {
-            this.finalSheetComponent.downloadUpdatedExcel();
-          }, 5000);
         }
       },
       error: (err) => {
@@ -320,6 +323,27 @@ export class ReviewComponent implements OnInit {
 
     console.log('📄 Updated OMR JSON with Circle:', updatedOMR);
     return updatedOMR;
+  }
+  async checkRemainingpages() {  
+    try {
+      const userPackageId = localStorage.getItem('userPackageId');
+      const pagesStr:any = localStorage.getItem('pageCount');
+      this._AuthService.checkRemainingpages(userPackageId, pagesStr , true).subscribe({
+        next: (res) => { 
+        },
+        error: (err:any) => {
+          console.log(err);
+          if (err.error.message == 'Not enough remaining pages.') {
+            console.log(err.error.message);
+          }
+        },
+      });
+    } catch (error) {
+      console.error('Error reading PDF:', error);
+    }
+  }  
+  downloadFile(){
+    this.finalSheetComponent.downloadUpdatedExcel();
   }
 
   // getAllPagesWithErrors() {
@@ -737,8 +761,8 @@ export class ReviewComponent implements OnInit {
         bestMatch.circle
       );
 
-      const modelAnswerPage = Object.values(this.omrResponse).find(
-        (p: any) => p.page_number === 1
+      const modelAnswerPage = Object.values(this.omrResponse).find((p: any) =>
+        p.questions && p.questions.hasOwnProperty(questionKey)
       ) as { questions: any };
 
       if (!modelAnswerPage) {
@@ -972,6 +996,9 @@ export class ReviewComponent implements OnInit {
       this.currentErrorIndex++;
       this.currentPage = this.errorPages[this.currentErrorIndex];
       this.errorQuestions = this.errorQuestionsByPage[this.currentPage] || [];
+    }
+    else{
+      this._ToastrService.success(" تم انتهاء عملية المراجعة")
     }
   }
 

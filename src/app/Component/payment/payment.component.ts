@@ -1,6 +1,6 @@
 import { ToastrService } from 'ngx-toastr';
 import { PayService } from './../../services/pay.service';
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -14,11 +14,14 @@ export class PaymentComponent {
     private _ToastrService:ToastrService,
     private  _Router:Router
   ){}
+  @Output() continueClicked = new EventEmitter<void>();
+  @Output() subscribed = new EventEmitter<void>();
 
   packages:any[] = [];
   hideLayer(): void {
     this.isLayerHidden = true;
   }
+  isFree: boolean = false;
   ngOnInit(): void {
    this._PayService.getAllPackages().subscribe({
     next:(res)=>{
@@ -27,58 +30,105 @@ export class PaymentComponent {
       console.log(this.packages);
     }
    })
-   this.getPacageDetails();    
+   this.getPacageDetails();
+   
+   this.checkFree()
   }
   selectedPackageId: number | null = null; 
   selectedPackage: any ;
 selectPackage(item: any) {
   this.selectedPackageId = item.id; 
   this.selectedPackage = item;
+  localStorage.setItem('selectedPackageId', item.id.toString());
   console.log("Selected Package:", item); 
 }
-
+openInNewTab() {
+  const url = '/test';  // Your desired route
+  window.open(url, '_blank');
+}
 getPacageDetails(){
     this._PayService.getPackageDetails(2).subscribe({
       next: (res) => {
         console.log("Package Details:", res);
       }
     })
+    
   }
-  subscribePackage(){
-   if(this.selectedPackageId){
-    const data ={
-      package_id: this.selectedPackageId
-    }
-    this._PayService.subscriveToPackage(data).subscribe({
+  // subscribePackage(){
+  //  if(this.selectedPackageId){
+  //   const data ={
+  //     package_id: this.selectedPackageId
+  //   }
+  //   this._PayService.subscriveToPackage(data).subscribe({
+  //     next: (res) => {
+  //       console.log("Subscribed Package:", res);
+  //       this._ToastrService.success('تم الاشتراك بنجاح');
+  //       // this._Router.navigate(['/uploadpdf']);
+  //       this.subscribed.emit(); // ✅ Emit when subscription is confirmed
+
+      
+  //     },
+  //     error: (err) => {
+  //       console.error("Error subscribing package:", err);
+  //     }
+  //   })
+  //  }
+  // }
+
+  usefree(){
+    this._PayService.useFree(3).subscribe({
       next: (res) => {
-        console.log("Subscribed Package:", res);
-        this._ToastrService.success('تم الاشتراك بنجاح');
-        // this._Router.navigate(['/uploadpdf']);
-      
-      
+        console.log("Free Package Response:", res);
+        this.checkFree()
       },
       error: (err) => {
-        console.error("Error subscribing package:", err);
+        console.error("Error using free package:", err);
       }
     })
-   }
   }
-
-
-  testMyFatoorah() {
-    const amount = this.selectedPackage.final_price;
-    const currency = 'KWD';
-    const customerName = 'Test User';
-    const returnUrl = 'http://localhost:4200/uploadpdf'; // Change in production
-  
-    this._PayService.createPayment(amount, currency, customerName, returnUrl).subscribe(response => {
-      if (response.IsSuccess) {
-        window.location.href = response.Data.PaymentURL;
-      } else {
-        console.error('Payment Failed:', response);
+  checkFree(){
+    this._PayService.getFreeTrial().subscribe({
+      next: (res) => {
+        console.log("Free Package Response:", res);
+        this.isFree = res.data.free_trial;
+      },
+      error: (err) => {
+        console.error("Error using free package:", err);
       }
-    });
+    })
   }
+ 
+  testMyFatoorah() {
+    const amount = this.selectedPackage?.final_price;
+    const currency = 'KWD'; // Currency code (currently KWD, but modify as needed)
+    const customerName = 'Test User';
+    const customerEmail = 'john@example.com'; // Customer's email
+    const customerMobile = '96650000000'; // Customer's mobile number
+    const mobileCountryCode = '+966'; // Country code for mobile number
+    const returnUrl = 'https://scoob.cc/review'; // Must be a public URL
+  
+    this._PayService.createPayment(amount, currency, customerName, customerEmail, customerMobile, returnUrl, mobileCountryCode).subscribe(
+      (response: any) => {
+        console.log('Payment Response:', response);
+        if (response.IsSuccess) {
+           window.location.href = response.Data.InvoiceURL; // Redirect to payment URL
+        } else {
+          console.error('Payment Failed:', response);
+        }
+      },
+      error => {
+        console.error('Payment Error:', error);
+      }
+    );
+  }
+  
+  
+
+  
+  isMark=false;
+   mark(){
+    this.isMark=true;
+   }
   
   }
 

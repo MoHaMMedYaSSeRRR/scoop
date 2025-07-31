@@ -18,6 +18,10 @@ export class LoginComponent {
     private _ToastrService: ToastrService,
     private _router: Router
   ) {}
+  ngOnInit(): void {
+    this._AuthService.setLoginState(false);
+    
+  }
 
   step1: boolean = true;
   step2: boolean = false;
@@ -38,6 +42,7 @@ export class LoginComponent {
   login(form: FormGroup) {
     this.email = form.value.email;
     console.log(form.value);
+    localStorage.setItem('scoobEmail', this.email);
     this._AuthService.login(form.value).subscribe({
       next: (res) => {
         if (res.result == true) {
@@ -77,7 +82,9 @@ export class LoginComponent {
             console.log(res)
             this._ToastrService.success('تم تسجيل الدخول بنجاح');
             localStorage.setItem('scoobToken', res.data.token);
-             this._router.navigate(['/pay']);
+             this._router.navigate(['/uploadpdf']);
+             this._AuthService.setLoginState(true);
+
           }
         },
         error: (err) => {

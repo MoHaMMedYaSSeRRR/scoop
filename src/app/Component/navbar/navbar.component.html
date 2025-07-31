@@ -1,37 +1,53 @@
 <div class="w-100 p-2 ">
-<div class="container text-end">
-    <div class="logo ms-auto">
-        <img src="../../../assets/image/logo.png" alt="">
+<div class="container d-flex justify-content-between align-items-center">
+    <h6 class="text-center text-black fw-bold">
+    أحد برامج كاف المطورة 
+  </h6>
+    
+  <div class="logo-kaf ms-auto">
+       <a href="https://scoob.cc/uploadpdf" target="_blank"> <img src="../../../assets/image/Group 7461@3x.png" class="w-100" alt="logo"></a>
     </div>
+
+  <div class="logo ms-auto">
+       <a href="https://scoob.cc/uploadpdf" target="_blank"> <img src="../../../assets/image/logo.png" alt="logo"></a>
+    </div>
+    
 </div>
 </div>
-<nav class="navbar navbar-expand-lg ">
-  <div class="container d-flex justify-content-center align-items-center">
-    <div class="d-flex justify-content-center align-items-center w-100">
+  <nav class="navbar navbar-expand-lg ">
+    <div class="container d-flex justify-content-center align-items-center">
+      <div class="d-flex justify-content-center align-items-center w-100">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item list-unstyled d-flex justify-content-center align-items-center">
-          <a class="nav-link text-white" href="#"> <i class="fab fa-twitter"></i> </a>
-          <a class="nav-link text-white" href="#"> <i class="fab fa-tiktok"></i> </a>
-          <a class="nav-link text-white" href="#">
-            <i class="fab fa-whatsapp"></i>
-          </a>
-          <a class="nav-link text-white" href="#"> <i class="fab fa-instagram"></i> </a>
-        </li>
-      </ul>
-      <ul class="list-unstyled  ">
-        <li class="d-flex justify-content-center align-items-center">
-          <a href="https://drive.google.com/drive/folders/1S_k0KKQb539TFJMUPw8XVgKn7egbnuMj?usp=sharing" class="mt-2" target="_blank" style="text-decoration: none; display: flex; align-items: center; gap: 5px;">
-            <span style="font-family: 'Almarai', sans-serif; color: #fff; font-size: 18px;">نماذج جاهزة</span>
-            <i class="fa-brands fa-google-drive" style="color: #fff; font-size: 20px;"></i>
-        </a>
-        </li>
-      </ul>
-      <ul class="navbar-navd list-unstyled ms-auto mb-2 mb-lg-0">
-        <li>
-            <h2 class="m-auto">مرحبا بك في سكوب للتصحيح الالي</h2>
-        </li>
-    </ul>
-    </div>
+    <li class="nav-item list-unstyled position-relative">
+      <a role='button' class="nav-link text-white d-flex align-items-center gap-2"  (click)="toggleUserMenu()">
+        <i class="fas fa-angle-down"></i>
+        <i class="fas fa-user fa-2x"></i>
+      </a>
+
+      <!-- Dropdown box -->
+    <div *ngIf="showUserMenu" class="user-dropdown bg-white p-3 rounded shadow position-absolute end-0 mt-2" dir="rtl">
+    <span class="d-block text-black text-end w-100" [innerHTML]="subscriptionStatusText"></span>
+    <hr class="w-75 mx-auto my-3">
+    <a role="button" *ngIf="isLogin" (click)="logout()" class="text-decoration-none text-danger d-block text-end w-100">تسجيل الخروج</a>
   </div>
-</nav>
+
+    </li>
+  </ul>
+
+        <ul class="list-unstyled   d-md-block d-none">
+          <li class="d-flex justify-content-center align-items-center">
+            <a href="https://drive.google.com/drive/folders/1S_k0KKQb539TFJMUPw8XVgKn7egbnuMj?usp=sharing" class="mt-2" target="_blank" style="text-decoration: none; display: flex; align-items: center; gap: 5px;">
+              <span style="font-family: 'Almarai', sans-serif; color: #fff; font-size: 18px;">نماذج جاهزة</span>
+              <i class="fa-brands fa-google-drive" style="color: #fff; font-size: 20px;"></i>
+          </a>
+          </li>
+        </ul>
+        <ul class="navbar-navd list-unstyled ms-auto mb-2 mb-lg-0">
+          <li>
+              <h2 class="m-auto">مرحبا بك في سكوب للتصحيح الالي</h2>
+          </li>
+      </ul>
+      </div>
+    </div>
+  </nav>
  

@@ -93,58 +93,74 @@ export class FinalSheetComponent {
     return this.omrIds;
   }
 
-  onSubmit() {
-    if (this.pdfForm.invalid) return;
-    this.isLoading = true;
-  
-    const file = this.pdfForm.value.pdf;
-    const reader = new FileReader();
-  
-    reader.onload = (e: any) => {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const excelData: any[] = XLSX.utils.sheet_to_json(sheet);
-  
-      console.log('📊 Original Excel Data:', excelData);
-  
-      const omrMap = this.getOmrIds();
-  
-      this.updatedData = excelData.map(row => {
-        const seatNumber = row['رقم الجلوس']?.toString();
-        const score = omrMap[seatNumber];
-        console.log(`🎯 Seat Number: ${seatNumber} - New Score: ${score}`);
-  
-        return {
-          ...row,
-          'النتيجة': score ?? '' // add new column 'النتيجة'
-        };
-      });
-  
-      console.log('✅ Updated Excel Data with النتيجة:', this.updatedData);
-      this.showDownloadButton = true;
+onSubmit() {
+  if (this.pdfForm.invalid) return;
+
+  this.isLoading = true;
+  const file = this.pdfForm.value.pdf;
+  const reader = new FileReader();
+
+  reader.onload = (e: any) => {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+const excelData: any[] = XLSX.utils.sheet_to_json(sheet, { raw: true, defval: "" });
+
+    console.log('📊 Original Excel Data:', excelData);
+
+    if (excelData.length === 0) {
+      console.warn('⚠️ Excel file is empty or not properly formatted.');
+      this.updatedData = [];
       this.isLoading = false;
-    };
-  
-    reader.readAsArrayBuffer(file);
-  }
-  
+      return;
+    }
 
-  downloadUpdatedExcel() {
-    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(this.updatedData);
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Final Scores');
+    const omrMap = this.getOmrIds();
 
-    const excelBuffer: any = XLSX.write(wb, {
-      bookType: 'xlsx',
-      type: 'array'
+    this.updatedData = excelData.map(row => {
+      const seatNumber = row['رقم الجلوس']?.toString()?.trim();
+      const score = omrMap[seatNumber];
+
+      console.log(`🎯 Seat Number: ${seatNumber} - New Score: ${score}`);
+
+      return {
+        ...row,
+        'النتيجة': score ?? ''  // Add 'النتيجة' column even if score is undefined
+      };
     });
 
-    const data: Blob = new Blob([excelBuffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
-    });
+    console.log('✅ Updated Excel Data with النتيجة:', this.updatedData);
+    this.showDownloadButton = true;
+    this.isLoading = false;
+    this.downloadUpdatedExcel();
+  };
 
-    FileSaver.saveAs(data, 'final_result.xlsx');
-    console.log('📥 File Download Triggered');
+  reader.readAsArrayBuffer(file);
+}
+
+  
+
+ downloadUpdatedExcel() {
+  if (!this.updatedData || this.updatedData.length === 0) {
+    console.warn('⚠️ No data to export. Make sure to upload and process a valid Excel file first.');
+    return;
   }
+
+  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(this.updatedData);
+  const wb: XLSX.WorkBook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Final Scores');
+
+  const excelBuffer: any = XLSX.write(wb, {
+    bookType: 'xlsx',
+    type: 'array'
+  });
+
+  const data: Blob = new Blob([excelBuffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
+  });
+
+  FileSaver.saveAs(data, 'final_result.xlsx');
+  console.log('📥 File Download Triggered');
+}
+
 }
