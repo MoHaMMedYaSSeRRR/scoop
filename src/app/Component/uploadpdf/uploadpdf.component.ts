@@ -400,85 +400,7 @@ export class UploadpdfComponent {
 
   another: any = [];
 
-  // onCurrentQuestionSubmit(): void {
-  //   if (this.isGlobal) {
-  //     this.isGlobal = false;
-  //     this.isshow = true;
-  //   }
-
-  //   if (this.isshow) {
-  //     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-  //     if (this.selectionBoxes.length > 0) {
-  //       const userEntitiesCount = currentQuestionForm.value.entities_count || 0; // Take from input field
-  //       const worth = currentQuestionForm.value.worth || 0; // Take from input field
-
-  //       const points = this.selectionBoxes.map((box) => [
-  //         [Math.floor(box.x), Math.floor(box.y)],
-  //         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-  //       ]);
-
-  //       // Determine roi_type dynamically
-  //       const roi_type = points.length === 1 ? 'question' : 'complementary';
-
-  //       const roiData: ROI = {
-  //         points: points,
-  //         roi_type: roi_type,
-  //         entities_count:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim()).length
-  //             : 10, // **Keep this unchanged**
-  //         choices:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim())
-  //             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  //         orientation: currentQuestionForm.value.orientation || 'vertical',
-  //         direction: currentQuestionForm.value.direction || 'top-to-bottom',
-  //         worth: worth,
-  //         corrected_by_teacher:
-  //           currentQuestionForm.value.gradedByTeacher === true,
-  //         id: this.selectedIdType === 'student_id' ? false : true,
-  //       };
-
-  //       console.log(roiData);
-
-  //       // **Update Final Score Calculation (Use Input `entities_count`)**
-  //       this.finalScore += userEntitiesCount * worth;
-
-  //       // Store question data
-  //       const questionKey = `question_${
-  //         Object.keys(this.selectedQuestions).length + 1
-  //       }`;
-  //       this.selectedQuestions[questionKey] = roiData;
-
-  //       currentQuestionForm.reset({
-  //         roi_coordinates: [],
-  //         colNumber: '',
-  //         direction: '',
-  //         marked: '',
-  //         gradedByTeacher: false,
-  //         choices: '',
-  //         worth: 0,
-  //         id: false,
-  //         entities_count: '',
-  //       });
-
-  //       this.resetboxes();
-  //       this.questionType = '';
-  //     } else {
-  //       console.error('Please define a selection area before submitting.');
-  //     }
-
-  //     this.direction = '';
-  //     this.isID = false;
-  //   }
-  // }
+  
 
   checkifid(x: any) {
     if (x == true) {
@@ -493,65 +415,7 @@ export class UploadpdfComponent {
   checkQuestionType(x: any) {
     this.questionType = x;
   }
-  // onFinalSubmit(): void {
-  //   this.onCurrentQuestionSubmit(); // Ensure the last question is submitted
 
-  //   const pagesObject: Record<string, any> = {};
-  //   let totalExamScore = 0; // Initialize total score
-
-  //   Object.keys(this.selectedQuestions).forEach((key, index) => {
-  //     const questionData = this.selectedQuestions[key];
-  //     const pageKey = `page-${questionData.page_number || 1}`;
-
-  //     // Ensure the page object exists
-  //     if (!pagesObject[pageKey]) {
-  //       pagesObject[pageKey] = {};
-  //     }
-
-  //     // Get the next available question key for this page
-  //     const questionNumber = Object.keys(pagesObject[pageKey]).length + 1;
-  //     const questionKey = `question-${questionNumber}`;
-
-  //     pagesObject[pageKey][questionKey] = {
-  //       points: questionData.points,
-  //       roi_type: questionData.roi_type || 'question',
-  //       entities_count: questionData.entities_count || 10,
-  //       choices: questionData.choices || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  //       orientation: questionData.orientation || 'horizontal',
-  //       direction: questionData.direction || 'right-to-left',
-  //       worth: questionData.worth || 1,
-  //       corrected_by_teacher: questionData.corrected_by_teacher || false,
-  //       id: questionData.id,
-  //     };
-
-  //     // Use user-entered entities_count for total score calculation
-  //     totalExamScore += questionData.entities_count * questionData.worth;
-  //   });
-
-  //   this.finalScore = totalExamScore; // Update total score dynamically
-
-  //   const finalPayload = { ...pagesObject };
-  //   this._UploadService.setdata(finalPayload, this.selectedFile);
-
-  //   if (this.selectedFile) {
-  //     this.formData.append('file', this.selectedFile);
-  //   }
-
-  //   const pdfJson = JSON.stringify(finalPayload);
-  //   this.formData.append('data', pdfJson);
-
-  //   this.isshow = false;
-  //   this._UploadService.upload(this.formData).subscribe({
-  //     next: (res) => {
-  //       console.log(res);
-  //       this._UploadService.setdata(res.response, this.selectedFile);
-  //       this.router.navigate(['/review']);
-  //     },
-  //     error: (err) => {
-  //       console.log(err);
-  //     },
-  //   });
-  // }
 
   onFinalSubmit(): void {
     this.onCurrentQuestionSubmit(); // Ensure the last question is submitted
@@ -589,7 +453,6 @@ export class UploadpdfComponent {
       );
     });
 
-    // this.finalScore = totalExamScore; // Update total score dynamically
 
     const finalPayload = { ...pagesObject };
     this._UploadService.setdata(finalPayload, this.selectedFile);
@@ -600,8 +463,7 @@ export class UploadpdfComponent {
 
     const pdfJson = JSON.stringify(finalPayload);
     this.formData.append('data', pdfJson);
-    // this._UploadService.setdata(pdfJson, this.selectedFile);
-    // this.router.navigate(['/review']);
+
     this.isshow = false;
     this._UploadService.upload(this.formData).subscribe({
       next: (res) => {
@@ -615,183 +477,6 @@ export class UploadpdfComponent {
     });
   }
 
-  // onCurrentQuestionSubmit(): void {
-  //   if (this.isGlobal) {
-  //     this.isGlobal = false;
-  //     this.isshow = true;
-  //   }
-
-  //   if (this.isshow) {
-  //     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-  //     if (this.selectionBoxes.length > 0) {
-  //       const userEntitiesCount = currentQuestionForm.value.entities_count || 0; // Take from input field
-  //       const worth = currentQuestionForm.value.worth || 1; // Take from input field
-
-  //       const points = this.selectionBoxes.map((box) => [
-  //         [Math.floor(box.x), Math.floor(box.y)],
-  //         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-  //       ]);
-
-  //       // Determine roi_type dynamically
-  //       // const roi_type = points.length === 1 ? 'question' : 'complementary';
-  //       const roi_type = 'question' ;
-  //       const roiData: ROI = {
-  //         points: points,
-  //         roi_type: roi_type,
-  //         entities_count:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim()).length
-  //             : 10,
-  //         choices:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim())
-  //             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  //         orientation: currentQuestionForm.value.orientation || 'vertical',
-  //         direction: currentQuestionForm.value.direction || 'top-to-bottom',
-  //         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
-  //         id: this.selectedIdType === 'student_id' ? false : true,
-  //         worth: worth
-  //             };
-
-  //       console.log(roiData);
-
-  //       // **Update Final Score Calculation (Use Input `entities_count`)**
-  //       this.finalScore += userEntitiesCount * worth;
-
-  //       // Store question under its respective page
-  //       const pageKey = `page-${this.currentPage+1}`;
-  //       if (!this.selectedQuestions[pageKey]) {
-  //         this.selectedQuestions[pageKey] = {};
-  //       }
-
-  //       const questionNumber = Object.keys(this.selectedQuestions[pageKey]).length + 1;
-  //       const questionKey = `question-${questionNumber}`;
-  //       this.selectedQuestions[pageKey][questionKey] = roiData;
-
-  //       currentQuestionForm.reset({
-  //         roi_coordinates: [],
-  //         colNumber: '',
-  //         direction: '',
-  //         marked: '',
-  //         gradedByTeacher: false,
-  //         choices: '',
-  //         worth: 1,
-  //         id: false,
-  //         entities_count: '',
-  //       });
-
-  //       this.resetboxes();
-  //       this.questionType = '';
-  //     } else {
-  //       console.error('Please define a selection area before submitting.');
-  //     }
-
-  //     this.direction = '';
-  //     this.isID = false;
-  //   }
-  // }
-  // onCurrentQuestionSubmit(): void {
-  //   if (this.isGlobal) {
-  //     this.isGlobal = false;
-  //     this.isshow = true;
-  //   }
-
-  //   if (this.isshow) {
-  //     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-  //     if (this.selectionBoxes.length > 0) {
-  //       const userEntitiesCount = currentQuestionForm.value.entities_count || 0;
-  //       const worth = currentQuestionForm.value.worth || 1;
-
-  //       const points = this.selectionBoxes.map((box) => [
-  //         [Math.floor(box.x), Math.floor(box.y)],
-  //         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-  //       ]);
-  //       const orientation = currentQuestionForm.value.orientation || 'vertical';
-  //       const direction = currentQuestionForm.value.direction?.trim()
-  //         ? currentQuestionForm.value.direction.trim()
-  //         : (orientation === 'vertical' ? 'top-to-bottom' : 'right-to-left');
-
-  //       const roi_type = currentQuestionForm.value.roi_type || 'question';
-  //       const roiData: ROI = {
-  //         points: points,
-  //         roi_type: roi_type,
-  //         entities_count:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim()).length
-  //             : 10,
-  //         choices:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim())
-  //             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  //             orientation: orientation,
-  //             direction: direction,
-  //         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
-  //         id: this.selectedIdType === 'student_id' ? false : true,
-  //         worth: worth,
-  //       };
-
-  //       console.log(roiData);
-
-  //       if (roiData.corrected_by_teacher) {
-  //         const numericChoices = (roiData.choices ?? []).map(Number);
-  //         const maxChoice = Math.max(...numericChoices, 0); // default to 0 if array is empty
-  //         this.finalScore += maxChoice;
-  //       } else {
-  //         this.finalScore += userEntitiesCount * worth;
-  //       }
-
-  //       const pageKey = `page-${this.currentPage + 1}`;
-  //       if (!this.selectedQuestions[pageKey]) {
-  //         this.selectedQuestions[pageKey] = {};
-  //       }
-
-  //       const questionNumber = Object.keys(this.selectedQuestions[pageKey]).length + 1;
-  //       const questionKey = `question-${questionNumber}`;
-  //       this.selectedQuestions[pageKey][questionKey] = roiData;
-
-  //       // 🔵 Mark boxes as submitted (change to blue)
-  //       if (this.selectionBoxesByPage[this.currentPage]) {
-  //         this.selectionBoxesByPage[this.currentPage] = this.selectionBoxesByPage[
-  //           this.currentPage
-  //         ].map((box) => ({ ...box, submitted: true }));
-  //       }
-
-  //       currentQuestionForm.reset({
-  //         roi_coordinates: [],
-  //         colNumber: '',
-  //         direction: '',
-  //         marked: '',
-  //         gradedByTeacher: false,
-  //         choices: '',
-  //         worth: 1,
-  //         id: false,
-  //         entities_count: '',
-  //       });
-
-  //       this.resetboxes();
-  //       this.questionType = '';
-  //     } else {
-  //       console.error('Please define a selection area before submitting.');
-  //     }
-
-  //     this.direction = '';
-  //     this.isID = false;
-  //   }
-  // }
   onCurrentQuestionSubmit(): void {
     if (this.isGlobal) {
       this.isGlobal = false;

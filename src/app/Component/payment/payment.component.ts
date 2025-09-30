@@ -2,6 +2,7 @@ import { ToastrService } from 'ngx-toastr';
 import { PayService } from './../../services/pay.service';
 import { Component, EventEmitter, Output } from '@angular/core';
 import { Router } from '@angular/router';
+import { UploadService } from 'src/app/services/upload.service';
 
 @Component({
   selector: 'app-payment',
@@ -12,7 +13,8 @@ export class PaymentComponent {
   isLayerHidden: boolean = false;
   constructor(private _PayService:PayService,
     private _ToastrService:ToastrService,
-    private  _Router:Router
+    private  _Router:Router , 
+    private _UploadService:UploadService
   ){}
   @Output() continueClicked = new EventEmitter<void>();
   @Output() subscribed = new EventEmitter<void>();
@@ -20,6 +22,7 @@ export class PaymentComponent {
   packages:any[] = [];
   hideLayer(): void {
     this.isLayerHidden = true;
+    this._UploadService.setIsPay(false);
   }
   isFree: boolean = false;
   ngOnInit(): void {

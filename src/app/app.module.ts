@@ -20,6 +20,8 @@ import { MyhttpInterceptor } from './interceptors/myhttp.interceptor';
 import { ReviewTestComponent } from './Component/review-test/review-test.component';
 import { FinalSheetComponent } from './Component/final-sheet/final-sheet.component';
 import { TestComponent } from './Component/test/test.component';
+import { TestssComponent } from './Component/testss/testss.component';
+import { ProcessingScreenComponentComponent } from './Component/processing-screen-component/processing-screen-component.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -32,6 +34,8 @@ import { TestComponent } from './Component/test/test.component';
     ReviewTestComponent,
     FinalSheetComponent,
     TestComponent,
+    TestssComponent,
+    ProcessingScreenComponentComponent,
   ],
   imports: [
     BrowserModule,

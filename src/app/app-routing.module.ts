@@ -1,3 +1,4 @@
+import { TestssComponent } from './Component/testss/testss.component';
 import { PaymentComponent } from './Component/payment/payment.component';
 import { ReviewComponent } from './Component/review/review.component';
 import { UploadpdfComponent } from './Component/uploadpdf/uploadpdf.component';
@@ -15,7 +16,11 @@ const routes: Routes = [
   { path: 'test', component: TestComponent, canActivate: [authGuard] },
   { path: 'review', component: ReviewComponent, canActivate: [authGuard] },
   { path: 'finalsheet', component: FinalSheetComponent },
-  { path: 'pay', component: PaymentComponent }
+    { path: 'testss', component: TestssComponent },
+
+  { path: 'pay', component: PaymentComponent },
+
+
 ];
 
 

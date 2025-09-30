@@ -1,0 +1,82 @@
+.container {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+  direction: rtl;
+  font-family: 'Arial', sans-serif;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 400px;
+}
+
+.btn {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: right;
+}
+
+.red {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.blue {
+  background-color: #2980b9;
+  color: white;
+}
+
+.green {
+  background-color: #27ae60;
+  color: white;
+  width: 100%;
+}
+
+.tab-content {
+  padding: 0;
+  margin: 0;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.orientation-buttons,
+.direction-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.orientation-buttons button,
+.direction-buttons button {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.orientation-buttons button.active {
+  background-color: #3498db;
+  color: white;
+  border-color: #2980b9;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}

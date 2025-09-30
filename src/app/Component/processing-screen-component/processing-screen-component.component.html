@@ -1,0 +1,33 @@
+<!-- زرار لتجربة التحميل -->
+<!-- <button class="btn-start" (click)="startProcessing()">ابدأ المعالجة</button> -->
+
+<!-- شاشة المعالجة -->
+<div class="overlay" *ngIf="isLoading" dir="rtl">
+  <div class="processing-box">
+    <h3 class="title">جاري المعالجة...</h3>
+    <div class="note">
+  العملية في قائمة الانتظار والوقت المقدر : {{ getFormattedTime() }} ⏳
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="value">{{ uploadSpeed }} <small>MB/s</small></div>
+        <div class="label">الرفع</div>
+      </div>
+      <div class="stat">
+        <div class="value">{{ downloadSpeed }} <small>MB/s</small></div>
+        <div class="label">التنزيل</div>
+      </div>
+      <div class="stat">
+        <div class="value">{{ networkSpeed }} <small>Mbps</small></div>
+        <div class="label">سرعة الشبكة</div>
+      </div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="progress"></div>
+    </div>
+    <div class="progress-text">جاري المعالجة... {{ progress }}%</div>
+  </div>
+</div>
+

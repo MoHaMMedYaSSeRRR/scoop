@@ -1,0 +1,63 @@
+<div class="container" dir="rtl">
+  <div class="sidebar">
+
+    <!-- رقم الجلوس -->
+    <button class="btn red" (click)="toggleTab('رقم الجلوس')">رقم الجلوس</button>
+    <div *ngIf="openTab === 'رقم الجلوس'" class="tab-content">
+      <p>محتوى رقم الجلوس هنا</p>
+      <button class="btn green" (click)="confirm('رقم الجلوس')">موافق</button>
+    </div>
+
+    <!-- الخيارات -->
+    <button class="btn blue" (click)="toggleTab('الخيارات')">الخيارات</button>
+    <div *ngIf="openTab === 'الخيارات'" class="tab-content">
+      <div class="orientation-buttons">
+        <button [class.active]="selectedOrientation === 'أفقي'" (click)="selectOrientation('أفقي')">أفقي</button>
+        <button [class.active]="selectedOrientation === 'عمودي'" (click)="selectOrientation('عمودي')">عمودي</button>
+      </div>
+
+      <div *ngIf="selectedOrientation === 'أفقي'" class="direction-buttons">
+        <button>من اليمين لليسار</button>
+        <button>من اليسار لليمين</button>
+      </div>
+
+      <input type="number" placeholder="عدد الخيارات" />
+      <input type="number" placeholder="عدد الفقرات" />
+      <input type="number" placeholder="درجة الفقرة" />
+
+      <button class="btn green" (click)="confirm('الخيارات')">موافق</button>
+    </div>
+
+    <!-- الحاق ربط -->
+    <button class="btn blue" (click)="toggleTab('الحاق ربط')">الحاق ربط</button>
+    <div *ngIf="openTab === 'الحاق ربط'" class="tab-content">
+      <div class="orientation-buttons">
+        <button [class.active]="selectedOrientation === 'أفقي'" (click)="selectOrientation('أفقي')">أفقي</button>
+        <button [class.active]="selectedOrientation === 'عمودي'" (click)="selectOrientation('عمودي')">عمودي</button>
+      </div>
+
+      <div *ngIf="selectedOrientation === 'أفقي'" class="direction-buttons">
+        <button>من اليمين لليسار</button>
+        <button>من اليسار لليمين</button>
+      </div>
+
+      <input type="number" placeholder="عدد الخيارات" />
+      <input type="number" placeholder="عدد الفقرات" />
+      <input type="number" placeholder="درجة الفقرة" />
+
+      <button class="btn green" (click)="confirm('الحاق ربط')">موافق</button>
+    </div>
+
+    <!-- سؤال مقالي -->
+    <button class="btn blue" (click)="toggleTab('سؤال مقالي')">سؤال مقالي</button>
+    <div *ngIf="openTab === 'سؤال مقالي'" class="tab-content">
+      <div class="direction-buttons">
+        <button>من اليمين لليسار</button>
+        <button>من اليسار لليمين</button>
+      </div>
+      <input type="text" placeholder="0-1-2-3-4-5-6">
+      <button class="btn green" (click)="confirm('سؤال مقالي')">موافق</button>
+    </div>
+
+  </div>
+</div>

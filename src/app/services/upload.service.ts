@@ -9,7 +9,8 @@ export class UploadService {
   private pdfUrl: string = '';
   private dataSubject = new BehaviorSubject<any>(null);
   data$ = this.dataSubject.asObservable();
-
+private pay = new BehaviorSubject<any>(false);
+  isPay$ = this.pay.asObservable();
   private fileSubject = new BehaviorSubject<File | null>(null);
   file$ = this.fileSubject.asObservable();
   private baseUrl = '/api'; // Use proxy path
@@ -23,6 +24,9 @@ export class UploadService {
   // upload(data: any): Observable<any> {
   //   return this._HttpClient.post('/scoob/step-1', data);
   // }
+  setIsPay(value: boolean) {
+    this.pay.next(value);
+  }
   pdfFile:any;
   setdata(data: any, file: File) {
     this.dataSubject.next(data);

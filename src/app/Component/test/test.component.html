@@ -24,7 +24,7 @@
           type="file"
           accept="application/pdf"
           #fileInput
-          (change)="onFileSelected($event)"
+          (change)="onFileSelected($event)" 
           hidden
         />
         <label for="pageCount">عدد صفحات الامتحان</label>
@@ -35,34 +35,27 @@
           class="form-control p-2 rounded-1 my-2"
           formControlName="pageCount"
         />
-        <!-- <label for="quesCount">عدد الأسئلة</label>
-        <input
-          id="quesCount"
-          type="number"
-          class="form-control p-2 rounded-1 my-2"
-          formControlName="questionCount"
-        /> -->
         <div class="d-flex align-items-center mt-3">
           <button
             type="button"
-            class="rounded-2 py-2 border-0 text-white px-5 me-auto"
-            (click)="onSubmit()"
+            class="rounded-2 py-2 border-0 text-white px-5 me-auto green"
+            (click)="checkRemainingpages()"
             [disabled]="pdfForm.invalid || isLoading"
           >
             <span *ngIf="isLoading" class="fa fa-spinner fa-spin me-2"></span>
-            <span *ngIf="!isLoading">التالي</span>
+            <span *ngIf="!isLoading">معالجة</span>
           </button>
-          <span
+          <!-- <span
             *ngIf="isLoading"
             class="w-75 text-start me-5 load"
             style="margin-left: 10px"
           >
             ...... جاري تحميل الملف</span
-          >
+          > -->
         </div>
       </form>
+      
     </div>
-
     <!-- Step 2: PDF Display and Question Form -->
     <div
       *ngIf="step2"
@@ -80,9 +73,7 @@
               (mouseleave)="onMouseUp()"
             />
 
-            <!-- Render all finalized selection boxes -->
-            <!-- Render all finalized selection boxes for the current page -->
-            <!-- Render all finalized selection boxes for the current page -->
+     
             <div
               *ngFor="
                 let box of selectionBoxesByPage[currentPage];
@@ -162,377 +153,117 @@
             </span>
           </div>
         </div>
+        
+     <div class="col-md-5" dir="rtl">
+  <h3 *ngIf="!isshow" class="mb-2 text-end">حدد مكان الدرجة</h3>
+  <div *ngIf="isshow" class="content text-end ps-md-3 p-1">
+    <h3 class="mb-2">ادخل البيانات التالية لكل صفحة في الامتحان</h3>
 
-        <div class="col-md-5">
-          <h3 *ngIf="!isshow" class="mb-2 text-end"> حدد مكان الدرجة</h3>
-          <div *ngIf="isshow" class="content text-end ps-md-3 p-1">
-            <h3 class="mb-2">ادخل البيانات التالية لكل صفحة في الامتحان</h3>
-            <form
-              class="my-2"
-              [formGroup]="getCurrentQuestionFormGroup()"
-              (ngSubmit)="onCurrentQuestionSubmit()"
-            >
-              <!-- Marked Field -->
-              <div class="row justify-content-end align-items-center mt-4">
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="no"
-                    name="marked"
-                    formControlName="marked"
-                    value="false"
-                    class="mx-2"
-                    (click)="
-                      checkifid(false); setOpacityForBoolean('marked', false)
-                    "
-                  />
-                  <label
-                    (click)="
-                      checkifid(false); setOpacityForBoolean('marked', false)
-                    "
-                    for="no"
-                  >
-                    رقم جلوس
-                  </label>
-                </div>
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="yes"
-                    name="marked"
-                    formControlName="marked"
-                    value="true"
-                    class="mx-2"
-                    (click)="
-                      checkifid(true); setOpacityForBoolean('marked', true)
-                    "
-                  />
-                  <label
-                    (click)="
-                      checkifid(true); setOpacityForBoolean('marked', true)
-                    "
-                    for="yes"
-                  >
-                    الاسئلة
-                  </label>
-                </div>
-              </div>
-              <div *ngIf="getCurrentQuestionFormGroup().get('marked')?.touched && getCurrentQuestionFormGroup().get('marked')?.invalid" class="text-danger text-end">
-                الرجاء اختيار نوع التحديد
-              </div>
-              <div *ngIf="isID" class="row justify-content-end align-items-center mt-4">
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="complementary"
-                    name="roi_type"
-                    formControlName="roi_type"
-                    value="complementary"
-                    class="mx-2"
-                    (click)="setOpacityForSameName('roi_type','complementary') ; checkShow('nocomp')"
-                  />
-                  <label
-                    (click)="setOpacityForSameName('roi_type', 'complementary') ; checkShow('comp')"
-                    for="complementary"
-                  >
-                    الحاق ربط
-                  </label>
-                </div>
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="question"
-                    name="roi_type"
-                    formControlName="roi_type"
-                    value="question"
-                    class="mx-2"
-                    (click)="setOpacityForSameName('roi_type', 'question')"
-                  />
-                  <label
-                    (click)="setOpacityForSameName('roi_type', 'question')"
-                    for="question"
-                  >
-                    سؤال
-                  </label>
-                </div>
-              </div>
-              <div *ngIf="getCurrentQuestionFormGroup().get('roi_type')?.touched && getCurrentQuestionFormGroup().get('roi_type')?.invalid" class="text-danger text-end">
-                الرجاء اختيار نوع السؤال
-              </div>
-              
+    <form [formGroup]="getCurrentQuestionFormGroup()" (ngSubmit)="onCurrentQuestionSubmit()">
+      <div class="sidebar">
 
-              <!-- Graded By Teacher Field -->
-              <div
-                *ngIf="isID"
-                class="row justify-content-end align-items-center mt-4"
-              >
-                
-                <div *ngIf="isshowcomp" class="col-3">
-                  <input
-                    type="radio"
-                    id="teacher-yes"
-                    name="gradedByTeacher"
-                    formControlName="gradedByTeacher"
-                    value="true"
-                    class="mx-2"
-                    (click)="
-                      setOpacityForBoolean('gradedByTeacher', true);
-                      checkQuestionType('nochoicis')
-                    "
-                  />
-                  <label
-                    (click)="
-                      setOpacityForBoolean('gradedByTeacher', true);
-                      checkQuestionType('nochoicis')
-                    "
-                    for="teacher-yes"
-                  >
-                    مقالي
-                  </label>
-                </div>
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="teacher-no"
-                    name="gradedByTeacher"
-                    formControlName="gradedByTeacher"
-                    value="false"
-                    class="mx-2"
-                    (click)="
-                      setOpacityForBoolean('gradedByTeacher', false);
-                      checkQuestionType('choicis')
-                    "
-                  />
-                  <label
-                    (click)="
-                      setOpacityForBoolean('gradedByTeacher', false);
-                      checkQuestionType('choicis')
-                    "
-                    for="teacher-no"
-                  >
-                    خيارات
-                  </label>
-                </div>
-              </div>
-              <div *ngIf="getCurrentQuestionFormGroup().get('gradedByTeacher')?.touched && getCurrentQuestionFormGroup().get('gradedByTeacher')?.invalid" class="text-danger text-end">
-                الرجاء اختيار نوع التصحيح
-              </div>
-              
-              <!-- Choices Field -->
-            
-              <!-- Direction Field -->
-              <div
-                *ngIf="isID"
-                class="row justify-content-end align-items-center mt-4"
-              >
-              <div (click)="checkdirection('vertical')" *ngIf="questionType == 'choicis'" class="col-3">
-                <input
-                  type="radio"
-                  id="vertical"
-                  name="orientation"
-                  formControlName="orientation"
-                  value="vertical"
-                  class="mx-2 mt-1"
-                  (click)="
-                    checkdirection('vertical');
-                    setOpacityForSameName('orientation', 'vertical')
-                  "
-                />
-                <label
-                  (click)="
-                    checkdirection('vertical');
-                    setOpacityForSameName('orientation', 'vertical')
-                  "
-                  for="vertical"
-                >
-                  عمودي
-                </label>
-              </div>
-                <div
-                  (click)="checkdirection('horizontal')"
-                  class="col-3 d-flex justify-content-start align-items-end"
-                >
-                  <input
-                    type="radio"
-                    id="horizontal"
-                    name="orientation"
-                    formControlName="orientation"
-                    value="horizontal"
-                    class="mx-2 mt-1"
-                    (click)="
-                      checkdirection('horizontal');
-                      setOpacityForSameName('orientation', 'horizontal')
-                    "
-                  />
-                  <label
-                    (click)="
-                      checkdirection('horizontal');
-                      setOpacityForSameName('orientation', 'horizontal')
-                    "
-                    for="horizontal"
-                  >
-                    افقي
-                  </label>
-                </div>
-                
-              </div>
-
-              <!-- Method Field -->
-              <div
-                *ngIf="direction == 'horizontal' && questionType !== 'choicis'"
-                class="row justify-content-end align-items-center mt-4"
-              >
-              <div class="col-3">
-                <input
-                  type="radio"
-                  id="ltr"
-                  name="direction"
-                  formControlName="direction"
-                  value="left-to-right"
-                  class="mx-2 mt-1"
-                  (click)="
-                    setOpacityForSameName('direction', 'left-to-right')
-                  "
-                />
-                <label
-                  (click)="
-                    setOpacityForSameName('direction', 'left-to-right')
-                  "
-                  for="ltr"
-                >
-                  من اليسار لليمين
-                </label>
-              </div>
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="rtl"
-                    name="direction"
-                    formControlName="direction"
-                    value="right-to-left"
-                    class="mx-2 mt-1"
-                    (click)="
-                      setOpacityForSameName('direction', 'right-to-left')
-                    "
-                  />
-                  <label
-                    (click)="
-                      setOpacityForSameName('direction', 'right-to-left')
-                    "
-                    for="rtl"
-                  >
-                    من اليمين لليسار
-                  </label>
-                </div>
-               
-              </div>
-              <input
-              *ngIf="questionType == 'nochoicis'"
-              type="text"
-              class="form-control p-2 rounded-1 my-2 text-end"
-              formControlName="choices"
-              placeholder="ex: 1-2-3-4-5 الدرجة"
-              required
-            />
-            <div *ngIf="questionType == 'choicis'">
-              <input
-              type="number"
-              class="form-control p-2 rounded-1 my-2 text-end"
-              formControlName="choices"
-              placeholder="عدد الخيارات"
-              required
-            />
-              
-              <input
-                *ngIf="questionType == 'choicis'"
-                type="number"
-                class="form-control p-2 rounded-1 my-2 text-end"
-                formControlName="entities_count"
-                placeholder="عدد الفقرات "
-                required
-              />
-              <input
-                *ngIf="questionType == 'choicis'"
-                type="number"
-                class="form-control p-2 rounded-1 my-2 text-end"
-                formControlName="worth"
-                placeholder="ex:1 درجة الفقرة"
-                required
-              />
-            </div>
-            <div *ngIf="getCurrentQuestionFormGroup().get('choices')?.touched && getCurrentQuestionFormGroup().get('choices')?.invalid" class="text-danger text-end">
-               الرجاء إدخال عدد الإجابات والفرات والدرجة
-            </div>
-
-              <!-- <div
-                *ngIf="direction == 'vertical'"
-                class="row justify-content-end align-items-center mt-4"
-              >
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="btt"
-                    name="direction"
-                    formControlName="direction"
-                    value="bottom-to-top"
-                    class="mx-2 mt-1"
-                    (click)="
-                      setOpacityForSameName('direction', 'bottom-to-top')
-                    "
-                  />
-                  <label
-                    (click)="
-                      setOpacityForSameName('direction', 'bottom-to-top')
-                    "
-                    for="btt"
-                  >
-                    من الاسفل للاعلي
-                  </label>
-                </div>
-                <div class="col-3">
-                  <input
-                    type="radio"
-                    id="ttb"
-                    name="direction"
-                    formControlName="direction"
-                    value="top-to-bottom"
-                    class="mx-2 mt-1"
-                    (click)="
-                      setOpacityForSameName('direction', 'top-to-bottom')
-                    "
-                  />
-                  <label
-                    (click)="
-                      setOpacityForSameName('direction', 'top-to-bottom')
-                    "
-                    for="ttb"
-                  >
-                    من الاعلي للاسفل
-                  </label>
-                </div>
-              </div> -->
-            </form>
-          </div>
-          <div class="w-100 text-center">
-            <button
-            
-              type="button"
-              class="sendBtn ms-1 p-2 border-0 text-white m-auto text-center mt-3"
-              (click)="onCurrentQuestionSubmit()"
-            >
-              التالي
-            </button>
-          </div>
+        <!-- رقم الجلوس -->
+        <button class="btn blue" type="button"
+          (click)="toggleTab('رقم الجلوس'); getCurrentQuestionFormGroup().patchValue({ marked: 'false' })">
+          رقم الجلوس
+        </button>
+        <div *ngIf="openTab === 'رقم الجلوس'" class="tab-content">
+          <button class="btn green" type="button" (click)="confirm('رقم الجلوس'); selectedIdType = 'student_id' ;onCurrentQuestionSubmit()">موافق</button>
         </div>
 
-        <!-- <button
-          *ngIf="!isshow"
-          type="button"
-          class="sendBtn p-2 border-0 text-white d-block me-auto mt-3"
-          (click)="onCallApi()"
-        >
-          ارسال
-        </button> -->
+        <!-- الخيارات -->
+        <button class="btn blue" type="button"
+          (click)="toggleTab('الخيارات'); getCurrentQuestionFormGroup().patchValue({ marked: 'true', gradedByTeacher: 'false' })">
+          الخيارات
+        </button>
+        <div *ngIf="openTab === 'الخيارات'" class="tab-content">
+          <div class="orientation-buttons">
+            <button type="button" [class.active]="selectedOrientation === 'horizontal'"
+              (click)="selectOrientation('horizontal')">أفقي</button>
+            <button type="button" [class.active]="selectedOrientation === 'vertical'"
+              (click)="selectOrientation('vertical')">عمودي</button>
+          </div>
+
+          <div *ngIf="selectedOrientation === 'horizontal'" class="direction-buttons my-2">
+            <button type="button" [class.active]="selectedDirection === 'rtl'" (click)="selectDirection('rtl')">من
+              اليمين للشمال</button>
+            <button type="button" [class.active]="selectedDirection === 'ltr'" (click)="selectDirection('ltr')">من
+              الشمال لليمين</button>
+           
+          </div>
+
+          <input type="number" class="form-control my-2" formControlName="choices" placeholder="عدد الخيارات" />
+          <input type="number" class="form-control my-2" formControlName="entities_count" placeholder="عدد الفقرات" />
+          <input type="number" class="form-control my-2" formControlName="worth" placeholder="درجة الفقرة" />
+
+          <button class="btn green" type="button" (click)="confirm('الخيارات') ;onCurrentQuestionSubmit()">موافق</button>
+        </div>
+
+        <!-- الحاق ربط -->
+        <button class="btn blue" type="button"
+          (click)="toggleTab('الحاق ربط'); getCurrentQuestionFormGroup().patchValue({ roi_type: 'complementary' })">
+          الحاق ربط
+        </button>
+        <div *ngIf="openTab === 'الحاق ربط'" class="tab-content">
+          <div class="orientation-buttons">
+            <button type="button" [class.active]="selectedOrientation === 'horizontal'"
+              (click)="selectOrientation('horizontal')">أفقي</button>
+            <button type="button" [class.active]="selectedOrientation === 'vertical'"
+              (click)="selectOrientation('vertical')">عمودي</button>
+          </div>
+
+          <div *ngIf="selectedOrientation === 'horizontal'" class="direction-buttons my-2">
+            <button type="button" [class.active]="selectedDirection === 'rtl'" (click)="selectDirection('rtl')">من
+              اليمين للشمال</button>
+            <button type="button" [class.active]="selectedDirection === 'ltr'" (click)="selectDirection('ltr')">من
+              الشمال لليمين</button>
+            
+          </div>
+
+          <input type="number" class="form-control my-2" formControlName="choices" placeholder="عدد الخيارات" />
+          <input type="number" class="form-control my-2" formControlName="entities_count" placeholder="عدد الفقرات" />
+          <input type="number" class="form-control my-2" formControlName="worth" placeholder="درجة الفقرة" />
+
+          <button class="btn green" type="button" (click)="confirm('الحاق ربط') ;onCurrentQuestionSubmit()">موافق</button>
+        </div>
+
+        <!-- سؤال مقالي -->
+        <button class="btn blue" type="button"
+          (click)="toggleTab('سؤال مقالي'); getCurrentQuestionFormGroup().patchValue({ gradedByTeacher: 'true' })">
+          سؤال مقالي
+        </button>
+        <div *ngIf="openTab === 'سؤال مقالي'" class="tab-content">
+         
+
+          <div *ngIf="selectedOrientation === 'horizontal'" class="direction-buttons my-2">
+           <button type="button" [class.active]="selectedDirection === 'rtl'" (click)="selectDirection('rtl')">من
+              اليمين للشمال</button>
+            <button type="button" [class.active]="selectedDirection === 'ltr'" (click)="selectDirection('ltr')">من
+              الشمال لليمين</button>
+            
+          </div>
+
+          <input type="text" class="form-control my-2" formControlName="choices" placeholder="0-1-2-3-4-5-6" />
+
+          <button class="btn green" type="button" (click)="confirm('سؤال مقالي') ;onCurrentQuestionSubmit()">موافق</button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="!isshow" class="w-100 text-center">
+    <button type="button" class="sendBtn ms-1 p-2 border-0 text-white m-auto text-center mt-3"
+      (click)="onCurrentQuestionSubmit()">
+      التالي
+    </button>
+  </div>
+</div>
+
+
+
+
+
         <button
           type="button"
           class="sendBtn p-2 border-0 text-white d-block me-auto mt-3"
@@ -544,8 +275,9 @@
     </div>
   </div>
 </section>
-  
 
-  
-  
-  
+<section *ngIf="ispay">
+  <app-payment >
+  </app-payment>
+</section>
+

@@ -60,7 +60,9 @@ export class AuthService {
       year: 'numeric',
     });
 
-    const status = `اشتراك ${packageName} <br> عدد الصفحات المتبقية ${remainingPages}  <br> ينتهي في ${formattedDate}`;
+    // const status = `اشتراك ${packageName} <br> عدد الصفحات المتبقية ${remainingPages}  <br> ينتهي في ${formattedDate}`;
+        const status = ` عدد الصفحات المتبقية ${remainingPages}`;
+
     this.subscriptionStatus.next(status);
   }
 }

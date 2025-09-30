@@ -17,7 +17,9 @@
   <nav class="navbar navbar-expand-lg ">
     <div class="container d-flex justify-content-center align-items-center">
       <div class="d-flex justify-content-center align-items-center w-100">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <ul class="navbar-nav me-auto d-flex justify-content-center align-items-center mb-2 mb-lg-0">
+            <span class="text-white  mx-2" [innerHTML]="subscriptionStatusText"></span>
+
     <li class="nav-item list-unstyled position-relative">
       <a role='button' class="nav-link text-white d-flex align-items-center gap-2"  (click)="toggleUserMenu()">
         <i class="fas fa-angle-down"></i>
@@ -26,7 +28,9 @@
 
       <!-- Dropdown box -->
     <div *ngIf="showUserMenu" class="user-dropdown bg-white p-3 rounded shadow position-absolute end-0 mt-2" dir="rtl">
-    <span class="d-block text-black text-end w-100" [innerHTML]="subscriptionStatusText"></span>
+      <button class="btn btn-primary w-100 mb-2 border-0" (click)="toggleIsPay();showUserMenu=false" *ngIf="isLogin">
+        اشتراك
+      </button>
     <hr class="w-75 mx-auto my-3">
     <a role="button" *ngIf="isLogin" (click)="logout()" class="text-decoration-none text-danger d-block text-end w-100">تسجيل الخروج</a>
   </div>

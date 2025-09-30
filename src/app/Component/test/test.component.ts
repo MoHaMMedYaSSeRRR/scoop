@@ -10,9 +10,11 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
-import { PDFDocument } from 'pdf-lib';
 import { UploadService } from 'src/app/services/upload.service';
 import { ToastrService } from 'ngx-toastr';
+import { ProcessingService } from 'src/app/services/processing.service';
+import { HttpClient, HttpEvent, HttpEventType } from '@angular/common/http';
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.js';
 
 interface ROI {
@@ -21,7 +23,6 @@ interface ROI {
   entities_count: number;
   choices?: string[];
   orientation: string; // Add this field
-  direction: string; // Add this field
   worth?: number; // Add this field
   corrected_by_teacher: boolean; // Add this field
   id: boolean; // Add this field
@@ -73,7 +74,12 @@ export class TestComponent {
       submitted?: boolean;
     }[];
   } = {};
-  modifiedFile: any;
+
+  // UI state for tabs & orientation/direction
+  openTab: string | null = null;
+  selectedOrientation: string = ''; // 'horizontal' | 'vertical'
+  selectedDirection: string = 'rtl'; // 'rtl' | 'ltr'
+
   constructor(
     private formBuilder: FormBuilder,
     private _UploadService: UploadService,
@@ -81,7 +87,9 @@ export class TestComponent {
     private _PayService: PayService,
     private route: ActivatedRoute,
     private _AuthService: AuthService,
-    private _ToastrService: ToastrService
+    private _ToastrService: ToastrService ,
+    private processingService: ProcessingService ,
+    private http:HttpClient
   ) {
     this.pdfForm = this.formBuilder.group({
       pdfFile: new FormControl(null, Validators.required),
@@ -93,12 +101,182 @@ export class TestComponent {
       language: new FormControl('ar', Validators.required),
     });
   }
- 
+
+  userPackageId: any;
+  isPending=true;
+
+  ngOnInit(): void {
+    this._AuthService.setLoginState(true);
+    this._UploadService.isPay$.subscribe({
+      next:(res)=>{
+        this.ispay = res;
+        console.log(res)
+      }
+    })
+    this.route.queryParams.subscribe((params) => {
+      const paymentId = params['paymentId']; // or params['Id'] if needed
+
+      if (paymentId) {
+        localStorage.setItem('userPaymentId' , paymentId)
+        this._PayService.getPaymentStatus(paymentId).subscribe({
+          next: (res) => {
+            console.log(res);
+            console.log(res.Data.InvoiceTransactions[0].TransactionStatus)
+            if (res.Data.InvoiceStatus == 'Paid') {
+              this.subscribePackage();
+              this.getUserPackage();
+              localStorage.removeItem('userPaymentId');
+              this.ispay = false;
+                  this._UploadService.setIsPay(false);
+
+            } else if (res.Data.InvoiceStatus == "Pending"){
+              this._ToastrService.info('جاري تاكيد عملية الدفع، برجاء الانتظار');
+              setTimeout(() => {
+                this._PayService.getPaymentStatus(paymentId).subscribe({
+                  next: (res) => {
+                    console.log(res);
+                    if (res.Data.InvoiceStatus == 'Paid') {
+                      this._ToastrService.success('تم تاكيد عملية الدفع');
+                      this.getUserPackage();
+                      localStorage.removeItem('userPaymentId');
+                      console.log('subsribeSecond');
+                      this.ispay = false;
+                          this._UploadService.setIsPay(false);
+
+                      this.subscribePackage();
+                    }
+                  },
+                  error: (err) => {
+                    console.error('Error fetching payment status:', err);
+                  },
+                });
+
+              }, 10000);
+            }
+          },
+          error: (err) => {
+            console.error('Error fetching payment status:', err);
+          },
+        });
+      } else if(localStorage.getItem('userPaymentId')) {
+        const secondPaymentId = localStorage.getItem('userPaymentId');
+        this._PayService.getPaymentStatus(secondPaymentId).subscribe({
+          next: (res) => {
+            console.log(res);
+            if (res.Data.InvoiceStatus == 'Paid') {
+              localStorage.removeItem('userPaymentId');
+              console.log('subsribeSecond');
+              this.ispay = false;
+                  this._UploadService.setIsPay(false);
+
+              this.subscribePackage();
+            }
+          },
+          error: (err) => {
+            console.error('Error fetching payment status:', err);
+          },
+        });
+      }
+      else {
+        console.error('paymentId not found in URL');
+      }   
+    });
+   this.getUserPackage();
+    // this.checkRemainingpages();
+  }
+
+  getUserPackage() {
+    this._AuthService.getUserPackage().subscribe({
+      next: (res) => {
+        console.log(res);
+        if (res.data) {
+          if (res.data[0].is_valid) {
+            this.ispay = false;
+            this._UploadService.setIsPay(false)
+            this.userPackageId = res.data[0].id;
+            this._AuthService.updateSubscriptionStatus(res.data[0]);
+            console.log(this.userPackageId);
+          }
+        }
+      },
+    });
+  }
+  subscribePackage() {
+    const selectedPackageId = localStorage.getItem('selectedPackageId');
+
+    if (selectedPackageId) {
+      const data = {
+        package_id: selectedPackageId,
+      };
+
+      this._PayService.subscriveToPackage(data).subscribe({
+        next: (res) => {
+          console.log('Subscribed Package:', res);
+          this._ToastrService.success('تم الاشتراك بنجاح');
+          // Optionally navigate to another page after subscription
+          // this._Router.navigate(['/uploadpdf']);
+        },
+        error: (err) => {
+          console.error('Error subscribing package:', err);
+        },
+      });
+    } else {
+      console.error('No package selected in local storage');
+    }
+  }
+  async checkRemainingpages() {
+    // const pdfFile = this.pdfForm.get('pdfFile')?.value;
+    // if (!pdfFile) return;
   
+    // try {
+    //   const pageCount = await this.getPdfPageCount(pdfFile);  // Get pages directly
+    //   this.userPageCount = pageCount;  // store it if needed
   
+    //   this._AuthService.checkRemainingpages(this.userPackageId, pageCount , false).subscribe({
+    //     next: (res) => { 
+    //       localStorage.setItem('userPackageId',this.userPackageId);
+    //       localStorage.setItem('pageCount',pageCount.toString());
+
+    //       console.log(this.userPackageId, pageCount);
+    //       this.onSubmit();  // Now safely call onSubmit
+    //     },
+    //     error: (err) => {
+    //       console.log(err);
+    //       if (err.error.message == 'Not enough remaining pages.') {
+    //         console.log(err.error.message);
+    //         this.ispay = true;
+    //         this._ToastrService.error("عدد صفحات الملف أكبر من عدد الصفحات المتبقية في باقتك");
+    //       }
+    //     },
+    //   });
+    // } catch (error) {
+    //   console.error('Error reading PDF:', error);
+    //   this._ToastrService.error("حدث خطأ أثناء قراءة الملف");
+    // }
+     this.onSubmit();
+  }
+  
+  async getPdfPageCount(pdfFile: File): Promise<number> {
+    const fileReader = new FileReader();
+  
+    return new Promise((resolve, reject) => {
+      fileReader.onloadend = async () => {
+        try {
+          const pdfData = new Uint8Array(fileReader.result as ArrayBuffer);
+          const pdf = await pdfjsLib.getDocument(pdfData).promise; // <-- fixed here
+          resolve(pdf.numPages);
+        } catch (error) {
+          reject(error);
+        }
+      };
+  
+      fileReader.readAsArrayBuffer(pdfFile);
+    });
+  }
   
   showPay() {
     this.ispay = !this.ispay;
+    
   }
 
   triggerFileInput(): void {
@@ -111,19 +289,13 @@ export class TestComponent {
 
   onFileSelected(event: any) {
     const file = event.target.files?.[0];
-    
+
     if (file && file.type === 'application/pdf') {
       this.fileName = file.name;
       this.selectedFile = file;
-      
-      // Patch the selected file into the form
+
+      // Patch file into your form if needed
       this.pdfForm.patchValue({ pdfFile: file });
-      
-      // Cut the PDF to the first 10 pages
-      this.cutPdfToFirst10Pages(file).then((modifiedPdf) => {
-        // Store the new modified PDF for submission
-        this.modifiedFile = modifiedPdf;
-      });
     } else {
       console.error('Please select a valid PDF file.');
       this.fileName = '';
@@ -131,33 +303,6 @@ export class TestComponent {
       this.pdfForm.patchValue({ pdfFile: null });
     }
   }
-  
-  // Function to cut the PDF to the first 10 pages
-  async cutPdfToFirst10Pages(file: File): Promise<File> {
-    const pdfBytes = await file.arrayBuffer();
-    const pdfDoc = await PDFDocument.load(pdfBytes);
-    
-    // Create a new PDF document to store the first 10 pages
-    const newPdf = await PDFDocument.create();
-  
-    // Get the total number of pages in the original PDF
-    const totalPages = pdfDoc.getPages().length;
-    const pagesToCopy = Math.min(totalPages, 10); // Limit to 10 pages
-  
-    // Copy the first 10 pages (or fewer if the PDF has less than 10 pages)
-    for (let i = 0; i < pagesToCopy; i++) {
-      const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
-      newPdf.addPage(copiedPage);
-    }
-  
-    // Save the new PDF
-    const modifiedPdfBytes = await newPdf.save();
-    const modifiedFile = new File([modifiedPdfBytes], 'modified.pdf', { type: 'application/pdf' });
-  
-    return modifiedFile;
-  }
-  
-  
 
   get languageDirection(): string {
     return this.pdfForm.get('language')?.value === 'ar'
@@ -166,64 +311,90 @@ export class TestComponent {
   }
 
   // Handle PDF to Image conversion
-  async convertPdfToImages(pdfUrl: string, maxPages: number = 10): Promise<string[]> {
-    const images: string[] = [];
-    const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-    const numPages = Math.min(pdf.numPages, maxPages); // Limit to the maxPages (e.g., 10 pages)
-  
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 1.5 });
-  
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-  
-      if (!context) {
-        throw new Error('Failed to get canvas context');
-      }
-  
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-  
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport,
-      };
-  
-      await page.render(renderContext).promise;
-      images.push(canvas.toDataURL('image/png'));
+ async convertPdfToImages(pdfUrl: string): Promise<string[]> {
+  const images: string[] = [];
+  const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+
+  const numPages = pdf.numPages;
+  const selectedPageCount = this.pdfForm.value.pageCount || 1;
+
+  // الحد الأقصى للتحويل (أصغر من الصفحات الفعلية والمطلوبة)
+  const pagesToConvert = Math.min(selectedPageCount, numPages);
+
+  const startTime = Date.now();
+
+  // تشغيل overlay
+  this.processingService.setLoading(true);
+  this.processingService.setProgress(0);
+
+  for (let pageNum = 1; pageNum <= pagesToConvert; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 1.5 });
+
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+
+    if (!context) {
+      throw new Error('Failed to get canvas context');
     }
-  
-    return images;
+
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport,
+    };
+
+    await page.render(renderContext).promise;
+    images.push(canvas.toDataURL('image/png'));
+
+    // تحديث progress (على أساس عدد الصفحات اللي هيتحولوا مش الكل)
+    const percent = Math.round((pageNum / pagesToConvert) * 100);
+    this.processingService.setProgress(percent);
+
+    // احسب الوقت المتبقي
+    const elapsedTime = (Date.now() - startTime) / 1000; // بالثواني
+    const avgTimePerPage = elapsedTime / pageNum;
+    const remainingTime = Math.round(avgTimePerPage * (pagesToConvert - pageNum));
+    this.processingService.setRemainingTime(remainingTime);
+
+    // سرعة افتراضية (صفحات/ثانية)
+    const pagesPerSecond = +(pageNum / elapsedTime).toFixed(2);
+   
   }
-  
-  
-  
+
+  // خلص التحويل
+  this.processingService.setLoading(false);
+  this.processingService.setProgress(100);
+  this.processingService.setRemainingTime(0);
+
+  return images;
+}
+
+
+
+
   async onSubmit(): Promise<void> {
     this.isLoading = true;
+    
     if (this.pdfForm.valid) {
       const pdfFile = this.pdfForm.get('pdfFile')?.value;
       const fileReader = new FileReader();
-  
+
       fileReader.onloadend = async () => {
         const pdfUrl = URL.createObjectURL(pdfFile);
-  
-        // Convert PDF only to the first 10 pages
-        this.pdfImages = await this.convertPdfToImages(pdfUrl, 10); // Passing 10 as a parameter
-  
-        // Ensure we only keep the first 10 pages
-        this.pdfImages = this.pdfImages.slice(0, 10);
-  
+        this.pdfImages = await this.convertPdfToImages(pdfUrl);
         this.userPageCount = this.pdfForm.get('pageCount')?.value || 0;
-  
+
         if (this.questions.length === 0) {
-          const pageCount = Math.min(this.pdfImages.length, this.userPageCount); // Limit questions to the number of images
+          const pageCount = this.pdfForm.get('pageCount')?.value || 0;
           for (let i = 0; i < pageCount; i++) {
             this.questions.push(
               this.formBuilder.group({
                 roi_type: new FormControl('', Validators.required),
-                direction: new FormControl('', Validators.required),
-                orientation: new FormControl('', Validators.required),
+                direction: new FormControl('rtl', Validators.required), // <<< CHANGED default rtl
+                orientation: new FormControl('horizontal', Validators.required), // <<< CHANGED default horizontal
                 marked: new FormControl(),
                 gradedByTeacher: new FormControl(),
                 entities_count: new FormControl(),
@@ -236,20 +407,71 @@ export class TestComponent {
             );
           }
         }
-        this.step1 = false;
-        this.step2 = true;
+        this.step1=false;
+        this.step2=true;
         this.isLoading = false;
       };
-  
+
       fileReader.readAsArrayBuffer(pdfFile);
     }
   }
-  
-  
-  
-  
-  
-  
+// uploadPdf(pdfFile: File) {
+//   const formData = new FormData();
+//   formData.append('file', pdfFile);
+
+//   const startTime = Date.now();
+//   let lastLoaded = 0;
+
+//   this.processingService.setLoading(true);
+
+//   this.http.post('http://your-api/upload', formData, {
+//     reportProgress: true,
+//     observe: 'events'
+//   }).subscribe({
+//     next: (event: HttpEvent<any>) => {
+//       if (event.type === HttpEventType.UploadProgress && event.total) {
+//         const loaded = event.loaded;
+//         const total = event.total;
+
+//         // حساب التقدم %
+//         const progress = Math.round((loaded / total) * 100);
+//         this.processingService.setProgress(progress);
+
+//         // الوقت اللي فات بالثواني
+//         const elapsedTime = (Date.now() - startTime) / 1000;
+
+//         // السرعة (بايت / ثانية) => (MB/s)
+//         const speed = (loaded / elapsedTime) / (1024 * 1024);
+//         this.processingService.setUploadSpeed(Number(speed.toFixed(2)));
+
+//         // الحجم المتبقي
+//         const remainingBytes = total - loaded;
+
+//         // الوقت المتبقي بالثواني
+//         const remainingTime = speed > 0
+//           ? Math.round((remainingBytes / (1024 * 1024)) / speed)
+//           : 0;
+
+//         this.processingService.setRemainingTime(remainingTime);
+
+//         lastLoaded = loaded;
+//       }
+
+//       if (event.type === HttpEventType.Response) {
+//         console.log('Upload complete:', event.body);
+
+//         // إنهاء المعالجة
+//         this.processingService.setLoading(false);
+//         this.processingService.setProgress(100);
+//         this.processingService.setRemainingTime(0);
+//       }
+//     },
+//     error: (err) => {
+//       console.error('Upload failed:', err);
+//       this.processingService.setLoading(false);
+//     }
+//   });
+// }
 
   // Get the current question FormGroup
   getCurrentQuestionFormGroup(): FormGroup {
@@ -272,6 +494,8 @@ export class TestComponent {
     }
 
     this.ispay = false;
+        this._UploadService.setIsPay(false);
+
     this.step1 = false;
     this.step2 = true;
   }
@@ -296,519 +520,259 @@ export class TestComponent {
 
   another: any = [];
 
- 
-
   checkifid(x: any) {
     if (x == true) {
       this.selectedIdType = 'student_id';
       this.isID = true;
     } else {
       this.selectedIdType = 'question_id';
-
       this.isID = false;
     }
   }
   checkQuestionType(x: any) {
     this.questionType = x;
   }
- 
 
-  onFinalSubmit(): void {
-    this.onCurrentQuestionSubmit(); // Ensure the last question is submitted
-  
-    const pagesObject: Record<string, any> = {};
-    let totalExamScore = 0; // Initialize total score
-  
-    // Process the questions and limit them to 10 pages
-    Object.keys(this.selectedQuestions).forEach((pageKey) => {
-      if (!pagesObject[pageKey]) {
-        pagesObject[pageKey] = {};
+onFinalSubmit(): void {
+  this.onCurrentQuestionSubmit(); // Ensure the last question is submitted
+
+  const pagesObject: Record<string, any> = {};
+  let totalExamScore = 0;
+
+  Object.keys(this.selectedQuestions).forEach((pageKey) => {
+    if (!pagesObject[pageKey]) {
+      pagesObject[pageKey] = {};
+    }
+
+    Object.keys(this.selectedQuestions[pageKey]).forEach((questionKey) => {
+      const questionData = this.selectedQuestions[pageKey][questionKey];
+
+      pagesObject[pageKey][questionKey] = {
+        points: questionData.points,
+        roi_type: questionData.roi_type,
+        entities_count:
+          questionData.entities_count ||
+          (questionData.choices ? questionData.choices.length : 10),
+        choices: questionData.choices || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        orientation: questionData.orientation || 'horizontal',
+        corrected_by_teacher: questionData.corrected_by_teacher || false,
+        id: questionData.id,
+        worth: questionData.worth,
+      };
+
+      if (questionData.worth) {
+        totalExamScore += questionData.entities_count * questionData.worth;
       }
-  
-      Object.keys(this.selectedQuestions[pageKey]).forEach(
-        (questionKey, index) => {
-          const questionData = this.selectedQuestions[pageKey][questionKey];
-  
-          pagesObject[pageKey][`question-${index + 1}`] = {
-            points: questionData.points,
-            roi_type:
-              questionData.roi_type === 'complementary'
-                ? 'complementary'
-                : 'question',
-            entities_count:
-              questionData.entities_count ||
-              (questionData.choices ? questionData.choices.length : 10),
-            choices: questionData.choices || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-            orientation: questionData.orientation || 'horizontal',
-            direction: questionData.direction || 'right-to-left',
-            corrected_by_teacher: questionData.corrected_by_teacher || false,
-            id: questionData.id,
-            worth: questionData.worth,
-          };
-  
-          // Calculate total exam score
-          if (questionData.worth) {
-            totalExamScore += questionData.entities_count * questionData.worth;
-          }
-        }
-      );
+      questionData.roi_type = 'question';
     });
-  
-    // finalPayload is generated based on the questions (limited to 10 pages)
-    const finalPayload = { ...pagesObject };
-    this._UploadService.setdata(finalPayload, this.selectedFile);
-  
-    if (this.modifiedFile) {
-      // Send the modified file (first 10 pages only)
-      this.formData.append('file', this.modifiedFile);
-    }
-  
-    const pdfJson = JSON.stringify(finalPayload);
-    this.formData.append('data', pdfJson);
-  
-    // Send the data (full PDF file + processed data for the first 10 pages)
-    this.isshow = false;
-    this._UploadService.upload(this.formData).subscribe({
-      next: (res) => {
-        console.log(res);
-        this._UploadService.setdata(res.response, this.selectedFile);
-        this.router.navigate(['/review']);
-      },
-      error: (err) => {
-        console.log(err);
-      },
-    });
+  });
+
+  const finalPayload = { ...pagesObject };
+  this._UploadService.setdata(finalPayload, this.selectedFile);
+
+  if (this.selectedFile) {
+    this.formData.append('file', this.selectedFile);
   }
-  
-  
-  
 
-  // onCurrentQuestionSubmit(): void {
-  //   if (this.isGlobal) {
-  //     this.isGlobal = false;
-  //     this.isshow = true;
-  //   }
+  const pdfJson = JSON.stringify(finalPayload);
+  this.formData.append('data', pdfJson);
 
-  //   if (this.isshow) {
-  //     const currentQuestionForm = this.getCurrentQuestionFormGroup();
+  this.isshow = false;
 
-  //     if (this.selectionBoxes.length > 0) {
-  //       const userEntitiesCount = currentQuestionForm.value.entities_count || 0; // Take from input field
-  //       const worth = currentQuestionForm.value.worth || 1; // Take from input field
+  // ✅ حساب وقت متوقع بناءً على حجم الملف
+  if (this.selectedFile) {
+    const fileSizeMB = this.selectedFile.size / (1024 * 1024); // MB
+    let estimatedTime = Math.ceil(fileSizeMB * 15); // تقريباً 15 ثانية لكل MB
 
-  //       const points = this.selectionBoxes.map((box) => [
-  //         [Math.floor(box.x), Math.floor(box.y)],
-  //         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-  //       ]);
-
-  //       // Determine roi_type dynamically
-  //       // const roi_type = points.length === 1 ? 'question' : 'complementary';
-  //       const roi_type = 'question' ;
-  //       const roiData: ROI = {
-  //         points: points,
-  //         roi_type: roi_type,
-  //         entities_count:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim()).length
-  //             : 10,
-  //         choices:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim())
-  //             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  //         orientation: currentQuestionForm.value.orientation || 'vertical',
-  //         direction: currentQuestionForm.value.direction || 'top-to-bottom',
-  //         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
-  //         id: this.selectedIdType === 'student_id' ? false : true,
-  //         worth: worth
-  //             };
-
-  //       console.log(roiData);
-
-  //       // **Update Final Score Calculation (Use Input `entities_count`)**
-  //       this.finalScore += userEntitiesCount * worth;
-
-  //       // Store question under its respective page
-  //       const pageKey = `page-${this.currentPage+1}`;
-  //       if (!this.selectedQuestions[pageKey]) {
-  //         this.selectedQuestions[pageKey] = {};
-  //       }
-
-  //       const questionNumber = Object.keys(this.selectedQuestions[pageKey]).length + 1;
-  //       const questionKey = `question-${questionNumber}`;
-  //       this.selectedQuestions[pageKey][questionKey] = roiData;
-
-  //       currentQuestionForm.reset({
-  //         roi_coordinates: [],
-  //         colNumber: '',
-  //         direction: '',
-  //         marked: '',
-  //         gradedByTeacher: false,
-  //         choices: '',
-  //         worth: 1,
-  //         id: false,
-  //         entities_count: '',
-  //       });
-
-  //       this.resetboxes();
-  //       this.questionType = '';
-  //     } else {
-  //       console.error('Please define a selection area before submitting.');
-  //     }
-
-  //     this.direction = '';
-  //     this.isID = false;
-  //   }
-  // }
-  // onCurrentQuestionSubmit(): void {
-  //   if (this.isGlobal) {
-  //     this.isGlobal = false;
-  //     this.isshow = true;
-  //   }
-
-  //   if (this.isshow) {
-  //     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-  //     if (this.selectionBoxes.length > 0) {
-  //       const userEntitiesCount = currentQuestionForm.value.entities_count || 0;
-  //       const worth = currentQuestionForm.value.worth || 1;
-
-  //       const points = this.selectionBoxes.map((box) => [
-  //         [Math.floor(box.x), Math.floor(box.y)],
-  //         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-  //       ]);
-  //       const orientation = currentQuestionForm.value.orientation || 'vertical';
-  //       const direction = currentQuestionForm.value.direction?.trim()
-  //         ? currentQuestionForm.value.direction.trim()
-  //         : (orientation === 'vertical' ? 'top-to-bottom' : 'right-to-left');
-
-  //       const roi_type = currentQuestionForm.value.roi_type || 'question';
-  //       const roiData: ROI = {
-  //         points: points,
-  //         roi_type: roi_type,
-  //         entities_count:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim()).length
-  //             : 10,
-  //         choices:
-  //           currentQuestionForm.value.choices &&
-  //           currentQuestionForm.value.choices.trim()
-  //             ? currentQuestionForm.value.choices
-  //                 .split(/[-,]/)
-  //                 .map((choice: string) => choice.trim())
-  //             : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-  //             orientation: orientation,
-  //             direction: direction,
-  //         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === 'true',
-  //         id: this.selectedIdType === 'student_id' ? false : true,
-  //         worth: worth,
-  //       };
-
-  //       console.log(roiData);
-
-  //       if (roiData.corrected_by_teacher) {
-  //         const numericChoices = (roiData.choices ?? []).map(Number);
-  //         const maxChoice = Math.max(...numericChoices, 0); // default to 0 if array is empty
-  //         this.finalScore += maxChoice;
-  //       } else {
-  //         this.finalScore += userEntitiesCount * worth;
-  //       }
-
-  //       const pageKey = `page-${this.currentPage + 1}`;
-  //       if (!this.selectedQuestions[pageKey]) {
-  //         this.selectedQuestions[pageKey] = {};
-  //       }
-
-  //       const questionNumber = Object.keys(this.selectedQuestions[pageKey]).length + 1;
-  //       const questionKey = `question-${questionNumber}`;
-  //       this.selectedQuestions[pageKey][questionKey] = roiData;
-
-  //       // 🔵 Mark boxes as submitted (change to blue)
-  //       if (this.selectionBoxesByPage[this.currentPage]) {
-  //         this.selectionBoxesByPage[this.currentPage] = this.selectionBoxesByPage[
-  //           this.currentPage
-  //         ].map((box) => ({ ...box, submitted: true }));
-  //       }
-
-  //       currentQuestionForm.reset({
-  //         roi_coordinates: [],
-  //         colNumber: '',
-  //         direction: '',
-  //         marked: '',
-  //         gradedByTeacher: false,
-  //         choices: '',
-  //         worth: 1,
-  //         id: false,
-  //         entities_count: '',
-  //       });
-
-  //       this.resetboxes();
-  //       this.questionType = '';
-  //     } else {
-  //       console.error('Please define a selection area before submitting.');
-  //     }
-
-  //     this.direction = '';
-  //     this.isID = false;
-  //   }
-  // }
-  onCurrentQuestionSubmit(): void {
-    if (this.isGlobal) {
-      this.isGlobal = false;
-      this.isshow = true;
+    if (estimatedTime < 15) {
+      estimatedTime = 15; // حد أدنى
     }
 
-    if (!this.isshow) return;
+    // تشغيل شاشة المعالجة مع تايمر و progress bar
+    this.processingService.startProcessing(estimatedTime);
 
-    const currentQuestionForm = this.getCurrentQuestionFormGroup();
+    console.log(
+      `📊 File size: ${fileSizeMB.toFixed(
+        2
+      )} MB, Estimated time: ${estimatedTime} sec`
+    );
+  }
 
-    if (this.selectionBoxes.length === 0) {
-      console.error('Please define a selection area before submitting.');
-      return;
-    }
-    const userEntitiesCount = currentQuestionForm.value.entities_count || 0;
+  const startTime = Date.now();
 
-    const worth = currentQuestionForm.value.worth || 1;
-    const isCorrectedByTeacher =
-      currentQuestionForm.value.gradedByTeacher === 'true' ||
-      currentQuestionForm.value.gradedByTeacher === true;
+  this._UploadService.upload(this.formData).subscribe({
+    next: (res) => {
+      const duration = (Date.now() - startTime) / 1000;
+      console.log('✅ Request finished in:', duration, 'seconds');
 
-    // Get points from selection boxes
-    const points = this.selectionBoxes.map((box) => [
-      [Math.floor(box.x), Math.floor(box.y)],
-      [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-    ]);
+      this.processingService.setLoading(false);
+      this.processingService.setProgress(100);
+      this.processingService.setRemainingTime(0);
 
-    // Orientation and direction defaults
-    const orientation = ['horizontal', 'vertical'].includes(
-      currentQuestionForm.value.orientation
-    )
-      ? currentQuestionForm.value.orientation
-      : 'vertical';
+      this._UploadService.setdata(res.response, this.selectedFile);
+      this.router.navigate(['/review']);
+    },
+    error: (err) => {
+      const duration = (Date.now() - startTime) / 1000;
+      console.log('❌ Request failed after:', duration, 'seconds');
 
-    const direction = ['right-to-left', 'top-to-bottom'].includes(
-      currentQuestionForm.value.direction
-    )
-      ? currentQuestionForm.value.direction
-      : orientation === 'vertical'
-      ? 'top-to-bottom'
-      : 'right-to-left';
+      this.processingService.setLoading(false);
+      this.processingService.setRemainingTime(0);
+      console.error(err);
+    },
+  });
+}
 
-    // ROI type
-    const roi_type = ['question', 'complementary'].includes(
-      currentQuestionForm.value.roi_type
-    )
-      ? currentQuestionForm.value.roi_type
+
+
+
+onCurrentQuestionSubmit(): void {
+  if (this.isGlobal) {
+    this.isGlobal = false;
+    this.isshow = true;
+  }
+
+  if (!this.isshow) return;
+
+  const currentQuestionForm = this.getCurrentQuestionFormGroup();
+  console.log(currentQuestionForm.value);
+
+  if (this.selectionBoxes.length === 0) {
+    console.error('Please define a selection area before submitting.');
+    return;
+  }
+
+  const userEntitiesCount = currentQuestionForm.value.entities_count || 0;
+  const worth = currentQuestionForm.value.worth || 1;
+  const isCorrectedByTeacher =
+    currentQuestionForm.value.gradedByTeacher === 'true' ||
+    currentQuestionForm.value.gradedByTeacher === true;
+
+  // points
+  const points = this.selectionBoxes.map((box) => [
+    [Math.floor(box.x), Math.floor(box.y)],
+    [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
+  ]);
+
+  // roi_type
+  const roiTypeValue = currentQuestionForm.value.roi_type;
+  const roi_type =
+    roiTypeValue === 'question' || roiTypeValue === 'complementary'
+      ? roiTypeValue
       : 'question';
 
-    // Setup choices and entity count
-    let choices: string[] = [];
-    let entities_count: number;
+  // id check → رقم الجلوس فقط
+  const isId = this.selectedIdType === 'student_id';
 
-    if (isCorrectedByTeacher) {
-      const rawChoices = currentQuestionForm.value.choices || '';
-      choices = rawChoices.split('-');
-      entities_count = choices.length;
-    } else {
-      const arabicLetters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-      const choiceCount = Number(currentQuestionForm.value.choices);
-      entities_count = choiceCount > 0 ? choiceCount : 10;
-      choices = arabicLetters.slice(0, entities_count);
-    }
-
-    // Construct the ROI data object
-    const roiData: ROI = {
-      points: points,
-      roi_type: roi_type,
-      entities_count: entities_count,
-      choices: choices,
-      orientation: orientation,
-      direction: direction,
-      corrected_by_teacher: isCorrectedByTeacher,
-      id: this.selectedIdType === 'student_id' ? false : true,
-      worth: worth,
-    };
-    if (roiData.corrected_by_teacher) {
-      const numericChoices = (roiData.choices ?? [])
-        .map(Number)
-        .filter((n) => !isNaN(n));
-      const maxChoice = Math.max(...numericChoices, 0);
-      this.finalScore += maxChoice;
-    } else {
-      this.finalScore += userEntitiesCount * worth;
-    }
-    // Store in selectedQuestions per page
-    const pageKey = `page-${this.currentPage + 1}`;
-    if (!this.selectedQuestions[pageKey]) {
-      this.selectedQuestions[pageKey] = {};
-    }
-
-    const questionNumber =
-      Object.keys(this.selectedQuestions[pageKey]).length + 1;
-    const questionKey = `question-${questionNumber}`;
-    this.selectedQuestions[pageKey][questionKey] = roiData;
-
-    // Mark boxes as submitted
-    if (this.selectionBoxesByPage[this.currentPage]) {
-      this.selectionBoxesByPage[this.currentPage] = this.selectionBoxesByPage[
-        this.currentPage
-      ].map((box) => ({
-        ...box,
-        submitted: true,
-      }));
-    }
-
-    // Reset the form
-    currentQuestionForm.reset({
-      roi_coordinates: [],
-      colNumber: '',
-      direction: '',
-      orientation: '',
-      marked: '',
-      gradedByTeacher: false,
-      choices: '',
-      worth: 1,
-      id: false,
-      entities_count: '',
-      roi_type: 'question',
-    });
-
-    this.resetboxes();
-    this.questionType = '';
-    this.direction = '';
-    this.isID = false;
-
-    console.log('ROI data submitted:', roiData);
+  // orientation → رقم الجلوس دايمًا vertical
+  let orientation: string;
+  if (isId) {
+    orientation = 'vertical';
+    console.log('Orientation forced to vertical for student ID');
+  } else {
+    orientation =
+      ['horizontal', 'vertical'].includes(currentQuestionForm.value.orientation)
+        ? currentQuestionForm.value.orientation
+        : 'vertical';
   }
 
-  // onCurrentQuestionSubmit(): void {
-  //   if (this.isGlobal) {
-  //     this.isGlobal = false;
-  //     this.isshow = true;
-  //   }
+  // direction
+  const direction =
+    currentQuestionForm.value.direction || this.selectedDirection || 'rtl';
 
-  //   if (this.isshow) {
-  //     const currentQuestionForm = this.getCurrentQuestionFormGroup();
+  // choices + entities
+  let choices: string[] = [];
+  let entities_count: number;
 
-  //     if (this.selectionBoxes.length > 0) {
-  //       const userEntitiesCount = currentQuestionForm.value.entities_count || 0;
-  //       const worth = currentQuestionForm.value.worth || 1;
+  if (isId) {
+        orientation = 'vertical';
 
-  //       const points = this.selectionBoxes.map((box) => [
-  //         [Math.floor(box.x), Math.floor(box.y)],
-  //         [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-  //       ]);
+    // رقم الجلوس 0-9
+    choices = Array.from({ length: 10 }, (_, i) => String(i));
+    entities_count = choices.length;
+  } else if (isCorrectedByTeacher) {
+    const rawChoices = currentQuestionForm.value.choices || '';
+    choices = rawChoices
+      .split('-')
+      .map((s: any) => s.trim())
+      .filter((s: any) => s !== '');
+    entities_count = choices.length;
+  } else {
+    const numbers = Array.from({ length: 21 }, (_, i) => String(i));
+    const choiceCount = Number(currentQuestionForm.value.choices);
+    entities_count = choiceCount && !isNaN(choiceCount) ? choiceCount : 10;
+    choices = numbers.slice(0, entities_count);
+  }
 
-  //       const orientation =
-  //         currentQuestionForm.value.orientation === 'horizontal' ||
-  //         currentQuestionForm.value.orientation === 'vertical'
-  //           ? currentQuestionForm.value.orientation
-  //           : 'vertical';
+  // لو سؤال مقالي و اتجاهه RTL + corrected_by_teacher → نعكس
+  if (!isId && isCorrectedByTeacher && orientation === 'horizontal' && direction === 'rtl') {
+    choices = [...choices].reverse();
+  }
 
-  //       const direction =
-  //         currentQuestionForm.value.direction === 'right-to-left' ||
-  //         currentQuestionForm.value.direction === 'top-to-bottom'
-  //           ? currentQuestionForm.value.direction
-  //           : orientation === 'vertical'
-  //           ? 'top-to-bottom'
-  //           : 'right-to-left';
+  const roiData: ROI = {
+    points: points,
+    roi_type: roi_type,
+    entities_count: entities_count,
+    choices: choices,
+    orientation: orientation,
+    corrected_by_teacher: isCorrectedByTeacher,
+    id: isId, // true بس لو رقم الجلوس
+    worth: worth,
+  };
 
-  //       const roi_type =
-  //         currentQuestionForm.value.roi_type === 'complementary' ||
-  //         currentQuestionForm.value.roi_type === 'question'
-  //           ? currentQuestionForm.value.roi_type
-  //           : 'question';
+  if (roiData.corrected_by_teacher) {
+    const numericChoices = (roiData.choices ?? [])
+      .map(Number)
+      .filter((n) => !isNaN(n));
+    const maxChoice = Math.max(...numericChoices, 0);
+    this.finalScore += maxChoice;
+  } else {
+    this.finalScore += userEntitiesCount * worth;
+  }
 
-  //       const isCorrectedByTeacher = currentQuestionForm.value.gradedByTeacher === 'true';
+  const pageKey = `page-${this.currentPage + 1}`;
+  if (!this.selectedQuestions[pageKey]) {
+    this.selectedQuestions[pageKey] = {};
+  }
 
-  //       let choices: string[] = [];
-  //       let entities_count: number = 10;
+  const questionNumber = Object.keys(this.selectedQuestions[pageKey]).length + 1;
+  const questionKey = `question-${questionNumber}`;
+  this.selectedQuestions[pageKey][questionKey] = roiData;
 
-  //       if (isCorrectedByTeacher) {
-  //         // 👇 Parse the custom choices string (e.g. "0-0.5-1-2-3")
-  //         const rawChoices = currentQuestionForm.value.choices || '';
-  //         choices = rawChoices.split('-');
-  //         entities_count = choices.length;
-  //       } else {
-  //         // 👇 Use Arabic letters logic
-  //         const arabicLetters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-  //         const choiceCount = Number(currentQuestionForm.value.choices);
-  //         entities_count = choiceCount && choiceCount > 0 ? choiceCount : 10;
-  //         choices = arabicLetters.slice(0, entities_count);
-  //       }
+  if (this.selectionBoxesByPage[this.currentPage]) {
+    this.selectionBoxesByPage[this.currentPage] = this.selectionBoxesByPage[
+      this.currentPage
+    ].map((box) => ({
+      ...box,
+      submitted: true,
+    }));
+  }
 
-  //       const roiData: ROI = {
-  //         points: points,
-  //         roi_type: roi_type,
-  //         entities_count: entities_count,
-  //         choices: choices,
-  //         orientation: orientation,
-  //         direction: direction,
-  //         corrected_by_teacher: isCorrectedByTeacher,
-  //         id: this.selectedIdType === 'student_id' ? false : true,
-  //         worth: worth,
-  //       };
+  currentQuestionForm.reset({
+    roi_coordinates: [],
+    colNumber: '',
+    orientation: 'horizontal',
+    direction: 'rtl',
+    marked: '',
+    gradedByTeacher: false,
+    choices: '',
+    worth: 1,
+    id: false,
+    entities_count: '',
+    roi_type: 'question',
+  });
+  this.setOpacityForSameName('roi_type', 'question');
 
-  //       console.log(roiData);
+  this.resetboxes();
+  this.questionType = '';
+  this.direction = '';
+  this.isID = false;
+  this.selectedIdType = '';
 
-  //       if (roiData.corrected_by_teacher) {
-  //         const numericChoices = (roiData.choices ?? []).map(Number).filter(n => !isNaN(n));
-  //         const maxChoice = Math.max(...numericChoices, 0);
-  //         this.finalScore += maxChoice;
-  //       } else {
-  //         this.finalScore += userEntitiesCount * worth;
-  //       }
+  console.log('ROI data submitted:', roiData);
+}
 
-  //       const pageKey = `page-${this.currentPage + 1}`;
-  //       if (!this.selectedQuestions[pageKey]) {
-  //         this.selectedQuestions[pageKey] = {};
-  //       }
 
-  //       const questionNumber =
-  //         Object.keys(this.selectedQuestions[pageKey]).length + 1;
-  //       const questionKey = `question-${questionNumber}`;
-  //       this.selectedQuestions[pageKey][questionKey] = roiData;
-
-  //       // 🔵 Mark boxes as submitted (change to blue)
-  //       if (this.selectionBoxesByPage[this.currentPage]) {
-  //         this.selectionBoxesByPage[this.currentPage] =
-  //           this.selectionBoxesByPage[this.currentPage].map((box) => ({
-  //             ...box,
-  //             submitted: true,
-  //           }));
-  //       }
-
-  //       currentQuestionForm.reset({
-  //         roi_coordinates: [],
-  //         colNumber: '',
-  //         direction: '',
-  //         marked: '',
-  //         gradedByTeacher: false,
-  //         choices: '',
-  //         worth: 1,
-  //         id: false,
-  //         entities_count: '',
-  //         roi_type: 'question',
-  //       });
-
-  //       this.resetboxes();
-  //       this.questionType = '';
-  //     } else {
-  //       console.error('Please define a selection area before submitting.');
-  //     }
-
-  //     this.direction = '';
-  //     this.isID = false;
-  //   }
-  // }
 
   visibleSelectionBoxes: {
     x: number;
@@ -1056,109 +1020,83 @@ export class TestComponent {
       this.isshowcomp = true;
     }
   }
+
+  toggleTab(tab: string) {
+    this.openTab = this.openTab === tab ? null : tab;
+    // keep selectedOrientation as-is; we will set orientation in selectOrientation
+    // if current form has orientation, reflect it
+    try {
+      const current = this.getCurrentQuestionFormGroup();
+      if (current) {
+        const ori = current.value.orientation;
+        const dir = current.value.direction;
+        if (ori) this.selectedOrientation = ori;
+        if (dir) this.selectedDirection = dir;
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  confirm(tab: string) {
+    this.openTab = null;
+    this.selectedOrientation = '';
+    // keep selectedDirection as-is
+  }
+
+  // when user clicks orientation buttons in UI, patch the current question form
+  selectOrientation(value: string) {
+    this.selectedOrientation = value;
+    // If orientation changed, persist to form
+    try {
+      const current = this.getCurrentQuestionFormGroup();
+      if (current) {
+        current.patchValue({ orientation: value });
+        if (value === 'horizontal') {
+          // default horizontal direction to rtl unless already set
+          this.selectedDirection = current.value.direction || 'rtl';
+          current.patchValue({ direction: this.selectedDirection });
+        } else {
+          // vertical -> clear direction (not used)
+          this.selectedDirection = current.value.direction || '';
+          current.patchValue({ direction: '' });
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // when user clicks direction buttons in UI, patch the current question form
+  selectDirection(value: string) {
+    this.selectedDirection = value;
+    try {
+      const current = this.getCurrentQuestionFormGroup();
+      if (current) {
+        current.patchValue({ direction: value });
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+startProcessing() {
+    this.processingService.setLoading(true);
+    // this.processingService.setSpeeds(5, 12, 50); // مثال سرعات مبدئية
+
+    let progress = 0;
+    let remaining = 60; // 60 ثانية
+
+    const interval = setInterval(() => {
+      progress += 5;
+      remaining -= 3;
+
+      this.processingService.setProgress(progress);
+      this.processingService.setRemainingTime(remaining);
+
+      if (progress >= 100) {
+        clearInterval(interval);
+        this.processingService.setLoading(false);
+      }
+    }, 1500);
+  }
 }
-// onCurrentQuestionSubmit(): void {
-//   if (this.isGlobal) {
-//     this.isGlobal = false;
-//     this.isshow = true;
-//   }
-
-//   if (this.isshow) {
-//     const currentQuestionForm = this.getCurrentQuestionFormGroup();
-
-//     if (this.selectionBoxes.length > 0) {
-//       const roiData: ROI = {
-//         points: this.selectionBoxes.map((box) => [
-//           [Math.floor(box.x), Math.floor(box.y)],
-//           [Math.floor(box.x + box.width), Math.floor(box.y + box.height)],
-//         ]),
-//         roi_type: 'question',
-//         entities_count: currentQuestionForm.value.choices && currentQuestionForm.value.choices.trim()
-//         ? currentQuestionForm.value.choices.split(/[-,]/).map((choice: string) => choice.trim()).length
-//         : 10,
-//       choices: currentQuestionForm.value.choices && currentQuestionForm.value.choices.trim()
-//         ? currentQuestionForm.value.choices.split(/[-,]/).map((choice: string) => choice.trim())
-//         : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-
-//         orientation: currentQuestionForm.value.orientation || 'horizontal',
-//         direction: currentQuestionForm.value.direction || "right-to-left",
-//         worth: currentQuestionForm.value.worth || 1,
-//         corrected_by_teacher: currentQuestionForm.value.gradedByTeacher === true,
-//         id: this.selectedIdType === 'student_id' ? false : true,
-//       };
-//       console.log(roiData)
-//       const questionKey = `question_${Object.keys(this.selectedQuestions).length + 1}`;
-//       this.selectedQuestions[questionKey] = roiData;
-
-//       currentQuestionForm.reset({
-//         roi_coordinates: [],
-//         colNumber: '',
-//         direction: '',
-//         marked: '',
-//         gradedByTeacher: false, // Ensure reset as boolean
-//         choices: '',
-//         worth: 1,
-//         id: false,
-//       });
-
-//        this.resetboxes();
-//     } else {
-//       console.error('Please define a selection area before submitting.');
-//     }
-
-//     this.direction = '';
-//     this.isID = false;
-//   }
-// }  // onFinalSubmit(): void {
-//   this.onCurrentQuestionSubmit();
-
-//   const pagesObject: Record<string, any> = {};
-
-//   Object.keys(this.selectedQuestions).forEach((key) => {
-//     const questionData = this.selectedQuestions[key];
-//     const pageKey = `page-${questionData.page_number || 1}`;
-//     const questionKey = `question-${Object.keys(pagesObject[pageKey] || {}).length + 1}`;
-
-//     if (!pagesObject[pageKey]) {
-//       pagesObject[pageKey] = {};
-//     }
-
-//     pagesObject[pageKey][questionKey] = {
-//       points: questionData.points,
-//       roi_type: questionData.roi_type || 'question',
-//       entities_count: questionData.entities_count || 10,
-//       choices: questionData.choices || [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-//       orientation: questionData.orientation || 'horizontal',
-//       direction: questionData.direction || 'right-to-left',
-//       worth: questionData.worth || 1,
-//       corrected_by_teacher: questionData.corrected_by_teacher || false,
-//       id: questionData.id, // Now correctly stored based on the selected radio button
-//     };
-//   });
-
-//   const finalPayload = { ...pagesObject };
-//   this._UploadService.setdata(finalPayload , this.selectedFile);
-
-//   if (this.selectedFile) {
-//     this.formData.append('file', this.selectedFile);
-//   }
-
-//   const pdfJson = JSON.stringify(finalPayload);
-//   this.formData.append('data', pdfJson);
-//     // this._UploadService.setdata('res.response', this.selectedFile);
-//     // this.router.navigate(['/review'])
-
-//   this.isshow = false;
-//   this._UploadService.upload(this.formData).subscribe({
-//     next: (res) => {
-//       console.log(res)
-//       this._UploadService.setdata(res.response, this.selectedFile);
-//       this.router.navigate(['/review'])
-//     },
-//     error: (err) => {
-//       console.log(err);
-//     },
-//   });
-//  }
-
-

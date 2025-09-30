@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { FinalSheetComponent } from '../final-sheet/final-sheet.component';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
+import { ProcessingService } from 'src/app/services/processing.service';
 
 interface Question {
   position: number[][][];
@@ -100,7 +101,8 @@ export class ReviewComponent implements OnInit {
 
   constructor(private _UploadService: UploadService, private router: Router ,
     private _AuthService: AuthService,
-    private _ToastrService:ToastrService
+    private _ToastrService:ToastrService ,
+    private processingService:ProcessingService
     ) {}
 
   ngOnInit(): void {
@@ -272,58 +274,77 @@ export class ReviewComponent implements OnInit {
       .join('');
   }
   reviewOMR() {
-    const box = this._UploadService.getSelectedBox();
+  const box = this._UploadService.getSelectedBox();
 
-    if (
-      !Array.isArray(box) ||
-      box.length !== 2 ||
-      !Array.isArray(box[0]) ||
-      !Array.isArray(box[1])
-    ) {
-      console.error('❌ Invalid box data format:', box);
-      return;
-    }
-
-    // Extract coordinates from the array
-    const [x_min, y_min] = box[0];
-    const [x_max, y_max] = box[1];
-
-    // Calculate the center and radius of the circle
-    const x_center = Math.round((x_min + x_max) / 2);
-    const y_center = Math.round((y_min + y_max) / 2);
-    const radius = Math.round(Math.max(x_max - x_min, y_max - y_min) / 2);
-
-    const circleData = { x: x_center, y: y_center, radius: radius };
-    console.log('⭕ Circle Data:', circleData);
-
-    // Update OMR data with circular selection
-    const updatedOMR = {
-      pages: { ...this.omrResponse }, // Wrap existing data inside 'pages'
-      number_of_pages: Object.keys(this.omrResponse).length,
-      drag: circleData, // Store circle data
-    };
-
-    this._UploadService.reviewOmr(updatedOMR).subscribe({
-      next: (res) => {
-        console.log('✅ API Response:', res);
-
-        // Open link in a new tab if the response contains a valid URL
-        if (res.success && res.response) {
-          window.open(res.response, '_blank');
-          this._UploadService.setOmrIds(res.ids);
-          this.finalSheetComponent.omrIds = res.ids;
-          this.checkRemainingpages();
-          this.finalSheetComponent.onSubmit();
-        }
-      },
-      error: (err) => {
-        console.error('❌ API Error:', err);
-      },
-    });
-
-    console.log('📄 Updated OMR JSON with Circle:', updatedOMR);
-    return updatedOMR;
+  if (
+    !Array.isArray(box) ||
+    box.length !== 2 ||
+    !Array.isArray(box[0]) ||
+    !Array.isArray(box[1])
+  ) {
+    console.error('❌ Invalid box data format:', box);
+    return;
   }
+
+  // Extract coordinates from the array
+  const [x_min, y_min] = box[0];
+  const [x_max, y_max] = box[1];
+
+  // Calculate the center and radius of the circle
+  const x_center = Math.round((x_min + x_max) / 2);
+  const y_center = Math.round((y_min + y_max) / 2);
+  const radius = Math.round(Math.max(x_max - x_min, y_max - y_min) / 2);
+
+  const circleData = { x: x_center, y: y_center, radius: radius };
+  console.log('⭕ Circle Data:', circleData);
+
+  // Update OMR data with circular selection
+  const updatedOMR = {
+    pages: { ...this.omrResponse }, // Wrap existing data inside 'pages'
+    number_of_pages: Object.keys(this.omrResponse).length,
+    drag: circleData, // Store circle data
+  };
+
+  // ✅ حساب وقت تقديري (مثلاً 10 ثواني لكل صفحة)
+  let estimatedTime = updatedOMR.number_of_pages * 10;
+  if (estimatedTime < 10) estimatedTime = 10;
+
+  this.processingService.startProcessing(2000);
+
+  const startTime = Date.now();
+
+  this._UploadService.reviewOmr(updatedOMR).subscribe({
+    next: (res) => {
+      const duration = (Date.now() - startTime) / 1000;
+      console.log('✅ Request finished in:', duration, 'seconds');
+
+      this.processingService.setLoading(false);
+      this.processingService.setProgress(100);
+      this.processingService.setRemainingTime(0);
+
+      // Open link in a new tab if the response contains a valid URL
+      if (res.success && res.response) {
+        window.open(res.response, '_blank');
+        this._UploadService.setOmrIds(res.ids);
+        this.finalSheetComponent.omrIds = res.ids;
+        this.checkRemainingpages();
+        this.finalSheetComponent.onSubmit();
+      }
+    },
+    error: (err) => {
+      const duration = (Date.now() - startTime) / 1000;
+      console.log('❌ Request failed after:', duration, 'seconds');
+
+      this.processingService.setLoading(false);
+      this.processingService.setRemainingTime(0);
+      console.error(err);
+    },
+  });
+
+  console.log('📄 Updated OMR JSON with Circle:', updatedOMR);
+  return updatedOMR;
+}
+
   async checkRemainingpages() {  
     try {
       const userPackageId = localStorage.getItem('userPackageId');

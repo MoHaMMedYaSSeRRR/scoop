@@ -1,6 +1,7 @@
 import { Component, ElementRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
+import { UploadService } from 'src/app/services/upload.service';
 
 @Component({
   selector: 'app-navbar',
@@ -12,7 +13,8 @@ export class NavbarComponent {
 
   constructor(private _AuthService: AuthService , 
     private _Router:Router,
-    private eRef: ElementRef
+    private eRef: ElementRef ,
+    private _UploadService:UploadService
   ) { }
   isLogin: boolean = this._AuthService.isLoggedIn;
   ngOnInit(): void {
@@ -22,6 +24,10 @@ export class NavbarComponent {
         this._AuthService.subscriptionStatus$.subscribe(status => {
       this.subscriptionStatusText = status;
     });
+  }
+  toggleIsPay() {
+    this._UploadService.setIsPay(true);
+    console.log("isPay set to true");
   }
    isLoggedIn() {
     this.isLogin = this._AuthService.isLoggedIn;

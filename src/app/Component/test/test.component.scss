@@ -1,185 +1,141 @@
-.pdfUpload{
-    border: 1px dashed gray;
+.pdfUpload {
+  border: 1px dashed gray;
 }
-label{
-    font-size: 14px;
-    font-weight: 400;
-    color: #191C1F;
+
+label {
+  font-size: 14px;
+  font-weight: 400;
+  color: #191C1F;
+
+  &.dimmed {
+    opacity: 0.5;
+  }
 }
-button{
-    background-color: #115081;
+
+button {
+  background-color: green;
 }
+
 img {
-  user-select: none; /* Disable text selection */
-  -webkit-user-drag: none; /* Disable drag in Webkit browsers */
-  -moz-user-drag: none; /* Disable drag in Firefox */
-  -ms-user-drag: none; /* Disable drag in Internet Explorer */
-}
-.selection-box i {
-  position: absolute;
-  top: -20px;
-  left: -5px;
-  z-index: 15020201502020 !important;
-  cursor: pointer;
-  pointer-events: auto; /* Allow clicking on the icon */
-
-}
-.selection-box i:hover {
-  color: #ff0000; /* Highlight on hover */
+  user-select: none;
+  -webkit-user-drag: none;
+  -moz-user-drag: none;
+  -ms-user-drag: none;
 }
 
-
-.step2{
-    .show{
-        width: 600px !important;
-        // height: 800px !important;
-        // border: 1px solid #DADADA;
-        position: relative;
-        overflow: hidden;
-        // background-color: red;
-
-        img{
-          width:600px !important;
-          // height:800px !important;
-          background-color: #007bff;
-          cursor: crosshair;
-          z-index: 120 !important;
-        }
-    }
-      .pagination-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-      
-        button {
-          border: none;
-          background-color: #007bff;
-          color: white;
-          padding: 5px 10px !important;
-          cursor: pointer;
-          width: 20%;
-        }
-      
-        button[disabled] {
-          background-color: #ccc;
-          cursor: not-allowed;
-        }
-      }
-      .arrows{
-        background-color: #F2F4F5 ;
-        border-radius: 5px;
-        padding: 10px;
-      }
-      
-}
+/* Selection box */
 .selection-box {
   position: absolute;
   border: 2px dashed #01ff0ed8;
   background-color: rgba(1, 255, 10, 0.3);
-  pointer-events: none; /* Prevent interaction with the box */
-  z-index: 10; /* Make sure the box is on top of the image */
-}
-.row input{
-  margin-top: 12px;
-}
-.sendBtn{
-  width: 15%;
-  border-radius: 5px;
-}
-@media (max-width: 768px){
-  .container{
-    width: 100% !important;
-    margin: 0px!important;
-    padding: 5px !important;
-  }
-  .show{
-    img{
-      height: auto;
+  pointer-events: none;
+  z-index: 10;
+
+  i {
+    position: absolute;
+    top: -20px;
+    left: -5px;
+    z-index: 15020201502020 !important;
+    cursor: pointer;
+    pointer-events: auto;
+
+    &:hover {
+      color: #ff0000;
     }
   }
-  .sendBtn{
-    width: 40%;
-  }
-}
-.load{
-  font-size: 15px;
-  font-weight: 700;
-}
-.content{
-  .col-3{
-    width: 40%;
-    display: flex;
-    justify-content: end;
-    align-items: end;
-    flex-direction: row-reverse;
-  }
-}
-input[type="radio"] {
-  &.dimmed {
-    opacity: 0.5;
-  }
 }
 
-label {
-  &.dimmed {
-    opacity: 0.5;
-  }
-}
-input[type="number"]::-webkit-inner-spin-button, 
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* For Firefox */
-input[type="number"] {
-  -moz-appearance: textfield;
-}
 .selection-boxx {
   position: absolute;
-  border: 3.5px solid #01ff0a;; /* Orange dashed border for visibility */
-  background-color: transparent; /* Semi-transparent green background */
-  z-index: 9999; /* Ensure it's on top of the PDF image */
-  pointer-events: none; /* Prevent interaction with the selection box itself */
+  border: 3.5px solid #01ff0a;
+  background-color: transparent;
+  z-index: 9999;
+  pointer-events: none;
   border-radius: 50%;
 }
+
+/* Step2 styles */
+.step2 {
+  .show {
+    width: 600px !important;
+    position: relative;
+    overflow: hidden;
+
+    img {
+      width: 600px !important;
+      background-color: #007bff;
+      cursor: crosshair;
+      z-index: 120 !important;
+    }
+  }
+
+  .pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    button {
+      border: none;
+      background-color: #007bff;
+      color: white;
+      padding: 5px 10px !important;
+      cursor: pointer;
+      width: 20%;
+
+      &[disabled] {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .arrows {
+    background-color: #F2F4F5;
+    border-radius: 5px;
+    padding: 10px;
+  }
+}
+
+/* Score line */
 .score-line {
   position: absolute;
-  top: 50%; /* Center the line vertically in the parent container */
-  left: 50%; /* Center the line horizontally */
-  transform: translate(-50%, -50%); /* Correct positioning to ensure it’s centered both vertically and horizontally */
-  border-top: 2px solid #01ff0a; /* Line color */
-  width: 100%; /* Ensure the line spans the full width of its parent container */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-top: 2px solid #01ff0a;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+
+  .score-label {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: bold;
+    color: #01ff0a;
+  }
+
+  .final-score {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: bold;
+    color: #01ff0a;
+  }
 }
 
-.score-label {
-  position: absolute;
-  top: -30px; /* Position the score label above the line */
-  left: 50%; /* Center the label horizontally */
-  transform: translateX(-50%); /* Ensure it's centered horizontally */
-  font-weight: bold;
-  color: #01ff0a;
-}
-
-.final-score {
-  position: absolute;
-  bottom: -30px; /* Position the final score below the line */
-  left: 50%; /* Center the final score horizontally */
-  transform: translateX(-50%); /* Ensure it's centered horizontally */
-  font-weight: bold;
-  color: #01ff0a;
-}
-.global{
+.global {
   width: 100px !important;
   height: 100px !important;
-  border-radius:50% !important;
-background-color: white;
+  border-radius: 50% !important;
+  background-color: white;
 }
 
+/* Boxes */
 .greenboxes {
   border: 2px dashed #01ff0ed8;
   background-color: rgba(1, 255, 10, 0.3);
@@ -190,3 +146,120 @@ background-color: white;
   background-color: rgba(0, 123, 255, 0.3);
 }
 
+/* Sidebar & Tabs */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 400px;
+}
+
+.btn {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: right;
+
+  &.red {
+    background-color: #e74c3c;
+    color: white;
+  }
+
+  &.blue {
+    background-color: #2980b9;
+    color: white;
+  }
+
+  &.green {
+    background-color: #27ae60;
+    color: white;
+    width: 100%;
+  }
+}
+
+.tab-content {
+  padding: 0;
+  margin: 0 0 10px 0;
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Orientation & Direction buttons */
+.orientation-buttons,
+.direction-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+
+  button {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    flex: 1;
+
+    &.active {
+      background-color: #3498db;
+      color: white;
+      border-color: #2980b9;
+    }
+  }
+}
+
+/* Inputs */
+input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+
+  &[type="radio"].dimmed {
+    opacity: 0.5;
+  }
+}
+
+.row input {
+  margin-top: 12px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Send Button */
+.sendBtn {
+  width: 15%;
+  border-radius: 5px;
+
+  @media (max-width: 768px) {
+    width: 40%;
+  }
+}
+
+/* Misc */
+.load {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.content {
+  .col-3 {
+    width: 40%;
+    display: flex;
+    justify-content: end;
+    align-items: end;
+    flex-direction: row-reverse;
+  }
+}
