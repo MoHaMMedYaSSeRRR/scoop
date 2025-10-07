@@ -1,7 +1,8 @@
 <section>
   <div class="container m-auto m-3 p-5">
     <!-- Step 1: PDF Upload and Form Inputs -->
-    <div *ngIf="step1" class="step1">
+    <div *ngIf="step1" class="step1 ">
+
       <div
         class="pdfUpload d-flex justify-content-center align-items-center p-5"
         (dragover)="onDragOver($event)"
@@ -280,4 +281,4 @@
   <app-payment >
   </app-payment>
 </section>
-
+<app-add-pages></app-add-pages>

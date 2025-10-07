@@ -29,6 +29,9 @@ export class NavbarComponent {
     this._UploadService.setIsPay(true);
     console.log("isPay set to true");
   }
+  toggleAddPages(){
+    this._UploadService.setAddPages(true);
+  }
    isLoggedIn() {
     this.isLogin = this._AuthService.isLoggedIn;
     console.log(this.isLogin);

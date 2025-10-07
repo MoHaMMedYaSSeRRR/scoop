@@ -1,0 +1,118 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(18, 66, 97, 0.6); // أزرق غامق شفاف بدل الأسود
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+.pay {
+  width: 90%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  animation: popupFadeIn 0.3s ease-in-out;
+
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #124261;
+    margin-bottom: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #124261;
+    margin: 0 1rem;
+  }
+
+  h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #ff8f00;
+    margin: 1.5rem 0;
+  }
+}
+
+/* Counter buttons */
+button.btn-danger,
+button.btn-success {
+  width: 45px;
+  height: 45px;
+  font-size: 1.25rem;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+button.btn-danger:hover {
+  background: darken(#dc3545, 5%);
+}
+
+button.btn-success:hover {
+  background: darken(#28a745, 5%);
+}
+
+/* Action buttons */
+button.btn-primary {
+  background-color: #124261;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  padding: 0.75rem 2rem;
+  transition: background 0.3s;
+
+  &:hover {
+    background-color: darken(#124261, 5%);
+  }
+}
+
+button.btn-outline-secondary {
+  border-radius: 0.75rem;
+  padding: 0.75rem 2rem;
+}
+
+/* Animation */
+@keyframes popupFadeIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .pay {
+    padding: 1.5rem;
+
+    h2 {
+      font-size: 1.3rem;
+    }
+    h3 {
+      font-size: 1.2rem;
+    }
+    h4 {
+      font-size: 1.1rem;
+    }
+  }
+
+  button.btn-primary,
+  button.btn-outline-secondary {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}

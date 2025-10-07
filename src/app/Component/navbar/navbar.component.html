@@ -31,6 +31,9 @@
       <button class="btn btn-primary w-100 mb-2 border-0" (click)="toggleIsPay();showUserMenu=false" *ngIf="isLogin">
         اشتراك
       </button>
+        <button class="btn btn-primary w-100 mb-2 border-0" (click)="toggleAddPages();showUserMenu=false" *ngIf="isLogin">
+        اضافة ورق
+      </button>
     <hr class="w-75 mx-auto my-3">
     <a role="button" *ngIf="isLogin" (click)="logout()" class="text-decoration-none text-danger d-block text-end w-100">تسجيل الخروج</a>
   </div>
@@ -48,7 +51,8 @@
         </ul>
         <ul class="navbar-navd list-unstyled ms-auto mb-2 mb-lg-0">
           <li>
-              <h2 class="m-auto">مرحبا بك في سكوب للتصحيح الالي</h2>
+              <h2 class="m-auto">            <a href='https://scoob.cc/buildModelAnswer.html' target="_blank" class='build  text-success text-white my-3'>  بناء ورقة الاجابة</a>
+</h2>
           </li>
       </ul>
       </div>

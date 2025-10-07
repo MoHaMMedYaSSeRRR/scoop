@@ -74,5 +74,10 @@ export class PayService {
         `https://dev.scoob.cc/api/check-free-trial`
       );
     }
-    
+    getPriceOfHandredPage():Observable<any>{
+    return this._HttpClient.get(`https://dev.scoob.cc/api/user/page-price`);
+  }
+  addNewPagesToUser(data:any):Observable<any>{
+    return this._HttpClient.post(`https://dev.scoob.cc/api/user-packages/add-pages` , data)
+  }
 }

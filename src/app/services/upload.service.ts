@@ -14,7 +14,8 @@ private pay = new BehaviorSubject<any>(false);
   private fileSubject = new BehaviorSubject<File | null>(null);
   file$ = this.fileSubject.asObservable();
   private baseUrl = '/api'; // Use proxy path
-
+private addPages = new BehaviorSubject<any>(false);
+  addPages$ = this.addPages.asObservable();
   constructor(
     private _HttpClient:HttpClient
   ) { }
@@ -26,6 +27,9 @@ private pay = new BehaviorSubject<any>(false);
   // }
   setIsPay(value: boolean) {
     this.pay.next(value);
+  }
+  setAddPages(value: boolean) {
+    this.addPages.next(value);
   }
   pdfFile:any;
   setdata(data: any, file: File) {
@@ -157,5 +161,6 @@ private pay = new BehaviorSubject<any>(false);
   getOmrIds(): { [key: string]: number } {
     return this.omrIds;
   }
+  
   
 }

@@ -22,6 +22,7 @@ import { FinalSheetComponent } from './Component/final-sheet/final-sheet.compone
 import { TestComponent } from './Component/test/test.component';
 import { TestssComponent } from './Component/testss/testss.component';
 import { ProcessingScreenComponentComponent } from './Component/processing-screen-component/processing-screen-component.component';
+import { AddPagesComponent } from './Component/add-pages/add-pages.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -36,6 +37,7 @@ import { ProcessingScreenComponentComponent } from './Component/processing-scree
     TestComponent,
     TestssComponent,
     ProcessingScreenComponentComponent,
+    AddPagesComponent,
   ],
   imports: [
     BrowserModule,

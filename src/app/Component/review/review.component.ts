@@ -273,7 +273,7 @@ export class ReviewComponent implements OnInit {
       .map((digit) => arabicNumbers[parseInt(digit, 10)])
       .join('');
   }
-  reviewOMR() {
+reviewOMR() {
   const box = this._UploadService.getSelectedBox();
 
   if (
@@ -286,43 +286,63 @@ export class ReviewComponent implements OnInit {
     return;
   }
 
-  // Extract coordinates from the array
   const [x_min, y_min] = box[0];
   const [x_max, y_max] = box[1];
-
-  // Calculate the center and radius of the circle
   const x_center = Math.round((x_min + x_max) / 2);
   const y_center = Math.round((y_min + y_max) / 2);
   const radius = Math.round(Math.max(x_max - x_min, y_max - y_min) / 2);
 
-  const circleData = { x: x_center, y: y_center, radius: radius };
-  console.log('⭕ Circle Data:', circleData);
+  const circleData = { x: x_center, y: y_center, radius };
 
-  // Update OMR data with circular selection
   const updatedOMR = {
-    pages: { ...this.omrResponse }, // Wrap existing data inside 'pages'
+    pages: { ...this.omrResponse },
     number_of_pages: Object.keys(this.omrResponse).length,
-    drag: circleData, // Store circle data
+    drag: circleData,
   };
 
-  // ✅ حساب وقت تقديري (مثلاً 10 ثواني لكل صفحة)
-  let estimatedTime = updatedOMR.number_of_pages * 10;
-  if (estimatedTime < 10) estimatedTime = 10;
+  console.log('📄 Updated OMR JSON with Circle:', updatedOMR);
 
-  this.processingService.startProcessing(2000);
+  // ✅ تهيئة القيم
+  this.processingService.setLoading(true);
+  let progress = 0;
+  let remainingTime = 120;
+  this.processingService.setProgress(progress);
+  this.processingService.setRemainingTime(remainingTime);
+
+  // 🔁 مؤقت يزيد progress ويقلل الوقت مع بعض
+  const interval = setInterval(() => {
+    if (progress < 90) {
+      progress += 2;
+      remainingTime = Math.max(0, remainingTime - 2); // يقل بنفس النسبة تقريبًا
+      this.processingService.setProgress(progress);
+      this.processingService.setRemainingTime(remainingTime);
+    }
+  }, 1500);
 
   const startTime = Date.now();
 
+  // 🧠 استدعاء API
   this._UploadService.reviewOmr(updatedOMR).subscribe({
     next: (res) => {
+      clearInterval(interval);
       const duration = (Date.now() - startTime) / 1000;
       console.log('✅ Request finished in:', duration, 'seconds');
 
-      this.processingService.setLoading(false);
-      this.processingService.setProgress(100);
-      this.processingService.setRemainingTime(0);
+      // ✳️ بعد ما السيرفر يرد — كمل من 90 إلى 100 وقلل الوقت لـ 0
+      let finalProgress = progress;
+      const smooth = setInterval(() => {
+        if (finalProgress < 100) {
+          finalProgress += 2;
+          remainingTime = Math.max(0, remainingTime - 2);
+          this.processingService.setProgress(finalProgress);
+          this.processingService.setRemainingTime(remainingTime);
+        } else {
+          clearInterval(smooth);
+          this.processingService.setLoading(false);
+        }
+      }, 150);
 
-      // Open link in a new tab if the response contains a valid URL
+      // ✅ معالجة النتيجة
       if (res.success && res.response) {
         window.open(res.response, '_blank');
         this._UploadService.setOmrIds(res.ids);
@@ -332,18 +352,15 @@ export class ReviewComponent implements OnInit {
       }
     },
     error: (err) => {
-      const duration = (Date.now() - startTime) / 1000;
-      console.log('❌ Request failed after:', duration, 'seconds');
-
-      this.processingService.setLoading(false);
+      clearInterval(interval);
+      this.processingService.setProgress(100);
       this.processingService.setRemainingTime(0);
-      console.error(err);
+      this.processingService.setLoading(false);
+      console.error('❌ Request failed:', err);
     },
   });
-
-  console.log('📄 Updated OMR JSON with Circle:', updatedOMR);
-  return updatedOMR;
 }
+
 
   async checkRemainingpages() {  
     try {

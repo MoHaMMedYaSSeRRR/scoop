@@ -105,85 +105,145 @@ export class TestComponent {
   userPackageId: any;
   isPending=true;
 
-  ngOnInit(): void {
-    this._AuthService.setLoginState(true);
-    this._UploadService.isPay$.subscribe({
-      next:(res)=>{
-        this.ispay = res;
-        console.log(res)
-      }
-    })
-    this.route.queryParams.subscribe((params) => {
-      const paymentId = params['paymentId']; // or params['Id'] if needed
+ ngOnInit(): void {
+  this._AuthService.setLoginState(true);
 
-      if (paymentId) {
-        localStorage.setItem('userPaymentId' , paymentId)
-        this._PayService.getPaymentStatus(paymentId).subscribe({
-          next: (res) => {
-            console.log(res);
-            console.log(res.Data.InvoiceTransactions[0].TransactionStatus)
-            if (res.Data.InvoiceStatus == 'Paid') {
-              this.subscribePackage();
-              this.getUserPackage();
-              localStorage.removeItem('userPaymentId');
-              this.ispay = false;
-                  this._UploadService.setIsPay(false);
+  this._UploadService.isPay$.subscribe({
+    next: (res) => {
+      this.ispay = res;
+      console.log('isPay:', res);
+    }
+  });
 
-            } else if (res.Data.InvoiceStatus == "Pending"){
-              this._ToastrService.info('جاري تاكيد عملية الدفع، برجاء الانتظار');
-              setTimeout(() => {
-                this._PayService.getPaymentStatus(paymentId).subscribe({
-                  next: (res) => {
-                    console.log(res);
-                    if (res.Data.InvoiceStatus == 'Paid') {
-                      this._ToastrService.success('تم تاكيد عملية الدفع');
-                      this.getUserPackage();
-                      localStorage.removeItem('userPaymentId');
-                      console.log('subsribeSecond');
-                      this.ispay = false;
-                          this._UploadService.setIsPay(false);
+  this.route.queryParams.subscribe((params) => {
+    const paymentId = params['paymentId'];
 
-                      this.subscribePackage();
+    if (paymentId) {
+      // حفظ الـ paymentId في localStorage
+      localStorage.setItem('userPaymentId', paymentId);
+
+      this._PayService.getPaymentStatus(paymentId).subscribe({
+        next: (res) => {
+          console.log('Payment Status Response:', res);
+
+          if (res.Data.InvoiceStatus === 'Paid') {
+            // ✅ الدفع ناجح
+            this.subscribePackage();
+            this.getUserPackage();
+
+            // ✅ تحقق من وجود عدد الصفحات في localStorage
+            const storedPages = localStorage.getItem('pendingPagesToAdd');
+            if (storedPages) {
+              const data = { number_of_pages: Number(storedPages) };
+              this._PayService.addNewPagesToUser(data).subscribe({
+                next: (res) => {
+                  console.log('✅ Pages Added:', res);
+                  this._ToastrService.success('تمت إضافة الصفحات بنجاح ✅');
+                  localStorage.removeItem('pendingPagesToAdd');
+                },
+                error: (err) => {
+                  console.error('❌ Error Adding Pages:', err);
+                  this._ToastrService.error('حدث خطأ أثناء إضافة الصفحات');
+                }
+              });
+            }
+
+            localStorage.removeItem('userPaymentId');
+            this.ispay = false;
+            this._UploadService.setIsPay(false);
+          } 
+          else if (res.Data.InvoiceStatus === 'Pending') {
+            // ⏳ الدفع قيد الانتظار
+            this._ToastrService.info('جاري تأكيد عملية الدفع، برجاء الانتظار');
+            setTimeout(() => {
+              this._PayService.getPaymentStatus(paymentId).subscribe({
+                next: (res) => {
+                  console.log('Recheck Payment Response:', res);
+                  if (res.Data.InvoiceStatus === 'Paid') {
+                    this._ToastrService.success('تم تأكيد عملية الدفع');
+                    this.getUserPackage();
+                    localStorage.removeItem('userPaymentId');
+                    console.log('subscribeSecond');
+                    this.ispay = false;
+                    this._UploadService.setIsPay(false);
+                    this.subscribePackage();
+
+                    // ✅ تحقق مرة ثانية من الصفحات بعد التأكيد
+                    const storedPages = localStorage.getItem('pendingPagesToAdd');
+                    if (storedPages) {
+                      const data = { number_of_pages: Number(storedPages) };
+                      this._PayService.addNewPagesToUser(data).subscribe({
+                        next: (res) => {
+                          console.log('✅ Pages Added (After Pending):', res);
+                          this._ToastrService.success('تمت إضافة الصفحات بنجاح ✅');
+                          localStorage.removeItem('pendingPagesToAdd');
+                        },
+                        error: (err) => {
+                          console.error('❌ Error Adding Pages:', err);
+                          this._ToastrService.error('حدث خطأ أثناء إضافة الصفحات');
+                        }
+                      });
                     }
-                  },
-                  error: (err) => {
-                    console.error('Error fetching payment status:', err);
-                  },
-                });
+                  }
+                },
+                error: (err) => {
+                  console.error('Error fetching payment status:', err);
+                },
+              });
+            }, 10000);
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching payment status:', err);
+        },
+      });
+    } 
+    else if (localStorage.getItem('userPaymentId')) {
+      // ✅ لو المستخدم رجع بعد الدفع بدون paymentId في الرابط
+      const secondPaymentId = localStorage.getItem('userPaymentId');
+      this._PayService.getPaymentStatus(secondPaymentId).subscribe({
+        next: (res) => {
+          console.log('Stored Payment Check:', res);
+          if (res.Data.InvoiceStatus === 'Paid') {
+            this.subscribePackage();
+            this.getUserPackage();
 
-              }, 10000);
+            // ✅ تحقق من الصفحات المحفوظة
+            const storedPages = localStorage.getItem('pendingPagesToAdd');
+            if (storedPages) {
+              const data = { number_of_pages: Number(storedPages) };
+              this._PayService.addNewPagesToUser(data).subscribe({
+                next: (res) => {
+                  console.log('✅ Pages Added (From Stored ID):', res);
+                  this._ToastrService.success('تمت إضافة الصفحات بنجاح ✅');
+                  localStorage.removeItem('pendingPagesToAdd');
+                },
+                error: (err) => {
+                  console.error('❌ Error Adding Pages:', err);
+                  this._ToastrService.error('حدث خطأ أثناء إضافة الصفحات');
+                }
+              });
             }
-          },
-          error: (err) => {
-            console.error('Error fetching payment status:', err);
-          },
-        });
-      } else if(localStorage.getItem('userPaymentId')) {
-        const secondPaymentId = localStorage.getItem('userPaymentId');
-        this._PayService.getPaymentStatus(secondPaymentId).subscribe({
-          next: (res) => {
-            console.log(res);
-            if (res.Data.InvoiceStatus == 'Paid') {
-              localStorage.removeItem('userPaymentId');
-              console.log('subsribeSecond');
-              this.ispay = false;
-                  this._UploadService.setIsPay(false);
 
-              this.subscribePackage();
-            }
-          },
-          error: (err) => {
-            console.error('Error fetching payment status:', err);
-          },
-        });
-      }
-      else {
-        console.error('paymentId not found in URL');
-      }   
-    });
-   this.getUserPackage();
-    // this.checkRemainingpages();
-  }
+            localStorage.removeItem('userPaymentId');
+            this.ispay = false;
+            this._UploadService.setIsPay(false);
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching stored payment status:', err);
+        },
+      });
+    } 
+    else {
+      console.error('paymentId not found in URL');
+    }
+  });
+
+  this.getUserPackage();
+  // this.checkRemainingpages();
+}
+
 
   getUserPackage() {
     this._AuthService.getUserPackage().subscribe({
