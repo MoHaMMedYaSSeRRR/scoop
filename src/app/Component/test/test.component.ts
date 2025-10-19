@@ -255,7 +255,7 @@ export class TestComponent {
             this._UploadService.setIsPay(false)
             this.userPackageId = res.data[0].id;
             this._AuthService.updateSubscriptionStatus(res.data[0]);
-            console.log(this.userPackageId);
+            localStorage.setItem('userPackageId', this.userPackageId);
           }
         }
       },
@@ -273,6 +273,7 @@ export class TestComponent {
         next: (res) => {
           console.log('Subscribed Package:', res);
           this._ToastrService.success('تم الاشتراك بنجاح');
+          localStorage.removeItem('selectedPackageId');
           // Optionally navigate to another page after subscription
           // this._Router.navigate(['/uploadpdf']);
         },
@@ -371,19 +372,21 @@ export class TestComponent {
   }
 
   // Handle PDF to Image conversion
- async convertPdfToImages(pdfUrl: string): Promise<string[]> {
+async convertPdfToImages(pdfUrl: string): Promise<string[]> {
   const images: string[] = [];
   const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
 
   const numPages = pdf.numPages;
   const selectedPageCount = this.pdfForm.value.pageCount || 1;
 
-  // الحد الأقصى للتحويل (أصغر من الصفحات الفعلية والمطلوبة)
+  // ✅ Actual number of pages we will convert
   const pagesToConvert = Math.min(selectedPageCount, numPages);
 
-  const startTime = Date.now();
+  // ✅ Store total page count in localStorage
+  localStorage.setItem('pdf_page_count', numPages.toString());
+  console.log(`📄 PDF has ${numPages} total pages (converted ${pagesToConvert})`);
 
-  // تشغيل overlay
+  const startTime = Date.now();
   this.processingService.setLoading(true);
   this.processingService.setProgress(0);
 
@@ -394,46 +397,31 @@ export class TestComponent {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d', { willReadFrequently: true });
 
-    if (!context) {
-      throw new Error('Failed to get canvas context');
-    }
+    if (!context) throw new Error('Failed to get canvas context');
 
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    const renderContext = {
-      canvasContext: context,
-      viewport: viewport,
-    };
-
+    const renderContext = { canvasContext: context, viewport };
     await page.render(renderContext).promise;
+
     images.push(canvas.toDataURL('image/png'));
 
-    // تحديث progress (على أساس عدد الصفحات اللي هيتحولوا مش الكل)
     const percent = Math.round((pageNum / pagesToConvert) * 100);
     this.processingService.setProgress(percent);
 
-    // احسب الوقت المتبقي
-    const elapsedTime = (Date.now() - startTime) / 1000; // بالثواني
+    const elapsedTime = (Date.now() - startTime) / 1000;
     const avgTimePerPage = elapsedTime / pageNum;
     const remainingTime = Math.round(avgTimePerPage * (pagesToConvert - pageNum));
     this.processingService.setRemainingTime(remainingTime);
-
-    // سرعة افتراضية (صفحات/ثانية)
-    const pagesPerSecond = +(pageNum / elapsedTime).toFixed(2);
-   
   }
 
-  // خلص التحويل
   this.processingService.setLoading(false);
   this.processingService.setProgress(100);
   this.processingService.setRemainingTime(0);
 
   return images;
 }
-
-
-
 
   async onSubmit(): Promise<void> {
     this.isLoading = true;

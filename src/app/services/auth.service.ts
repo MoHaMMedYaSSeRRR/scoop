@@ -46,7 +46,8 @@ export class AuthService {
   
   private subscriptionStatus = new BehaviorSubject<string>('');
   subscriptionStatus$ = this.subscriptionStatus.asObservable();
-
+  private formattedDate = new BehaviorSubject<string>('');
+  formattedDate$ = this.formattedDate.asObservable();
   updateSubscriptionStatus(packageData: any): void {
     const expiresAt = new Date(packageData.expires_at);
     const remainingPages = packageData.remaining_pages;
@@ -61,8 +62,10 @@ export class AuthService {
     });
 
     // const status = `اشتراك ${packageName} <br> عدد الصفحات المتبقية ${remainingPages}  <br> ينتهي في ${formattedDate}`;
-        const status = ` عدد الصفحات المتبقية ${remainingPages}`;
+        const status = ` عدد الورق:  ${remainingPages}`;
+        const dateStatus = `   اشتراكك الحالي ينتهي في ${formattedDate}`;
 
     this.subscriptionStatus.next(status);
+    this.formattedDate.next(dateStatus);
   }
 }

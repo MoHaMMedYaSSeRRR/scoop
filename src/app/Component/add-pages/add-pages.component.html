@@ -1,8 +1,7 @@
-<div class="layer d-flex justify-content-center align-items-center" [ngClass]="{ 'd-none': !isLayerHidden }">
   <div class="pay my-3 position-relative bg-white p-4 rounded-3 w-75 text-end">
     <h2>شراء صفحات إضافية</h2>
 
-    <div class="d-flex justify-content-center align-items-center my-3">
+    <div class="d-flex justify-content-center align-items-center my-3 w-100 p-0">
       <button class="btn btn-danger mx-2" (click)="decrease()">-</button>
       <h3>{{ pagesCount }} صفحة</h3>
       <button class="btn btn-success mx-2" (click)="increase()">+</button>
@@ -11,8 +10,7 @@
     <h4 class="my-3">الإجمالي: {{ totalPrice }} ريال</h4>
 
     <div class="text-center">
-      <button class="btn btn-primary px-4 py-2" (click)="payNow()">ادفع الآن</button>
-      <button class="btn btn-outline-secondary mx-2" (click)="hideLayer()">إلغاء</button>
+      <button class="btn btn-primary px-4 py-2 w-100" (click)="payNow()">ادفع الآن</button>
     </div>
   </div>
-</div>
+

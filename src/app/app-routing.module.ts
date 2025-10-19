@@ -12,8 +12,8 @@ import { TestComponent } from './Component/test/test.component';
 const routes: Routes = [
   { path: '', component: LoginComponent, pathMatch: 'full', canActivate: [authGuard] },
   { path: 'login', component: LoginComponent, canActivate: [authGuard] },
-  { path: 'uploadpdf', component: UploadpdfComponent, canActivate: [authGuard] },
-  { path: 'test', component: TestComponent, canActivate: [authGuard] },
+  { path: 'uploadpdf', component: TestComponent, canActivate: [authGuard] },
+  // { path: 'test', component: TestComponent, canActivate: [authGuard] },
   { path: 'review', component: ReviewComponent, canActivate: [authGuard] },
   { path: 'finalsheet', component: FinalSheetComponent },
     { path: 'testss', component: TestssComponent },

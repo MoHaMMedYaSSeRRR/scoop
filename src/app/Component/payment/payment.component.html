@@ -3,6 +3,22 @@
   [ngClass]="{ 'd-none': isLayerHidden }"
 >
   <div class="pay my-3 position-relative bg-white p-4 rounded-3 w-75 text-end">
+    <span
+  class="close-icon position-absolute"
+  role="button"
+  (click)="hideLayer()"
+>
+  <span class="material-icons">X</span>
+</span>
+<div class="info">
+  <h6 class="mail">
+   {{ userEmail }}:الايميل المستخدم 
+</h6>
+<h6 class="formated">
+  {{ subscriptionStatusText }}
+</h6>
+</div>
+
     <h2>هل تريد المزيد؟</h2>
     <p *ngIf="!isFree" class="mt-3">سكوب يتيح لك تصحيح 10 صفحات مجاني اشترك بسهولة</p>
 
@@ -42,7 +58,10 @@
           </p>
         </div>
       </div>
+    <div class="col-md-4">
+        <app-add-pages></app-add-pages>
 
+      </div>
       <!-- <div class="col-md-4">
         <div
           class="p-4 py-5  content d-flex  justify-content-center align-items-center flex-column"

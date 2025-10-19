@@ -1,3 +1,4 @@
+import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { PayService } from './../../services/pay.service';
 import { Component, EventEmitter, Output } from '@angular/core';
@@ -14,11 +15,13 @@ export class PaymentComponent {
   constructor(private _PayService:PayService,
     private _ToastrService:ToastrService,
     private  _Router:Router , 
-    private _UploadService:UploadService
+    private _UploadService:UploadService,
+    private _AuthService:AuthService
   ){}
   @Output() continueClicked = new EventEmitter<void>();
   @Output() subscribed = new EventEmitter<void>();
-
+  subscriptionStatusText: string = '';
+userEmail: string | null = localStorage.getItem('scoobEmail');
   packages:any[] = [];
   hideLayer(): void {
     this.isLayerHidden = true;
@@ -33,6 +36,10 @@ export class PaymentComponent {
       console.log(this.packages);
     }
    })
+       this._AuthService.formattedDate$.subscribe(status => {
+         this.subscriptionStatusText = status;
+         console.log("Subscription Status:", status);
+       });
    this.getPacageDetails();
    
    this.checkFree()

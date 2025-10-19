@@ -8,6 +8,7 @@ import { FinalSheetComponent } from '../final-sheet/final-sheet.component';
 import { AuthService } from 'src/app/services/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { ProcessingService } from 'src/app/services/processing.service';
+import { NgZone } from '@angular/core';
 
 interface Question {
   position: number[][][];
@@ -102,7 +103,10 @@ export class ReviewComponent implements OnInit {
   constructor(private _UploadService: UploadService, private router: Router ,
     private _AuthService: AuthService,
     private _ToastrService:ToastrService ,
-    private processingService:ProcessingService
+    private processingService:ProcessingService,
+      private ngZone: NgZone , 
+       private toastr:ToastrService
+
     ) {}
 
   ngOnInit(): void {
@@ -273,101 +277,95 @@ export class ReviewComponent implements OnInit {
       .map((digit) => arabicNumbers[parseInt(digit, 10)])
       .join('');
   }
-reviewOMR() {
-  const box = this._UploadService.getSelectedBox();
+async reviewOMR(): Promise<void> {
+  try {
+    const box = this._UploadService.getSelectedBox();
 
-  if (
-    !Array.isArray(box) ||
-    box.length !== 2 ||
-    !Array.isArray(box[0]) ||
-    !Array.isArray(box[1])
-  ) {
-    console.error('❌ Invalid box data format:', box);
-    return;
-  }
-
-  const [x_min, y_min] = box[0];
-  const [x_max, y_max] = box[1];
-  const x_center = Math.round((x_min + x_max) / 2);
-  const y_center = Math.round((y_min + y_max) / 2);
-  const radius = Math.round(Math.max(x_max - x_min, y_max - y_min) / 2);
-
-  const circleData = { x: x_center, y: y_center, radius };
-
-  const updatedOMR = {
-    pages: { ...this.omrResponse },
-    number_of_pages: Object.keys(this.omrResponse).length,
-    drag: circleData,
-  };
-
-  console.log('📄 Updated OMR JSON with Circle:', updatedOMR);
-
-  // ✅ تهيئة القيم
-  this.processingService.setLoading(true);
-  let progress = 0;
-  let remainingTime = 120;
-  this.processingService.setProgress(progress);
-  this.processingService.setRemainingTime(remainingTime);
-
-  // 🔁 مؤقت يزيد progress ويقلل الوقت مع بعض
-  const interval = setInterval(() => {
-    if (progress < 90) {
-      progress += 2;
-      remainingTime = Math.max(0, remainingTime - 2); // يقل بنفس النسبة تقريبًا
-      this.processingService.setProgress(progress);
-      this.processingService.setRemainingTime(remainingTime);
+    if (!Array.isArray(box) || box.length !== 2) {
+      this.toastr.error('❌ Invalid box selection');
+      return;
     }
-  }, 1500);
 
-  const startTime = Date.now();
+    const [x_min, y_min] = box[0];
+    const [x_max, y_max] = box[1];
+    const circleData = {
+      x: Math.round((x_min + x_max) / 2),
+      y: Math.round((y_min + y_max) / 2),
+      radius: Math.round(Math.max(x_max - x_min, y_max - y_min) / 2),
+    };
 
-  // 🧠 استدعاء API
-  this._UploadService.reviewOmr(updatedOMR).subscribe({
-    next: (res) => {
-      clearInterval(interval);
-      const duration = (Date.now() - startTime) / 1000;
-      console.log('✅ Request finished in:', duration, 'seconds');
+    const updatedOMR = {
+      pages: { ...this.omrResponse },
+      number_of_pages: Object.keys(this.omrResponse).length,
+      drag: circleData,
+    };
 
-      // ✳️ بعد ما السيرفر يرد — كمل من 90 إلى 100 وقلل الوقت لـ 0
-      let finalProgress = progress;
-      const smooth = setInterval(() => {
-        if (finalProgress < 100) {
-          finalProgress += 2;
-          remainingTime = Math.max(0, remainingTime - 2);
-          this.processingService.setProgress(finalProgress);
-          this.processingService.setRemainingTime(remainingTime);
+    const userPackageId = localStorage.getItem('userPackageId');
+    const pagesStr: any = localStorage.getItem('pdf_page_count');
+
+    if (!userPackageId || !pagesStr) {
+      this.toastr.error('بيانات الحزمة أو عدد الصفحات غير متوفرة.');
+      return;
+    }
+
+    this._AuthService.checkRemainingpages(userPackageId, pagesStr, true).subscribe({
+      next: (res: any) => {
+        console.log('✅ Remaining page check:', res);
+
+        // ✅ Start fake progress simulation
+        const processingSim = this.processingService.startProcessing(60);
+        const startTime = Date.now();
+
+        this._UploadService.reviewOmr(updatedOMR).subscribe({
+          next: (res) => {
+            const duration = (Date.now() - startTime) / 1000;
+            console.log(`✅ Review finished in: ${duration}s`);
+
+            // ✅ Stop progress simulation cleanly
+            this.processingService.stopProcessing();
+
+            if (res.success && res.response) {
+              window.open(res.response, '_blank');
+              this._UploadService.setOmrIds(res.ids);
+              this.finalSheetComponent.omrIds = res.ids;
+              this.finalSheetComponent.onSubmit();
+              this.toastr.success('تمت مراجعة ورقة الإجابة بنجاح ✅');
+            }
+          },
+          error: (err) => {
+            console.error('❌ Review failed:', err);
+            this.processingService.stopProcessing();
+            this.toastr.error('فشل في مراجعة الورقة.');
+          },
+        });
+      },
+      error: (err: any) => {
+        console.log(err);
+        if (err.error?.message === 'Not enough remaining pages.') {
+          this.toastr.error('عدد الصفحات المتبقية غير كافٍ في خطتك الحالية.');
         } else {
-          clearInterval(smooth);
-          this.processingService.setLoading(false);
+          this.toastr.error('حدث خطأ أثناء التحقق من الصفحات المتبقية.');
         }
-      }, 150);
-
-      // ✅ معالجة النتيجة
-      if (res.success && res.response) {
-        window.open(res.response, '_blank');
-        this._UploadService.setOmrIds(res.ids);
-        this.finalSheetComponent.omrIds = res.ids;
-        this.checkRemainingpages();
-        this.finalSheetComponent.onSubmit();
-      }
-    },
-    error: (err) => {
-      clearInterval(interval);
-      this.processingService.setProgress(100);
-      this.processingService.setRemainingTime(0);
-      this.processingService.setLoading(false);
-      console.error('❌ Request failed:', err);
-    },
-  });
+      },
+    });
+  } catch (error) {
+    console.error('❌ Error during reviewOMR:', error);
+    this.processingService.stopProcessing();
+    this.toastr.error('حدث خطأ أثناء معالجة الورقة.');
+  }
 }
+
+
+
 
 
   async checkRemainingpages() {  
     try {
       const userPackageId = localStorage.getItem('userPackageId');
-      const pagesStr:any = localStorage.getItem('pageCount');
+      const pagesStr:any = localStorage.getItem('pdf_page_count');
       this._AuthService.checkRemainingpages(userPackageId, pagesStr , true).subscribe({
         next: (res) => { 
+          console.log(res);
         },
         error: (err:any) => {
           console.log(err);

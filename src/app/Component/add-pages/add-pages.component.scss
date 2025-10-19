@@ -21,23 +21,23 @@
   animation: popupFadeIn 0.3s ease-in-out;
 
   h2 {
-    font-size: 1.6rem;
+    font-size: 1rem;
     font-weight: 700;
-    color: #124261;
+    color: #000;
     margin-bottom: 1.5rem;
   }
 
   h3 {
-    font-size: 1.4rem;
+    font-size: 0.8rem;
     font-weight: bold;
-    color: #124261;
+    color: #000;
     margin: 0 1rem;
   }
 
   h4 {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: #ff8f00;
+    color: #000;
     margin: 1.5rem 0;
   }
 }
@@ -45,9 +45,11 @@
 /* Counter buttons */
 button.btn-danger,
 button.btn-success {
-  width: 45px;
-  height: 45px;
+  width: 35px;
+  height: 35px;
   font-size: 1.25rem;
+  background-color: transparent !important;
+  color: #000;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -55,13 +57,7 @@ button.btn-success {
   transition: all 0.2s ease;
 }
 
-button.btn-danger:hover {
-  background: darken(#dc3545, 5%);
-}
 
-button.btn-success:hover {
-  background: darken(#28a745, 5%);
-}
 
 /* Action buttons */
 button.btn-primary {

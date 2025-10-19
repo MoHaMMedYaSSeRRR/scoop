@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, interval, takeWhile } from 'rxjs';
+import { BehaviorSubject, interval, Subscription } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ProcessingService {
@@ -21,6 +21,9 @@ export class ProcessingService {
   private networkSpeedSource = new BehaviorSubject<number>(0);
   networkSpeed$ = this.networkSpeedSource.asObservable();
 
+  private progressSub?: Subscription;
+
+  // ✅ Setter methods (required!)
   setLoading(state: boolean) {
     this.isLoadingSource.next(state);
   }
@@ -45,42 +48,48 @@ export class ProcessingService {
     this.networkSpeedSource.next(network);
   }
 
-  // 🟢 محاكاة السرعات العشوائية
-  startSpeedSimulation() {
-    interval(1000).subscribe(() => {
-      const upload = this.randomInRange(9, 11);     // MB/s
-      const download = this.randomInRange(9, 11);   // MB/s
-      const network = this.randomInRange(145, 155); // Mbps
-
-      this.setUploadSpeed(upload);
-      this.setDownloadSpeed(download);
-      this.setNetworkSpeed(network);
-    });
-  }
-
+  // ✅ Random speed generator
   private randomInRange(min: number, max: number): number {
     return parseFloat((Math.random() * (max - min) + min).toFixed(2));
   }
 
-  startProcessing(totalTime: number = 20) {
+  // ✅ Simulate network speeds
+  startSpeedSimulation() {
+    interval(1000).subscribe(() => {
+      this.setUploadSpeed(this.randomInRange(9, 11));     // MB/s
+      this.setDownloadSpeed(this.randomInRange(9, 11));   // MB/s
+      this.setNetworkSpeed(this.randomInRange(145, 155)); // Mbps
+    });
+  }
+
+  // ✅ Start simulated progress
+  startProcessing(totalTime: number = 60): Subscription {
     this.setLoading(true);
     this.setProgress(0);
     this.setRemainingTime(totalTime);
 
     let elapsed = 0;
-    const tick = 1000;
 
-    interval(tick)
-      .pipe(takeWhile(() => elapsed < totalTime))
-      .subscribe(() => {
-        elapsed++;
-        const progress = Math.min(100, Math.round((elapsed / totalTime) * 100));
-        this.setProgress(progress);
-        this.setRemainingTime(totalTime - elapsed);
+    // stop any previous progress loop
+    this.progressSub?.unsubscribe();
 
-        if (progress === 100) {
-          this.setLoading(false);
-        }
-      });
+    this.progressSub = interval(1000).subscribe(() => {
+      elapsed++;
+      const progress = Math.min(100, Math.round((elapsed / totalTime) * 100));
+      this.setProgress(progress);
+      this.setRemainingTime(totalTime - elapsed);
+
+      if (elapsed >= totalTime) this.stopProcessing();
+    });
+
+    return this.progressSub;
+  }
+
+  // ✅ Stop progress cleanly
+  stopProcessing() {
+    this.progressSub?.unsubscribe();
+    this.setLoading(false);
+    this.setProgress(100);
+    this.setRemainingTime(0);
   }
 }
