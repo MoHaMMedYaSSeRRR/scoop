@@ -140,27 +140,54 @@ const excelData: any[] = XLSX.utils.sheet_to_json(sheet, { raw: true, defval: ""
 
   
 
- downloadUpdatedExcel() {
+downloadUpdatedExcel() {
   if (!this.updatedData || this.updatedData.length === 0) {
     console.warn('⚠️ No data to export. Make sure to upload and process a valid Excel file first.');
     return;
   }
 
+  // 🔹 Create worksheet from JSON
   const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(this.updatedData);
+
+  // 🔹 Apply red background to rows with missing ID or score
+  const range = XLSX.utils.decode_range(ws['!ref'] || '');
+  for (let R = range.s.r + 1; R <= range.e.r; ++R) { // skip header (row 0)
+    const idCellRef = XLSX.utils.encode_cell({ r: R, c: 0 });
+    const scoreCellRef = XLSX.utils.encode_cell({ r: R, c: 1 });
+
+    const id = ws[idCellRef]?.v;
+    const score = ws[scoreCellRef]?.v;
+
+    // 🟥 Check: has ID but no score OR has score but no ID
+    if ((id && !score) || (!id && score)) {
+      for (let C = 0; C <= range.e.c; ++C) {
+        const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+        if (!ws[cellRef]) continue;
+        ws[cellRef].s = {
+          fill: { fgColor: { rgb: 'FFCCCC' } }, // light red background
+        };
+      }
+    }
+  }
+
+  // 🔹 Create workbook and append sheet
   const wb: XLSX.WorkBook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Final Scores');
 
+  // 🔹 Write and save Excel
   const excelBuffer: any = XLSX.write(wb, {
     bookType: 'xlsx',
-    type: 'array'
+    type: 'array',
+    cellStyles: true, // ✅ Required for color
   });
 
   const data: Blob = new Blob([excelBuffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
   });
 
   FileSaver.saveAs(data, 'final_result.xlsx');
   console.log('📥 File Download Triggered');
 }
+
 
 }

@@ -12,7 +12,7 @@
       >
         <div class="logo text-center">
           <img
-            src="../../../assets/image/pdf 2.png"
+            src="assets/image/pdf 2.png"
             alt="Upload PDF"
             style="cursor: pointer"
           />
@@ -58,203 +58,289 @@
       
     </div>
     <!-- Step 2: PDF Display and Question Form -->
-    <div
-      *ngIf="step2"
-      class="step2 justify-content-between overflow-hidden align-items-center"
-    >
-      <div class="row g-2">
-        <div class="col-md-6 text-end p-0 m-0">
-          <div class="show position-relative p-0 m-0">
-            <img
-              *ngIf="pdfImages.length > 0"
-              [src]="pdfImages[currentPage]"
-              (mousedown)="onMouseDown($event)"
-              (mousemove)="onMouseMove($event)"
-              (mouseup)="onMouseUp()"
-              (mouseleave)="onMouseUp()"
-            />
+   <div *ngIf="step2" class="step2 justify-content-between align-items-center">
+  <div class="row g-2 w-100 mx-auto">
+    <!-- Left side: PDF display -->
+    <div class="col-md-6 text-end p-0 m-0">
+      <div class="show position-relative p-0 m-0">
+        <div
+          class="pdf-container position-relative"
+          [style.overflow]="'hidden'"
+          style="touch-action: none;"
+        >
+          <img
+            *ngIf="pdfImages.length > 0"
+            [src]="pdfImages[currentPage]"
+            [style.transform]="
+              'scale(' + scale + ') translate(' + translateX + 'px,' + translateY + 'px)'
+            "
+            [style.transformOrigin]="transformOrigin"
+            [style.transition]="'transform 0.15s ease-out'"
 
-     
-            <div
-              *ngFor="
-                let box of selectionBoxesByPage[currentPage];
-                let i = index
-              "
-              [ngClass]="{
-                'selection-box': true,
-                greenboxes: !box.submitted,
-                blueboxes: box.submitted
-              }"
-              [ngStyle]="{
-                left: box.x + 'px',
-                top: box.y + 'px',
-                width: box.width + 'px',
-                height: box.height + 'px'
-              }"
-            >
-              <i
-                role="button"
-                class="fa fa-trash text-danger"
-                *ngIf="!box.submitted"
-                (click)="removeBox(i, $event)"
-              ></i>
-            </div>
+            (wheel)="onWheelZoom($event)"
+            (mousedown)="onMouseDown($event)"
+            (mousemove)="onMouseMove($event)"
+            (mouseup)="onMouseUp()"
+            (mouseleave)="onMouseUp()"
+            (touchstart)="onTouchStartZoom($event)"
+            (touchmove)="onTouchMoveZoom($event)"
+            (touchend)="onTouchEndZoom()"
+          />
 
-            <!-- Render current selection box while dragging -->
-            <div
-              class="selection-box"
-              *ngIf="isSelecting"
-              [ngStyle]="{
-                left: selectionBox.x + 'px',
-                top: selectionBox.y + 'px',
-                width: selectionBox.width + 'px',
-                height: selectionBox.height + 'px'
-              }"
-            ></div>
-            <div
-              class="selection-boxx global"
-              *ngIf="
-                globalSelectionBoxesByPage[currentPage] &&
-                globalSelectionBoxesByPage[currentPage].width > 0
-              "
-              [ngStyle]="{
-                left: globalSelectionBoxesByPage[currentPage].x + 'px',
-                top: globalSelectionBoxesByPage[currentPage].y + 'px',
-                width: globalSelectionBoxesByPage[currentPage].width + 'px',
-                height: globalSelectionBoxesByPage[currentPage].height + 'px'
-              }"
-            >
-              <div class="score-line">
-                <div class="score-label">
-                  {{ currentScore }}
-                </div>
-                <div class="final-score">
-                  {{ finalScore }}
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- Selection boxes -->
           <div
-            class="arrows d-flex justify-content-between align-items-center w-50 m-auto mt-3 text-center"
+            *ngFor="let box of selectionBoxesByPage[currentPage]; let i = index"
+            [ngClass]="{
+              'selection-box': true,
+              greenboxes: !box.submitted,
+              blueboxes: box.submitted
+            }"
+            [ngStyle]="{
+              left: box.x + 'px',
+              top: box.y + 'px',
+              width: box.width + 'px',
+              height: box.height + 'px'
+            }"
           >
-            <span
+            <i
               role="button"
-              (click)="goToPreviousPage()"
-              [class.disabled]="currentPage === 0"
-            >
-              <i class="fa fa-arrow-left"></i>
-            </span>
-            <span>{{ currentPage + 1 }} / {{ userPageCount }}</span>
-            <span
-              role="button"
-              (click)="goToNextPage()"
-              [class.disabled]="currentPage === userPageCount - 1"
-            >
-              <i class="fa fa-arrow-right"></i>
-            </span>
+              class="fa fa-trash text-danger"
+              *ngIf="!box.submitted"
+              (click)="removeBox(i, $event)"
+            ></i>
+          </div>
+
+          <!-- Render current selection box while dragging -->
+          <div
+            class="selection-box"
+            *ngIf="isSelecting"
+            [ngStyle]="{
+              left: selectionBox.x + 'px',
+              top: selectionBox.y + 'px',
+              width: selectionBox.width + 'px',
+              height: selectionBox.height + 'px'
+            }"
+          ></div>
+
+          <!-- Global selection box -->
+          <div
+            class="selection-boxx global"
+            *ngIf="
+              globalSelectionBoxesByPage[currentPage] &&
+              globalSelectionBoxesByPage[currentPage].width > 0
+            "
+            [ngStyle]="{
+              left: globalSelectionBoxesByPage[currentPage].x + 'px',
+              top: globalSelectionBoxesByPage[currentPage].y + 'px',
+              width: globalSelectionBoxesByPage[currentPage].width + 'px',
+              height: globalSelectionBoxesByPage[currentPage].height + 'px'
+            }"
+          >
+            <div class="score-line">
+              <div class="score-label">{{ currentScore }}</div>
+              <div class="final-score">{{ finalScore }}</div>
+            </div>
           </div>
         </div>
-        
-     <div class="col-md-5" dir="rtl">
+      </div>
+
+      <!-- Page navigation arrows -->
+      <div
+        class="arrows d-flex justify-content-between align-items-center w-50 m-auto mt-3 text-center"
+      >
+        <span role="button" (click)="goToPreviousPage()" [class.disabled]="currentPage === 0">
+          <i class="fa fa-arrow-left"></i>
+        </span>
+        <span>{{ currentPage + 1 }} / {{ userPageCount }}</span>
+        <span
+          role="button"
+          (click)="goToNextPage()"
+          [class.disabled]="currentPage === userPageCount - 1"
+        >
+          <i class="fa fa-arrow-right"></i>
+        </span>
+      </div>
+    </div>
+
+    <!-- Right side: form -->
+   <div class="col-md-5" dir="rtl">
+  <!-- Title -->
   <h3 *ngIf="!isshow" class="mb-2 text-end">حدد مكان الدرجة</h3>
+
+  <!-- Main Form Section -->
   <div *ngIf="isshow" class="content text-end ps-md-3 p-1">
     <h3 class="mb-2">ادخل البيانات التالية لكل صفحة في الامتحان</h3>
 
     <form [formGroup]="getCurrentQuestionFormGroup()" (ngSubmit)="onCurrentQuestionSubmit()">
       <div class="sidebar">
-
         <!-- رقم الجلوس -->
-        <button class="btn blue" type="button"
+        <button
+          class="btn blue"
+          type="button"
           (click)="toggleTab('رقم الجلوس'); getCurrentQuestionFormGroup().patchValue({ marked: 'false' })">
           رقم الجلوس
         </button>
+
         <div *ngIf="openTab === 'رقم الجلوس'" class="tab-content">
-          <button class="btn green" type="button" (click)="confirm('رقم الجلوس'); selectedIdType = 'student_id' ;onCurrentQuestionSubmit()">موافق</button>
+          <button
+            class="btn green"
+            type="button"
+            (click)="confirm('رقم الجلوس'); selectedIdType = 'student_id'; onCurrentQuestionSubmit()">
+            موافق
+          </button>
         </div>
 
         <!-- الخيارات -->
-        <button class="btn blue" type="button"
+        <button
+          class="btn blue"
+          type="button"
           (click)="toggleTab('الخيارات'); getCurrentQuestionFormGroup().patchValue({ marked: 'true', gradedByTeacher: 'false' })">
           الخيارات
         </button>
+
         <div *ngIf="openTab === 'الخيارات'" class="tab-content">
+          <!-- Orientation -->
           <div class="orientation-buttons">
-            <button type="button" [class.active]="selectedOrientation === 'horizontal'"
-              (click)="selectOrientation('horizontal')">أفقي</button>
-            <button type="button" [class.active]="selectedOrientation === 'vertical'"
-              (click)="selectOrientation('vertical')">عمودي</button>
+            <button
+              type="button"
+              [class.active]="selectedOrientation === 'horizontal'"
+              (click)="selectOrientation('horizontal')">
+              أفقي
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedOrientation === 'vertical'"
+              (click)="selectOrientation('vertical')">
+              عمودي
+            </button>
           </div>
 
+          <!-- Direction -->
           <div *ngIf="selectedOrientation === 'horizontal'" class="direction-buttons my-2">
-            <button type="button" [class.active]="selectedDirection === 'rtl'" (click)="selectDirection('rtl')">من
-              اليمين للشمال</button>
-            <button type="button" [class.active]="selectedDirection === 'ltr'" (click)="selectDirection('ltr')">من
-              الشمال لليمين</button>
-           
+            <button
+              type="button"
+              [class.active]="selectedDirection === 'rtl'"
+              (click)="selectDirection('rtl')">
+              من اليمين للشمال
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedDirection === 'ltr'"
+              (click)="selectDirection('ltr')">
+              من الشمال لليمين
+            </button>
           </div>
 
+          <!-- Inputs -->
           <input type="number" class="form-control my-2" formControlName="choices" placeholder="عدد الخيارات" />
           <input type="number" class="form-control my-2" formControlName="entities_count" placeholder="عدد الفقرات" />
           <input type="number" class="form-control my-2" formControlName="worth" placeholder="درجة الفقرة" />
 
-          <button class="btn green" type="button" (click)="confirm('الخيارات') ;onCurrentQuestionSubmit()">موافق</button>
+          <button
+            class="btn green"
+            type="button"
+            (click)="confirm('الخيارات'); onCurrentQuestionSubmit()">
+            موافق
+          </button>
         </div>
 
         <!-- الحاق ربط -->
-        <button class="btn blue" type="button"
+        <button
+          class="btn blue"
+          type="button"
           (click)="toggleTab('الحاق ربط'); getCurrentQuestionFormGroup().patchValue({ roi_type: 'complementary' })">
           الحاق ربط
         </button>
+
         <div *ngIf="openTab === 'الحاق ربط'" class="tab-content">
           <div class="orientation-buttons">
-            <button type="button" [class.active]="selectedOrientation === 'horizontal'"
-              (click)="selectOrientation('horizontal')">أفقي</button>
-            <button type="button" [class.active]="selectedOrientation === 'vertical'"
-              (click)="selectOrientation('vertical')">عمودي</button>
+            <button
+              type="button"
+              [class.active]="selectedOrientation === 'horizontal'"
+              (click)="selectOrientation('horizontal')">
+              أفقي
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedOrientation === 'vertical'"
+              (click)="selectOrientation('vertical')">
+              عمودي
+            </button>
           </div>
 
           <div *ngIf="selectedOrientation === 'horizontal'" class="direction-buttons my-2">
-            <button type="button" [class.active]="selectedDirection === 'rtl'" (click)="selectDirection('rtl')">من
-              اليمين للشمال</button>
-            <button type="button" [class.active]="selectedDirection === 'ltr'" (click)="selectDirection('ltr')">من
-              الشمال لليمين</button>
-            
+            <button
+              type="button"
+              [class.active]="selectedDirection === 'rtl'"
+              (click)="selectDirection('rtl')">
+              من اليمين للشمال
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedDirection === 'ltr'"
+              (click)="selectDirection('ltr')">
+              من الشمال لليمين
+            </button>
           </div>
 
           <input type="number" class="form-control my-2" formControlName="choices" placeholder="عدد الخيارات" />
           <input type="number" class="form-control my-2" formControlName="entities_count" placeholder="عدد الفقرات" />
           <input type="number" class="form-control my-2" formControlName="worth" placeholder="درجة الفقرة" />
 
-          <button class="btn green" type="button" (click)="confirm('الحاق ربط') ;onCurrentQuestionSubmit()">موافق</button>
+          <button
+            class="btn green"
+            type="button"
+            (click)="confirm('الحاق ربط'); onCurrentQuestionSubmit()">
+            موافق
+          </button>
         </div>
 
         <!-- سؤال مقالي -->
-        <button class="btn blue" type="button"
+        <button
+          class="btn blue"
+          type="button"
           (click)="toggleTab('سؤال مقالي'); getCurrentQuestionFormGroup().patchValue({ gradedByTeacher: 'true' })">
           سؤال مقالي
         </button>
-        <div *ngIf="openTab === 'سؤال مقالي'" class="tab-content">
-         
 
+        <div *ngIf="openTab === 'سؤال مقالي'" class="tab-content">
           <div *ngIf="selectedOrientation === 'horizontal'" class="direction-buttons my-2">
-           <button type="button" [class.active]="selectedDirection === 'rtl'" (click)="selectDirection('rtl')">من
-              اليمين للشمال</button>
-            <button type="button" [class.active]="selectedDirection === 'ltr'" (click)="selectDirection('ltr')">من
-              الشمال لليمين</button>
-            
+            <button
+              type="button"
+              [class.active]="selectedDirection === 'rtl'"
+              (click)="selectDirection('rtl')">
+              من اليمين للشمال
+            </button>
+            <button
+              type="button"
+              [class.active]="selectedDirection === 'ltr'"
+              (click)="selectDirection('ltr')">
+              من الشمال لليمين
+            </button>
           </div>
 
-          <input type="text" class="form-control my-2" formControlName="choices" placeholder="0-1-2-3-4-5-6" />
+          <input
+            type="text"
+            class="form-control my-2"
+            formControlName="choices"
+            placeholder="0-1-2-3-4-5-6" />
 
-          <button class="btn green" type="button" (click)="confirm('سؤال مقالي') ;onCurrentQuestionSubmit()">موافق</button>
+          <button
+            class="btn green"
+            type="button"
+            (click)="confirm('سؤال مقالي'); onCurrentQuestionSubmit()">
+            موافق
+          </button>
         </div>
-
       </div>
     </form>
   </div>
 
+  <!-- التالي Button -->
   <div *ngIf="!isshow" class="w-100 text-center">
-    <button type="button" class="sendBtn ms-1 p-2 border-0 text-white m-auto text-center mt-3"
+    <button
+      type="button"
+      class="sendBtn next ms-1 p-2 border-0 text-white m-auto text-center mt-3"
       (click)="onCurrentQuestionSubmit()">
       التالي
     </button>
@@ -262,20 +348,15 @@
 </div>
 
 
-
-
-
-        <button
-          type="button"
-          class="sendBtn p-2 border-0 text-white d-block me-auto mt-3"
-          (click)="onFinalSubmit()"
-        >
-          التصحيح والمراجعة
-        </button>
-      </div>
-    </div>
+    <button
+      type="button"
+      class="sendBtn p-2 border-0 text-white d-block me-auto mt-3"
+      (click)="onFinalSubmit()"
+    >
+      التصحيح والمراجعة
+    </button>
   </div>
-</section>
+</div>
 
 <section *ngIf="ispay">
   <app-payment >

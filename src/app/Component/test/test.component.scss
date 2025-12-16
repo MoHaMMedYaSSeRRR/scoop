@@ -59,13 +59,19 @@ img {
   .show {
     width: 600px !important;
     position: relative;
-    overflow: hidden;
+    overflow: hidden; // change from auto → hidden for smoother zoom
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
     img {
       width: 600px !important;
       background-color: #007bff;
       cursor: crosshair;
       z-index: 120 !important;
+      transform-origin: center center;
+      transition: transform 0.2s ease;
+      touch-action: none; // prevent browser pinch-zoom
     }
   }
 
@@ -96,6 +102,7 @@ img {
     padding: 10px;
   }
 }
+
 
 /* Score line */
 .score-line {
@@ -261,5 +268,17 @@ input[type="number"] {
     justify-content: end;
     align-items: end;
     flex-direction: row-reverse;
+  }
+}
+@media (max-width:768px) {
+  .step2{
+    flex-direction: column;
+    button{
+      width:100%;
+    }
+    .next{
+      width:50%;
+
+    }
   }
 }

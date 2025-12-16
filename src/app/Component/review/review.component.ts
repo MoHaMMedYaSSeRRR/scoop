@@ -325,7 +325,22 @@ async reviewOMR(): Promise<void> {
             this.processingService.stopProcessing();
 
             if (res.success && res.response) {
-              window.open(res.response, '_blank');
+              const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+              if (isMobile) {
+                // 📱 لو موبايل → افتح الرابط في نفس الصفحة
+                window.location.href = res.response;
+              } else {
+                // 💻 لو كمبيوتر → افتح في تاب جديدة
+                const previewTab = window.open('', '_blank');
+                if (previewTab) {
+                  previewTab.location.href = res.response;
+                } else {
+                  console.error('❌ لم يتم فتح التبويب (قد يكون المتصفح منع النوافذ المنبثقة).');
+                }
+              }
+
+              // ✅ باقي العمليات بعد الفتح
               this._UploadService.setOmrIds(res.ids);
               this.finalSheetComponent.omrIds = res.ids;
               this.finalSheetComponent.onSubmit();
@@ -357,8 +372,6 @@ async reviewOMR(): Promise<void> {
 
 
 
-
-
   async checkRemainingpages() {  
     try {
       const userPackageId = localStorage.getItem('userPackageId');
@@ -382,81 +395,6 @@ async reviewOMR(): Promise<void> {
     this.finalSheetComponent.downloadUpdatedExcel();
   }
 
-  // getAllPagesWithErrors() {
-  //   this.errorQuestions = [];
-  //   this.errorBorders = {}; // Ensure it's an object, not an array
-  //   const errorPagesSet = new Set<number>();
-
-  //   Object.values(this.omrResponse).forEach((pageData: any) => {
-  //     const pageErrors: {
-  //       x: number;
-  //       y: number;
-  //       width: number;
-  //       height: number;
-  //       color: string;
-  //     }[] = []; // Explicit type
-
-  //     Object.entries(pageData.questions).forEach(
-  //       ([questionNumber, questionData]: [string, any]) => {
-  //         questionData.groups.forEach((group: any, groupIndex: number) => {
-  //           if (group.errors) {
-  //             this.errorQuestions.push({
-  //               page: pageData.page_number,
-  //               questionNumber,
-  //               subQuestion: groupIndex + 1,
-  //               errors: group.errors,
-  //             });
-
-  //             errorPagesSet.add(pageData.page_number);
-  //             // Ensure we have valid bubbles
-  //             if (!group.bubbles || group.bubbles.length === 0) return;
-
-  //             const bubbles = group.bubbles.map((b: any) => b.circle);
-  //             const minX = Math.min(...bubbles.map((b: any) => b[0]));
-  //             const minY = Math.min(...bubbles.map((b: any) => b[1]));
-  //             const maxX = Math.max(...bubbles.map((b: any) => b[0]));
-  //             const maxY = Math.max(...bubbles.map((b: any) => b[1]));
-
-  //             // Add dynamic padding for small areas
-  //             const padding = 10;
-  //             const width = maxX - minX + padding;
-  //             const height = maxY - minY + padding;
-
-  //             // Determine border color
-  //             let borderColor = '#ff0000'; // Default: No answer
-  //             if (group.errors === "There's more than one answer") {
-  //               borderColor = '#0000ff'; // Multiple answers
-  //             }
-
-  //             // Store errors per page
-  //             pageErrors.push({
-  //               x: minX - padding / 2,
-  //               y: minY - padding / 2,
-  //               width: width,
-  //               height: height,
-  //               color: borderColor,
-  //             });
-  //           }
-  //         });
-  //       }
-  //     );
-
-  //     // Assign page-specific errors
-  //     if (pageErrors.length > 0) {
-  //       this.errorBorders[pageData.page_number] = pageErrors;
-  //     }
-  //   });
-
-  //   this.errorPages = Array.from(errorPagesSet).sort((a, b) => a - b);
-
-  //   if (this.errorPages.length > 0) {
-  //     this.currentErrorIndex = 0;
-  //     this.currentPage = this.errorPages[this.currentErrorIndex];
-  //   }
-
-  //   console.log('🚨 Pages with errors:', this.errorPages);
-  //   console.log('🖼️ Error Borders:', this.errorBorders);
-  // }
 
   pageVisited: { [pageNumber: number]: boolean } = {}; // 👈 track which pages were counted
 
@@ -618,110 +556,6 @@ async reviewOMR(): Promise<void> {
     return closestQuestionKey;
   }
 
-  // updateBubbleSelection(
-  //   offsetX: number,
-  //   offsetY: number,
-  //   foundQuestionData: any,
-  //   questionKey: string
-  // ) {
-  //   const circleRadius = 8;
-  //   const tolerance = 12;
-  //   let bestMatch: any = null;
-  //   let bestDistance = Infinity;
-  //   let foundGroupIndex: number | null = null;
-
-  //   for (let groupIndex = 0; groupIndex < foundQuestionData.groups.length; groupIndex++) {
-  //     const group = foundQuestionData.groups[groupIndex];
-  //     for (const bubble of group.bubbles) {
-  //       const [bubbleX, bubbleY, bubbleRadius] = bubble.circle;
-  //       const distance = Math.sqrt((offsetX - bubbleX) ** 2 + (offsetY - bubbleY) ** 2);
-  //       if (distance <= bubbleRadius + tolerance) {
-  //         if (distance < bestDistance) {
-  //           bestDistance = distance;
-  //           bestMatch = bubble;
-  //           foundGroupIndex = groupIndex;
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   if (bestMatch && foundGroupIndex !== null) {
-  //     // console.log(`✅ Closest Bubble Found in Group ${foundGroupIndex} at (${bestMatch.circle[0]}, ${bestMatch.circle[1]})`);
-  //     // console.log(`🔍 Distance from click: ${bestDistance}px`);
-
-  //     // Find Model Answer Page (Page 1)
-  //     const modelAnswerPage = Object.values(this.omrResponse).find(
-  //       (p: any) => p.page_number === 1
-  //     ) as { questions: any }; // Add correct type here
-  //     if (!modelAnswerPage) {
-  //       // console.warn('⚠️ Model Answer Page (Page 1) Not Found!');
-  //       return;
-  //     }
-
-  //     // console.log('📄 Model Answer Page Structure:', modelAnswerPage);
-  //     // console.log('🔍 Searching for Question Key:', questionKey);
-
-  //     if (!modelAnswerPage.questions || !modelAnswerPage.questions[questionKey]) {
-  //       console.warn(`⚠️ No matching question '${questionKey}' found in Model Answer Page!`);
-  //       console.log('🧐 Available Questions:', Object.keys(modelAnswerPage.questions));
-  //       return;
-  //     }
-
-  //     const modelQuestion = modelAnswerPage.questions[questionKey];
-
-  //     // Find the corresponding group in Model Answer Page
-  //     const modelGroup = modelQuestion.groups[foundGroupIndex];
-  //     if (!modelGroup) {
-  //       // console.warn('⚠️ No matching group found in Model Answer Page!');
-  //       return;
-  //     }
-
-  //     // Check if the selected bubble is correct
-  //     let isCorrect = false;
-  //     for (const bubble of modelGroup.bubbles) {
-  //       console.log(bestMatch)
-  //       if (bubble.choice === bestMatch.choice) {
-  //         isCorrect = bubble.selected === true; // Bubble is correct only if selected in Page 1
-  //         break;
-  //       }
-  //     }
-
-  //     // Unselect previously selected bubble in the same group
-  //     foundQuestionData.groups[foundGroupIndex].bubbles.forEach((bubble: any) => {
-  //       bubble.selected = false;
-  //       console.log(bubble)
-  //     });
-  //     // console.log(foundQuestionData.groups[foundGroupIndex].errors)
-
-  //     // Select new bubble
-  //     bestMatch.selected = true;
-
-  //     // ✅ Clear error message when a bubble is selected
-  //     if (foundQuestionData.groups[foundGroupIndex].errors) {
-  //       // console.log('🔄 Removing error message:',foundQuestionData.groups[foundGroupIndex].errors);
-  //       foundQuestionData.groups[foundGroupIndex].errors = null;
-  //     }
-  //     // console.log(foundQuestionData.groups[foundGroupIndex].errors);
-
-  //     // Store Selection for Dynamic Update
-  //     if (!this.selectionCircles[this.currentPage]) {
-  //       this.selectionCircles[this.currentPage] = [];
-  //     }
-
-  //     // 🔥 Use bestMatch.circle coordinates instead of offsetX and offsetY
-  //     this.selectionCircles[this.currentPage].push({
-  //       x: bestMatch.circle[0], // Use found bubble X
-  //       y: bestMatch.circle[1], // Use found bubble Y
-  //       radius: circleRadius,
-  //       isCorrect,
-  //     });
-
-  //     // console.log(`🎯 Selected choice: ${bestMatch.choice} → ${isCorrect ? '✅ Correct' : '❌ Incorrect'}`);
-  //     // console.log('🚀 Updated foundQuestionData:', foundQuestionData);
-  //   } else {
-  //     console.warn(`❌ No valid bubble found near (${offsetX}, ${offsetY}).`);
-  //   }
-  // }
   updateBubbleSelection(
     offsetX: number,
     offsetY: number,
@@ -925,19 +759,7 @@ async reviewOMR(): Promise<void> {
     console.log(`🚨 Pages with errors: ${this.errorPages.join(', ')}`);
   }
 
-  // goToPreviousPage() {
-  //   if (this.currentErrorIndex > 0) {
-  //     this.currentErrorIndex--;
-  //     this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to previous error page
-  //   }
-  // }
 
-  // goToNextPage() {
-  //   if (this.currentErrorIndex < this.errorPages.length - 1) {
-  //     this.currentErrorIndex++;
-  //     this.currentPage = this.errorPages[this.currentErrorIndex]; // Move to next error page
-  //   }
-  // }
   getAllPagesWithErrors() {
     this.errorQuestions = [];
     this.errorQuestionsByPage = {};
@@ -1120,6 +942,22 @@ async reviewOMR(): Promise<void> {
   }
 
 
+zoomLevel: number = 1;
+zoomStep: number = 0.2;
+maxZoom: number = 2;
+minZoom: number = 0.6;
+
+zoomIn() {
+  if (this.zoomLevel < this.maxZoom) {
+    this.zoomLevel = parseFloat((this.zoomLevel + this.zoomStep).toFixed(1));
+  }
+}
+
+zoomOut() {
+  if (this.zoomLevel > this.minZoom) {
+    this.zoomLevel = parseFloat((this.zoomLevel - this.zoomStep).toFixed(1));
+  }
+}
 
 
 }

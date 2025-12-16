@@ -1,18 +1,31 @@
 .show {
-  width:600px !important;
-  // height: 800px;
+  width: 600px !important;
   position: relative;
   overflow: hidden;
+  cursor: grab;
 
   img {
-    width: 600px !important;
-    // height: 100%;
-    // height:800px;
-    // background:#09c;
+    width: 100%;
+    transition: transform 0.2s ease-out;
     cursor: crosshair;
-    // object-fit: contain;  
+    transform-origin: center center;
+    user-select: none;
+    -webkit-user-drag: none;
+    display: block;
+  }
+
+  &.zooming img {
+    cursor: grabbing;
   }
 }
+
+/* Optional responsive tweak */
+@media (max-width: 768px) {
+  .show {
+    width: 100% !important;
+  }
+}
+
 
 .pagination-controls {
     display: flex;

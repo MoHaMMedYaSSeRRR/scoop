@@ -20,7 +20,7 @@ private addPages = new BehaviorSubject<any>(false);
     private _HttpClient:HttpClient
   ) { }
   upload(data: any): Observable<any> {
-    return this._HttpClient.post('https://scoob.cc/api/step-1', data);
+    return this._HttpClient.post('https://omr.shiftcodes.net/api/step-1', data);
   }
   // upload(data: any): Observable<any> {
   //   return this._HttpClient.post('/scoob/step-1', data);
@@ -72,7 +72,7 @@ private addPages = new BehaviorSubject<any>(false);
     return this.selectedBoxSubject.value;  
   }
    reviewOmr(data:any): Observable<any> {
-    return this._HttpClient.post('https://scoob.cc/api/final', data);
+    return this._HttpClient.post('https://omr.shiftcodes.net/api/final', data);
   }
   // reviewOmr(data: any): Observable<any> {
   //   return this._HttpClient.post(`/scoob/final`, data);

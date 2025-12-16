@@ -23,6 +23,7 @@ import { TestComponent } from './Component/test/test.component';
 import { TestssComponent } from './Component/testss/testss.component';
 import { ProcessingScreenComponentComponent } from './Component/processing-screen-component/processing-screen-component.component';
 import { AddPagesComponent } from './Component/add-pages/add-pages.component';
+import { HomeComponent } from './Component/home/home.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -38,6 +39,7 @@ import { AddPagesComponent } from './Component/add-pages/add-pages.component';
     TestssComponent,
     ProcessingScreenComponentComponent,
     AddPagesComponent,
+    HomeComponent,
   ],
   imports: [
     BrowserModule,

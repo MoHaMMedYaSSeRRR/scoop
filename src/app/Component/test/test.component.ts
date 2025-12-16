@@ -905,85 +905,177 @@ onCurrentQuestionSubmit(): void {
     };
   } = {};
 
-  onMouseDown(event: MouseEvent): void {
-    const imgElement = event.target as HTMLImageElement;
-    const rect = imgElement.getBoundingClientRect();
+  // onMouseDown(event: MouseEvent): void {
+  //   const imgElement = event.target as HTMLImageElement;
+  //   const rect = imgElement.getBoundingClientRect();
 
-    const imgWidth = 600; // الصورة بعرض ثابت 600px
-    const aspectRatio = imgElement.naturalHeight / imgElement.naturalWidth; // نسبة الأبعاد الحقيقية
-    const imgHeight = imgWidth * aspectRatio; // حساب الارتفاع بناءً على العرض
+  //   const imgWidth = 600; // الصورة بعرض ثابت 600px
+  //   const aspectRatio = imgElement.naturalHeight / imgElement.naturalWidth; // نسبة الأبعاد الحقيقية
+  //   const imgHeight = imgWidth * aspectRatio; // حساب الارتفاع بناءً على العرض
 
-    // ضبط الإحداثيات بحيث يكون (x=0) عند حافة اليسار و(y=0) عند الحافة العلوية
-    this.startX = ((event.clientX - rect.left) / rect.width) * imgWidth;
-    this.startY = ((event.clientY - rect.top) / rect.height) * imgHeight;
+  //   // ضبط الإحداثيات بحيث يكون (x=0) عند حافة اليسار و(y=0) عند الحافة العلوية
+  //   this.startX = ((event.clientX - rect.left) / rect.width) * imgWidth;
+  //   this.startY = ((event.clientY - rect.top) / rect.height) * imgHeight;
 
-    this.isSelecting = true;
-    this.selectionBox = { x: this.startX, y: this.startY, width: 0, height: 0 };
-  }
+  //   this.isSelecting = true;
+  //   this.selectionBox = { x: this.startX, y: this.startY, width: 0, height: 0 };
+  // }
 
-  onMouseMove(event: MouseEvent): void {
-    if (this.isSelecting) {
-      const imgElement = event.target as HTMLImageElement;
-      const rect = imgElement.getBoundingClientRect();
+  // onMouseMove(event: MouseEvent): void {
+  //   if (this.isSelecting) {
+  //     const imgElement = event.target as HTMLImageElement;
+  //     const rect = imgElement.getBoundingClientRect();
 
-      const imgWidth = 600; // عرض الصورة القياسي
-      const aspectRatio = imgElement.naturalHeight / imgElement.naturalWidth; // نسبة أبعاد الصورة
-      const imgHeight = imgWidth * aspectRatio; // حساب الارتفاع بناءً على العرض
+  //     const imgWidth = 600; // عرض الصورة القياسي
+  //     const aspectRatio = imgElement.naturalHeight / imgElement.naturalWidth; // نسبة أبعاد الصورة
+  //     const imgHeight = imgWidth * aspectRatio; // حساب الارتفاع بناءً على العرض
 
-      // تحويل إحداثيات الماوس إلى نظام الصورة (600x auto height)
-      const currentX = ((event.clientX - rect.left) / rect.width) * imgWidth;
-      const currentY = ((event.clientY - rect.top) / rect.height) * imgHeight;
+  //     // تحويل إحداثيات الماوس إلى نظام الصورة (600x auto height)
+  //     const currentX = ((event.clientX - rect.left) / rect.width) * imgWidth;
+  //     const currentY = ((event.clientY - rect.top) / rect.height) * imgHeight;
 
-      this.selectionBox.width = Math.abs(currentX - this.startX);
-      this.selectionBox.height = Math.abs(currentY - this.startY);
-      this.selectionBox.x = Math.min(this.startX, currentX);
-      this.selectionBox.y = Math.min(this.startY, currentY);
-    }
-  }
-  onMouseUp(): void {
-    if (this.isSelecting) {
-      this.isSelecting = false;
+  //     this.selectionBox.width = Math.abs(currentX - this.startX);
+  //     this.selectionBox.height = Math.abs(currentY - this.startY);
+  //     this.selectionBox.x = Math.min(this.startX, currentX);
+  //     this.selectionBox.y = Math.min(this.startY, currentY);
+  //   }
+  // }
+  // onMouseUp(): void {
+  //   if (this.isSelecting) {
+  //     this.isSelecting = false;
 
-      if (this.isGlobal) {
-        const fixedWidth = 100;
-        const fixedHeight = 100;
+  //     if (this.isGlobal) {
+  //       const fixedWidth = 100;
+  //       const fixedHeight = 100;
 
-        this.globalSelectionBoxesByPage[this.currentPage] = {
-          x: this.selectionBox.x,
-          y: this.selectionBox.y,
-          width: fixedWidth,
-          height: fixedHeight,
-        };
+  //       this.globalSelectionBoxesByPage[this.currentPage] = {
+  //         x: this.selectionBox.x,
+  //         y: this.selectionBox.y,
+  //         width: fixedWidth,
+  //         height: fixedHeight,
+  //       };
 
-        const selectionPoints: [[number, number], [number, number]] = [
-          [this.selectionBox.x, this.selectionBox.y],
-          [this.selectionBox.x + fixedWidth, this.selectionBox.y + fixedHeight],
-        ];
+  //       const selectionPoints: [[number, number], [number, number]] = [
+  //         [this.selectionBox.x, this.selectionBox.y],
+  //         [this.selectionBox.x + fixedWidth, this.selectionBox.y + fixedHeight],
+  //       ];
 
-        this._UploadService.setSelectedBox(selectionPoints);
-        console.log(
-          'Corrected Global Selection for page',
-          this.currentPage,
-          ':',
-          this.globalSelectionBoxesByPage[this.currentPage]
-        );
-      } else {
-        if (!this.selectionBoxesByPage[this.currentPage]) {
-          this.selectionBoxesByPage[this.currentPage] = [];
-        }
+  //       this._UploadService.setSelectedBox(selectionPoints);
+  //       console.log(
+  //         'Corrected Global Selection for page',
+  //         this.currentPage,
+  //         ':',
+  //         this.globalSelectionBoxesByPage[this.currentPage]
+  //       );
+  //     } else {
+  //       if (!this.selectionBoxesByPage[this.currentPage]) {
+  //         this.selectionBoxesByPage[this.currentPage] = [];
+  //       }
 
-        const newBox = { ...this.selectionBox, submitted: false };
+  //       const newBox = { ...this.selectionBox, submitted: false };
 
-        this.selectionBoxesByPage[this.currentPage].push(newBox);
-        this.selectionBoxes.push(newBox);
-        this.visibleSelectionBoxes.push(newBox);
+  //       this.selectionBoxesByPage[this.currentPage].push(newBox);
+  //       this.selectionBoxes.push(newBox);
+  //       this.visibleSelectionBoxes.push(newBox);
 
-        console.log('Final Selection Box:', this.selectionBox);
+  //       console.log('Final Selection Box:', this.selectionBox);
+  //     }
+
+  //     this.resetSelectionBox();
+  //   }
+  // }
+onMouseDown(event: MouseEvent | TouchEvent): void {
+  event.preventDefault();
+
+  const imgElement = event.target as HTMLImageElement;
+  const rect = imgElement.getBoundingClientRect();
+
+  const imgWidth = 600;
+  const aspectRatio = imgElement.naturalHeight / imgElement.naturalWidth;
+  const imgHeight = imgWidth * aspectRatio;
+
+  // 🔹 تحديد الإحداثيات سواء بالماوس أو باللمس
+  const clientX =
+    event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
+  const clientY =
+    event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+
+  this.startX = ((clientX - rect.left) / rect.width) * imgWidth;
+  this.startY = ((clientY - rect.top) / rect.height) * imgHeight;
+
+  this.isSelecting = true;
+  this.selectionBox = { x: this.startX, y: this.startY, width: 0, height: 0 };
+}
+
+onMouseMove(event: MouseEvent | TouchEvent): void {
+  if (!this.isSelecting) return;
+  event.preventDefault();
+
+  const imgElement = event.target as HTMLImageElement;
+  const rect = imgElement.getBoundingClientRect();
+
+  const imgWidth = 600;
+  const aspectRatio = imgElement.naturalHeight / imgElement.naturalWidth;
+  const imgHeight = imgWidth * aspectRatio;
+
+  // 🔹 تحديد الإحداثيات سواء بالماوس أو باللمس
+  const clientX =
+    event instanceof MouseEvent ? event.clientX : event.touches[0].clientX;
+  const clientY =
+    event instanceof MouseEvent ? event.clientY : event.touches[0].clientY;
+
+  const currentX = ((clientX - rect.left) / rect.width) * imgWidth;
+  const currentY = ((clientY - rect.top) / rect.height) * imgHeight;
+
+  this.selectionBox.width = Math.abs(currentX - this.startX);
+  this.selectionBox.height = Math.abs(currentY - this.startY);
+  this.selectionBox.x = Math.min(this.startX, currentX);
+  this.selectionBox.y = Math.min(this.startY, currentY);
+}
+
+onMouseUp(): void {
+  if (this.isSelecting) {
+    this.isSelecting = false;
+
+    if (this.isGlobal) {
+      const fixedWidth = 100;
+      const fixedHeight = 100;
+
+      this.globalSelectionBoxesByPage[this.currentPage] = {
+        x: this.selectionBox.x,
+        y: this.selectionBox.y,
+        width: fixedWidth,
+        height: fixedHeight,
+      };
+
+      const selectionPoints: [[number, number], [number, number]] = [
+        [this.selectionBox.x, this.selectionBox.y],
+        [this.selectionBox.x + fixedWidth, this.selectionBox.y + fixedHeight],
+      ];
+
+      this._UploadService.setSelectedBox(selectionPoints);
+      console.log(
+        'Corrected Global Selection for page',
+        this.currentPage,
+        ':',
+        this.globalSelectionBoxesByPage[this.currentPage]
+      );
+    } else {
+      if (!this.selectionBoxesByPage[this.currentPage]) {
+        this.selectionBoxesByPage[this.currentPage] = [];
       }
 
-      this.resetSelectionBox();
+      const newBox = { ...this.selectionBox, submitted: false };
+      this.selectionBoxesByPage[this.currentPage].push(newBox);
+      this.selectionBoxes.push(newBox);
+      this.visibleSelectionBoxes.push(newBox);
+
+      console.log('Final Selection Box:', this.selectionBox);
     }
+
+    this.resetSelectionBox();
   }
+}
 
   setOpacityForSameName(name: string, value: any): void {
     const radios = document.querySelectorAll(
@@ -1147,4 +1239,61 @@ startProcessing() {
       }
     }, 1500);
   }
+  scale = 1;
+transformOrigin = 'center center';
+translateX = 0;
+translateY = 0;
+
+
+lastTouchDistance = 0; // 👈 Add this line
+onWheelZoom(event: WheelEvent) {
+  event.preventDefault();
+
+  const img = event.target as HTMLImageElement;
+  const rect = img.getBoundingClientRect();
+
+  // get mouse position relative to image
+  const offsetX = event.clientX - rect.left;
+  const offsetY = event.clientY - rect.top;
+  const xPercent = (offsetX / rect.width) * 100;
+  const yPercent = (offsetY / rect.height) * 100;
+
+  // set zoom center to mouse
+  this.transformOrigin = `${xPercent}% ${yPercent}%`;
+
+  // adjust zoom level
+  const delta = event.deltaY > 0 ? -0.1 : 0.1;
+  this.scale = Math.min(Math.max(this.scale + delta, 1), 4);
+}
+
+onTouchStartZoom(event: TouchEvent) {
+  if (event.touches.length === 2) {
+    event.preventDefault();
+    this.lastTouchDistance = this.getTouchDistance(event);
+  }
+}
+
+onTouchMoveZoom(event: TouchEvent) {
+  if (event.touches.length === 2) {
+    event.preventDefault();
+    const newDistance = this.getTouchDistance(event);
+    const delta = newDistance - this.lastTouchDistance;
+
+    this.scale = Math.min(Math.max(this.scale + delta / 200, 1), 4);
+    this.lastTouchDistance = newDistance;
+  }
+}
+
+onTouchEndZoom() {
+  this.lastTouchDistance = 0;
+}
+
+getTouchDistance(event: TouchEvent) {
+  const [touch1, touch2] = [event.touches.item(0), event.touches.item(1)];
+  if (!touch1 || !touch2) return 0;
+  const dx = touch2.clientX - touch1.clientX;
+  const dy = touch2.clientY - touch1.clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
 }

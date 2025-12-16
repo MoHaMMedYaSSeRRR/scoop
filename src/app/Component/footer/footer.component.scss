@@ -58,7 +58,15 @@ footer{
     .whatsapp-container {
         right: 20px;
     }
-  
+      .youtube{
+        
+        img{
+           width: 40px !important;
+    height: 40px !important;
+   
+        }
+           
+      }
   }
   h6{
     color: #fefefe;
@@ -67,3 +75,26 @@ footer{
     margin-top: 10px;
     text-align: center;
   }
+  .telegram-container {
+    position: fixed;
+    bottom: 75px;
+    right: 150px;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1200;
+  }
+  
+  .telegram-icon {
+    width: 40px;
+    height: 40px;
+
+    z-index: 1200;
+    border-radius: 50%;
+    opacity: 2;
+  }
+  
+  
+  
